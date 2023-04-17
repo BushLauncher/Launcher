@@ -1,0 +1,83 @@
+.mainMenuBar {
+  width: 100%;
+  height: 6vh;
+  position: relative;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 100;
+  -webkit-app-region: drag;
+}
+
+.mainMenuBar p {
+  font-family: SquareFont, serif;
+}
+
+.mainMenuBar .data {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 1vw;
+}
+
+.mainMenuBar .data .frameData {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.5vw;
+}
+
+.mainMenuBar .data .frameData .title {
+  color: var(--text-color);
+  font-weight: 300;
+  font-size: 3vh;
+}
+
+.mainMenuBar .data .frameData .version {
+  color: var(--text-color);
+  font-weight: 500;
+  font-size: 2.5vh;
+}
+
+.mainMenuBar .frameActionGroup {
+  height: 100%;
+  width: 5vw;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  -webkit-app-region: no-drag;
+}
+
+.mainMenuBar .frameActionGroup .frameButton {
+  width: 100%;
+  height: 100%;
+  -webkit-app-region: no-drag;
+}
+
+/***************************/
+.frameButton {
+  height: 100%;
+  width: 3vw;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 1.8vw;
+  cursor: pointer;
+}
+
+.frameButton:hover {
+  background-color: var(--hover-background-color);
+}
+
+.frameButton[datatype='close'] {
+}
+
+.frameButton[datatype='close']:hover {
+  background-color: red;
+}
+
+.frameButton[datatype='minimize'] {
+  background-size: 1.2vw;
+}

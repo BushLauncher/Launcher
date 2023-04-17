@@ -1,0 +1,129 @@
+.mainIcon {
+    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+    width: 100px;
+    height: 100px;
+}
+/**********************************/
+
+.Button {
+    text-align: center;
+    height: 2vh;
+    background-color: var(--hover-background-color);
+    padding: 20px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+}
+
+.Button .img {
+    width: 100%;
+    height: 100%;
+    transition: all 0.5s ease-in-out;
+}
+
+.Button.square {
+    height: 3vw;
+    width: 3vw;
+}
+
+/****************************/
+
+.GameIcon {
+    width: 10vw;
+    height: 10vh;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+
+}
+
+/****************************/
+.VerticalLine {
+    height: 90%;
+    background-color: var(--text-color);
+    width: 2px;
+    border-radius: 25px;
+}
+
+.HorizontalLine {
+    width: 90%;
+    background-color: var(--text-color);
+    height: 2px;
+    border-radius: 25px;
+}
+
+/****************************/
+.Loaded-content {
+  width: 100%;
+  height: 100%;
+}
+.Loader {
+  width: 100%;
+  height: 10vh;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+/*******************************/
+.Version {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0 15px;
+  box-sizing: border-box;
+  gap: 13px;
+
+  background: var(--third-background-color);
+  border-radius: 15px;
+  transition: all 0.3s ease-in-out;
+  cursor: pointer;
+
+  width: 100%;
+  height: 7vh;
+
+  flex: none;
+  order: 0;
+  align-self: stretch;
+  flex-grow: 0;
+}
+.Version.versionInstalled:hover:not(.versionSelected) {
+  background-color: var(--hover-background-color);
+}
+.Version.versionToDownload:hover:not(.versionSelected) {
+  background-color: var(--hover-background-color);
+}
+.Version.versionSelected {
+  background-color: var(--valid);
+}
+
+.Version .versionText {
+
+  font-family: 'SquareFont', serif;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 4vh;
+  line-height: 46px;
+
+  display: flex;
+  align-items: center;
+  text-align: center;
+
+  color: var(--text-color);
+
+  flex: none;
+  order: 1;
+  flex-grow: 1;
+}
+
+.Version .versionIcon {
+  height: 50%;
+  flex: none;
+  order: 0;
+  flex-grow: 0;
+}

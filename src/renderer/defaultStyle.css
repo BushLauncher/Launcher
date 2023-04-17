@@ -1,0 +1,50 @@
+@import 'react-toastify/dist/ReactToastify.css';
+@font-face {
+    font-family: SquareFont;
+    src: url(./../assets/fonts/Square.ttf);
+}
+
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--background-color);
+
+  --background-color: #232323;
+  --background-color-opacity: hsla(0, 2%, 12%, 0.82);
+  --secondary-background-color: #302F2F;
+  --third-background-color: #4b4949;
+  --hover-background-color: #5A5858;
+  --hover-background-color-opacity: #5a5858b3;
+  --bush-background-color: #252D27;
+  --text-color: #FFF;
+  --unvalid: #932A2A;
+  --unvalid-secondary: #633434;
+  --valid: #39C457;
+  --valid-secondary: #2D8640;
+  --bush-primary: #1E954D;
+  --normal-size: 2vw;
+  --big-size: 3vw;
+}
+
+* {
+    user-select: none;
+  -webkit-user-drag: none;
+}
+
+#root, body, html, #MAIN {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+div::-webkit-scrollbar {
+  width: 8px;
+}
+
+div::-webkit-scrollbar-thumb {
+  background: var(--hover-background-color);
+  border-radius: 8px;
+}
