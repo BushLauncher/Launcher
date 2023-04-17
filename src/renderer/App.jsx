@@ -8,6 +8,17 @@ import NotificationModuleProvider from './components/main/Notification/Notificat
 import { toast, ToastContainer } from 'react-toastify';
 
 export const NotificationManager = new NotificationModuleProvider({});
+
+export const defaultNotificationParams = {
+  position: 'bottom-center',
+  autoClose: 5000,
+  hideProgressBar: false,
+  closeOnClick: false,
+  pauseOnHover: true,
+  draggable: false,
+  progress: undefined,
+  theme: 'dark',
+};
 export default function App() {
   const getSelectedTab = () => {
     return new Promise((resolve, reject) => {
@@ -30,7 +41,7 @@ export default function App() {
               customStyle: { position: 'relative', top: '59%' },
             }),
           ];
-
+          toast.info("Loaded successfully", {...defaultNotificationParams, ...{autoClose: 2000, closeButton: false, pauseOnHover: false}})
           resolve(
             <div id={'MAIN'}>
               <TabView
@@ -47,7 +58,7 @@ export default function App() {
               <ToastContainer
                 position="bottom-center"
                 autoClose={5000}
-                hideProgressBar
+                hideProgressBar={false}
                 newestOnTop={false}
                 closeOnClick={false}
                 rtl={false}
@@ -61,32 +72,7 @@ export default function App() {
         });
     });
   };
-  const param = {
-    position: 'bottom-center',
-    autoClose: 5000,
-    hideProgressBar: true,
-    closeOnClick: false,
-    pauseOnHover: true,
-    draggable: false,
-    progress: undefined,
-    theme: 'dark',
-  };
-  toast('🦄 Wow so easy!', param);
-  toast.success('Success', param);
-  toast.info('Info', param);
-  toast.warn('Warn', param);
-  toast.error('Error', param);
-  toast.promise(() => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        resolve();
-      }, 2000);
-    });
-  },     {
-    pending: 'Promise is pending',
-    success: 'Promise resolved 👌',
-    error: 'Promise rejected 🤯'
-  });
+
   return (
     <Loader
       content={getSelectedTab}

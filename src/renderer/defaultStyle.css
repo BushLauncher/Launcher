@@ -1,43 +1,96 @@
 @import 'react-toastify/dist/ReactToastify.css';
 @font-face {
-    font-family: SquareFont;
-    src: url(./../assets/fonts/Square.ttf);
+  font-family: SquareFont;
+  src: url(./../assets/fonts/Square.ttf);
 }
 
-
 body {
-    margin: 0;
-    padding: 0;
-    background-color: var(--background-color);
+  margin: 0;
+  padding: 0;
+  background-color: var(--background-color);
 
   --background-color: #232323;
   --background-color-opacity: hsla(0, 2%, 12%, 0.82);
-  --secondary-background-color: #302F2F;
+  --secondary-background-color: #302f2f;
   --third-background-color: #4b4949;
-  --hover-background-color: #5A5858;
+  --hover-background-color: #5a5858;
   --hover-background-color-opacity: #5a5858b3;
-  --bush-background-color: #252D27;
-  --text-color: #FFF;
-  --unvalid: #932A2A;
+  --bush-background-color: #252d27;
+  --text-color: #fff;
+  --unvalid: #932a2a;
   --unvalid-secondary: #633434;
-  --valid: #39C457;
-  --valid-secondary: #2D8640;
-  --bush-primary: #1E954D;
+  --valid: #39c457;
+  --valid-secondary: #2d8640;
+  --bush-primary: #1e954d;
   --normal-size: 2vw;
   --big-size: 3vw;
 }
 
 * {
-    user-select: none;
+  user-select: none;
   -webkit-user-drag: none;
 }
 
-#root, body, html, #MAIN {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+#root {
+  --toastify-color-light: #fff;
+  --toastify-color-dark: var(--secondary-background-color);
+  --toastify-color-info: #0396ff;
+  --toastify-color-success: #24f106;
+  --toastify-color-warning: #ffb103;
+  --toastify-color-error: #f10606;
+  --toastify-color-transparent: rgba(255, 255, 255, 0.7);
+
+  --toastify-icon-color-info: var(--toastify-color-info);
+  --toastify-icon-color-success: var(--toastify-color-success);
+  --toastify-icon-color-warning: var(--toastify-color-warning);
+  --toastify-icon-color-error: var(--toastify-color-error);
+
+  --toastify-toast-width: 320px;
+  --toastify-toast-background: #fff;
+  --toastify-toast-min-height: 64px;
+  --toastify-toast-max-height: 800px;
+  --toastify-font-family: sans-serif;
+  --toastify-z-index: 9999;
+
+  --toastify-text-color-light: #757575;
+  --toastify-text-color-dark: #fff;
+
+  /*Used only for colored theme*/
+  --toastify-text-color-info: #fff;
+  --toastify-text-color-success: #fff;
+  --toastify-text-color-warning: #fff;
+  --toastify-text-color-error: #fff;
+
+  --toastify-spinner-color: #616161;
+  --toastify-spinner-color-empty-area: #e0e0e0;
+
+  /*Used when no type is provided*/
+  --toastify-color-progress-light: linear-gradient(
+    to right,
+    #4cd964,
+    #5ac8fa,
+    #007aff,
+    #34aadc,
+    #5856d6,
+    #ff2d55
+  );
+  /*Used when no type is provided*/
+  --toastify-color-progress-dark: #bb86fc;
+  --toastify-color-progress-info: var(--toastify-color-info);
+  --toastify-color-progress-success: var(--toastify-color-success);
+  --toastify-color-progress-warning: var(--toastify-color-warning);
+  --toastify-color-progress-error: var(--toastify-color-error);
+}
+
+#root,
+body,
+html,
+#MAIN {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 div::-webkit-scrollbar {

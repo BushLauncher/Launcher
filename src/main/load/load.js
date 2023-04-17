@@ -69,7 +69,7 @@ export default class PreLoad {
           .catch((error) => {
             reject({
               updated: false,
-              code: error.code,
+              code: error.status,
               message: error.message,
             });
           });

@@ -4,16 +4,62 @@ import DataTextComponent from '../public/DataText';
 import FrameButton from './FrameButton';
 import React, { useContext } from 'react';
 import { globalStateContext } from '../../index';
+import { toast } from 'react-toastify';
+import { defaultNotificationParams } from '../../App';
+import Button from '../public/Button';
 
 export default function MainMenuBar() {
   const { isOnline } = React.useContext(globalStateContext);
-  const launchNetworkCheck = ()=>{
-    if(!isOnline) {
-      setInterval(() => {
-        if (navigator.onLine === true) window.location.reload();
-      }, 10000);
-    }
-  }
+  const launchNetworkCheck = () => {
+    const getNetworkState = () => {
+      return new Promise((resolve, reject) => {
+        setTimeout(() => {
+          if (!isOnline) {
+            if (navigator.onLine) {
+              resolve();
+            }
+          } else {
+            if (!navigator.onLine) {
+              reject();
+            }
+          }
+        }, 5000);
+      });
+    };
+    const updateNetworkState = () => {
+      if (navigator.onLine !== isOnline) {
+        //if the current state != global state
+        toast.promise(
+          getNetworkState,
+          {
+            pending: 'Connecting to the internet...',
+            success: {
+              render() {
+                setTimeout(() => {
+                  window.location.reload();
+                }, 2000);
+                return 'Connected !';
+              },
+            },
+            error: {
+              render() {
+                setTimeout(() => {
+                  window.location.reload();
+                }, 2000);
+                return 'We lost connexion !';
+              },
+            },
+          },
+          {
+            toastId: 'networkConnexion',
+            autoClose: false,
+          }
+        );
+      }
+    };
+    updateNetworkState()
+    setInterval(updateNetworkState, 3000);
+  };
 
   return (
     <div id="mainMenu" className={styles.mainMenuBar} role={'menu'}>
@@ -32,7 +78,6 @@ export default function MainMenuBar() {
           </p>
           {!isOnline && <p className={styles.version}>[Offline Mode]</p>}
           {launchNetworkCheck()}
-
         </div>
       </div>
       <div className={styles.frameActionGroup}>
