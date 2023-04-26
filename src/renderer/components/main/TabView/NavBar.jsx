@@ -1,7 +1,7 @@
 import styles from './TabViewStyle.module.css'
 import ButtonStyle from '../../public/css/publicStyle.module.css'
 import Tab from './Tab'
-import Button from '../../public/Button'
+import Button, { ButtonType } from '../../public/Button';
 import { useState } from 'react'
 import arrowIcon from '../../../../assets/graphics/icons/caret-left.svg'
 
@@ -29,14 +29,14 @@ export default function TabNavBar({
       {collapsable ? (
         <Button
           action={() => setCollapsed(!isCollapsed)}
-          label={
+          content={
             <img
               className={[ButtonStyle.img, styles.img].join(' ')}
               src={arrowIcon}
               alt={'collapse Main Menu'}
             />
           }
-          type={'square'}
+          type={ButtonType.Square}
           className={styles.CollapseButton}
         />
       ) : null}

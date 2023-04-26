@@ -7,15 +7,38 @@ export default function Loader({ content, className, style }) {
   const [currentContent, setCurrentContent] = useState(null);
 
   useEffect(() => {
-    content().then((loadedContent) => {
-      setCurrentContent(loadedContent);
-      setIsLoading(false);
-    });
+    content(reload)
+      .then((data) => {
+        setCurrentContent(data);
+        setIsLoading(false);
+      })
+      .catch((error) => {
+        console.error(error);
+        setIsLoading(false);
+      });
   }, [content]);
+
+  const reload = () => {
+    console.log('re-rendering...');
+    setIsLoading(true);
+    content(reload)
+      .then((data) => {
+        setCurrentContent(data);
+        setIsLoading(false);
+      })
+      .catch((error) => {
+        console.error(error);
+        setIsLoading(false);
+      });
+  };
+
   return (
     <div className={[styles.LoadedContent, className].join(' ')} style={style}>
       {isLoading && (
-        <div className={styles.Loader} style={{ backgroundImage: `url(${icon})`}}></div>
+        <div
+          className={styles.Loader}
+          style={{ backgroundImage: `url(${icon})` }}
+        />
       )}
       {!isLoading && currentContent}
     </div>

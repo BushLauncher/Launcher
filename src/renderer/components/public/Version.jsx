@@ -23,7 +23,7 @@ export default function Version({
     return isInstalled ? doneIcon : toDownloadIcon;
   };
   const SelectVersion = (version)=>{
-    window.electron.ipcRenderer.sendMessage('setVersion', (version))
+    window.electron.ipcRenderer.sendMessage('Version:set', (version))
   }
 
   return (

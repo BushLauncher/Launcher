@@ -31,13 +31,11 @@
 }
 
 .mainMenuBar .data .frameData .title {
-  color: var(--text-color);
   font-weight: 300;
   font-size: 3vh;
 }
 
 .mainMenuBar .data .frameData .version {
-  color: var(--text-color);
   font-weight: 500;
   font-size: 2.5vh;
 }

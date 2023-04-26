@@ -1,59 +1,58 @@
 .mainIcon {
-    background-position: center;
-    background-size: contain;
-    background-repeat: no-repeat;
-    width: 100px;
-    height: 100px;
+  background-position: center;
+  background-size: contain;
+  background-repeat: no-repeat;
+  width: 100px;
+  height: 100px;
 }
 /**********************************/
 
 .Button {
-    text-align: center;
-    height: 2vh;
-    background-color: var(--hover-background-color);
-    padding: 20px;
-    border-radius: 10px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-
+  text-align: center;
+  height: 2vh;
+  background-color: var(--hover-background-color);
+  padding: 20px;
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
 }
 
 .Button .img {
-    width: 100%;
-    height: 100%;
-    transition: all 0.5s ease-in-out;
+  width: 100%;
+  height: 100%;
+  transition: all 0.5s ease-in-out;
 }
 
 .Button.square {
-    height: 3vw;
-    width: 3vw;
+  height: 3vw;
+  width: 3vw;
 }
 
 /****************************/
 
 .GameIcon {
-    width: 10vw;
-    height: 10vh;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-
+  width: 10vw;
+  height: 10vh;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 /****************************/
 .VerticalLine {
-    height: 90%;
-    background-color: var(--text-color);
-    width: 2px;
-    border-radius: 25px;
+  height: 90%;
+  background-color: var(--text-color);
+  width: 2px;
+  border-radius: 25px;
 }
 
 .HorizontalLine {
-    width: 90%;
-    background-color: var(--text-color);
-    height: 2px;
-    border-radius: 25px;
+  width: 90%;
+  background-color: var(--text-color);
+  height: 2px;
+  border-radius: 25px;
 }
 
 /****************************/
@@ -103,7 +102,6 @@
 }
 
 .Version .versionText {
-
   font-family: 'SquareFont', serif;
   font-style: normal;
   font-weight: 400;
@@ -114,7 +112,6 @@
   align-items: center;
   text-align: center;
 
-  color: var(--text-color);
 
   flex: none;
   order: 1;
@@ -126,4 +123,11 @@
   flex: none;
   order: 0;
   flex-grow: 0;
+}
+
+/************************************/
+.MinecraftSkin {
+  background-color: orange;
+  width: 10vw;
+  height: 10vw;
 }

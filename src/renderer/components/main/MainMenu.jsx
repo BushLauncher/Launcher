@@ -23,7 +23,7 @@ export default function MainMenuBar() {
               reject();
             }
           }
-        }, 5000);
+        }, 20000);
       });
     };
     const updateNetworkState = () => {
@@ -58,7 +58,7 @@ export default function MainMenuBar() {
       }
     };
     updateNetworkState()
-    setInterval(updateNetworkState, 3000);
+    setInterval(updateNetworkState, 10000);
   };
 
   return (

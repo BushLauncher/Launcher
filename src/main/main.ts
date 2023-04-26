@@ -9,7 +9,7 @@
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
 import path from 'path';
-import { app, BrowserWindow, shell, ipcMain, net } from 'electron';
+import { app, BrowserWindow, ipcMain, net, shell } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import {
@@ -23,8 +23,16 @@ import PreLoad from './load/load';
 import { update } from './downloader';
 import * as versionManager from '../internal/VersionManager';
 import * as userData from '../internal/userData';
-import { Version } from '../internal/public/GameData';
-import { createDefaultData, defaultData } from '../internal/userData';
+import { GameType, Version } from '../internal/public/GameData';
+import {
+  AddAccount, getAccountList,
+  getSelectedAccount, getSelectedAccountId,
+  Login,
+  LogOutAccount,
+  SwitchAccount
+} from '../internal/AuthModule';
+import { Minecraft } from 'msmc';
+import { AuthProviderType } from '../internal/public/AuthPublic';
 
 const prefix = '[Main Process]: ';
 const createWindow = async () => {
@@ -33,8 +41,8 @@ const createWindow = async () => {
       ? path.join(process.resourcesPath, 'assets')
       : path.join(__dirname, '../../assets');
 
-    const getAssetPath = (...paths: string[]): string => {
-      return path.join(RESOURCES_PATH, ...paths);
+    const getAssetPath = (...dataPaths: string[]): string => {
+      return path.join(RESOURCES_PATH, ...dataPaths);
     };
 
     mainWindow = new BrowserWindow({
@@ -61,6 +69,7 @@ const createWindow = async () => {
       darkTheme: true,
       icon: getAssetPath('icon.png'),
     });
+    mainWindow.setResizable(false);
     mainWindow.webContents
       .loadFile('./src/main/load/mainLoad.html')
       .then(() => {
@@ -171,11 +180,11 @@ ipcMain.on('closeApp', (event, args) => app.quit());
 ipcMain.on('minimizeWindow', (event, args) =>
   BrowserWindow.getFocusedWindow()?.minimize()
 );
-ipcMain.handle('getVersionList', (event, args: any[]) => {
+ipcMain.handle('Version:getList', (event, args: { gameType: GameType }) => {
   return new Promise((resolve, reject) => {
     if (net.isOnline()) {
       versionManager
-        .GetVersionList(args[0])
+        .GetVersionList(args.gameType)
         ?.then((versionList) => {
           resolve(versionList);
         })
@@ -185,7 +194,7 @@ ipcMain.handle('getVersionList', (event, args: any[]) => {
         });
     } else {
       versionManager
-        .GetLocalVersionList(args[0])
+        .GetLocalVersionList(args.gameType)
         ?.then((versionList) => {
           resolve(versionList);
         })
@@ -196,12 +205,32 @@ ipcMain.handle('getVersionList', (event, args: any[]) => {
     }
   });
 });
-ipcMain.on('setVersion', (event, version: Version) =>
+ipcMain.on('Version:set', (event, version: Version) =>
   userData.SelectVersion(version)
 );
-ipcMain.handle('getVersion', (event, args) => {
+ipcMain.handle('Version:get', (event, args) => {
   return userData.getSelected();
 });
+ipcMain.handle('Auth:Add', (event, args: { user: Minecraft }) => {
+  return AddAccount(args.user);
+});
+ipcMain.handle('Auth:LogOut', (event, args: { accountIndex: number }) => {
+  return LogOutAccount(args.accountIndex);
+});
+ipcMain.handle('Auth:getSelectedAccount', () => getSelectedAccount());
+ipcMain.handle('Auth:getSelectedId', () => {
+  return getSelectedAccountId()
+});
+ipcMain.handle('Auth:getAccountList', () => getAccountList());
+ipcMain.handle(
+  'Auth:Login',
+  async (event, args: { type: AuthProviderType }) => {
+    return await Login(args.type);
+  }
+);
+ipcMain.on('Auth:SelectAccount', (event, args: { index: number }) =>
+  SwitchAccount(args.index)
+);
 
 app.on('window-all-closed', () => {
   // Respect the OSX convention of having the application in memory even
@@ -213,21 +242,17 @@ app.on('window-all-closed', () => {
 ////////////////////////////////////////////////////////
 
 export const userDataStorage = new userData.Storage('user-preference');
-ipcMain.on('saveData', (event, arg: { path: string; value: any }) => {
-  userDataStorage.set(arg.path, arg.value);
+ipcMain.on('saveData', (event, arg: { dataPath: string; value: any }) => {
+  userDataStorage.set(arg.dataPath, arg.value);
 });
-ipcMain.handle(
-  'getData',
-  (event, arg: { path: string }) => {
-    return userDataStorage.get(arg.path);
-  }
-);
-ipcMain.on('updateData', (event, arg: { value: any; path: any }) => {
- userDataStorage.update(arg.path, arg.value);
-
+ipcMain.handle('getData', (event, args: { dataPath: string }) => {
+  return userDataStorage.get(args.dataPath);
 });
-ipcMain.handle('removeData', (event, arg: { path: string }) => {
-  return userDataStorage.remove(arg.path);
+ipcMain.on('updateData', (event, arg: { value: any; dataPath: any }) => {
+  userDataStorage.update(arg.dataPath, arg.value);
+});
+ipcMain.handle('removeData', (event, arg: { dataPath: string }) => {
+  return userDataStorage.remove(arg.dataPath);
 });
 ////////////////////////////////////////////////////////
 app
@@ -240,7 +265,7 @@ app
     }
     createWindow().then((res: any) => {
       if (res.mustRestart) app.quit();
-      userData.loadData()
+      userData.loadData();
       setTimeout(() => {
         if (mainWindow !== null)
           mainWindow.loadURL(resolveHtmlPath('index.html'));

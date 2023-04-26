@@ -9,13 +9,13 @@ import { concatXmclVersion, GameType } from '../../../internal/public/GameData';
 import Loader from '../public/Loader';
 import { globalStateContext } from '../../index';
 function getSelected() {
-  return window.electron.ipcRenderer.invoke('getVersion');
+  return window.electron.ipcRenderer.invoke('Version:get');
 }
 export default function LaunchButton({ customStyle, versionSelector }) {
   const [isVersionSelectorOpened, setVersionSelectorOpened] = useState(false);
   const {isOnline} = useContext(globalStateContext)
 
-  const versionSelectorInit = () => {
+  const versionSelectorInit = (reload) => {
     if (versionSelector) {
       return new Promise((resolve, reject) => {
         getSelected().then((selectedVersion) => {
@@ -37,10 +37,10 @@ export default function LaunchButton({ customStyle, versionSelector }) {
               <div className={styles.versionListDropdown}>
                 {
                   <Loader
-                    content={() => {
+                    content={(reload) => {
                       return new Promise((resolve, reject) => {
                         window.electron.ipcRenderer
-                          .invoke('getVersionList', [GameType.VANILLA, true])
+                          .invoke('Version:getList', { gameType: GameType.VANILLA })
                           .then((list) => {
                             resolve(
                               list.map((version, index) => {

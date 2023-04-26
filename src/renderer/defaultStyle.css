@@ -91,6 +91,7 @@ html,
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  position: relative;
 }
 
 div::-webkit-scrollbar {
@@ -100,4 +101,10 @@ div::-webkit-scrollbar {
 div::-webkit-scrollbar-thumb {
   background: var(--hover-background-color);
   border-radius: 8px;
+}
+
+p {
+  color: var(--text-color);
+  font-size: var(--normal-size);
+  font-family: SquareFont, serif;
 }

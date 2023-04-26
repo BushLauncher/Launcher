@@ -96,7 +96,6 @@
     align-items: center;
     text-align: center;
 
-    color: var(--text-color);
 
     flex: none;
     order: 1;
@@ -238,7 +237,6 @@
     font-weight: 400;
     font-size: 30px;
     line-height: 46px;
-    color: var(--text-color);
     flex: none;
     order: 1;
     flex-grow: 1;

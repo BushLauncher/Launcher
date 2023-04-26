@@ -2,6 +2,7 @@ import { Version, defaultVersion, defaultGameType } from './public/GameData';
 import { app } from 'electron';
 import { existsSync, readFileSync, writeFile, writeFileSync } from 'fs';
 import { userDataStorage } from '../main/main';
+import { Xbox } from 'msmc';
 const path = require('path');
 const userPath = app.getPath('userData');
 const prefix: string = '[UserData]: ';
@@ -36,16 +37,24 @@ export function SelectVersion(version: Version) {
 interface InterfaceData {
   selectedTab: string;
 }
-
+interface AuthData {
+  accountList: Xbox[];
+  selectedAccount: number | null;
+}
 export interface defaultData {
   interface: InterfaceData;
   version: {
     selected: Version;
   };
+  auth: AuthData;
 }
 
 export function createDefaultData(): defaultData {
   return {
+    auth: {
+      accountList: [],
+      selectedAccount: null,
+    },
     version: { selected: defaultVersion(defaultGameType) },
     interface: {
       selectedTab: 'vanilla',
@@ -89,6 +98,7 @@ export class Storage {
   }
 
   private saveData(customData?: any): void {
+    console.log("Saving All data");
     writeFileSync(
       this.storageFilePath,
       JSON.stringify(customData ? customData : this.data)
