@@ -18,9 +18,6 @@
     flex: none;
 }
 
-.TabView .NavBar > :not(:last-child) {
-    margin-top: 2vh;
-}
 
 .TabView[datapos='left'] .NavBar[datacollapsed='true'] {
     width: 8.5vw;
@@ -29,7 +26,8 @@
 .TabView[datapos='left'] .NavBar {
     height: 100%;
     width: 20vw;
-    padding: 10px 0 0 0;
+    padding: 10px 0 10px 0;
+    box-sizing: border-box;
 }
 
 .TabView[datapos='top'] .NavBar {

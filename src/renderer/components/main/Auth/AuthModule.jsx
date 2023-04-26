@@ -3,13 +3,14 @@ import Button, { ButtonType } from '../../public/Button';
 import Icon from '../../public/Icons/Icon';
 import arrowIcon from '../../../../assets/graphics/icons/arrow_down.svg';
 import addIcon from '../../../../assets/graphics/icons/plus.svg';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import Loader from '../../public/Loader';
 import UserCard from './UserCard';
 import { toast } from 'react-toastify';
 import { createRoot } from 'react-dom/client';
 import { knownError } from '../../../../internal/public/AuthPublic';
 import LoginPanel from './LoginPanel';
+import { globalStateContext } from '../../../index';
 export async function getLogin() {
   return new Promise((resolve) => {
     const container = document.createElement('div');
@@ -53,9 +54,10 @@ export function addAccount(account) {
 }
 export default function AuthModule() {
   const [dropdownOpened, setDropdownOpen] = useState(false);
-
+  const { isOnline } = React.useContext(globalStateContext);
   const getData = (reload) => {
     const getUserList = () => {
+
       return new Promise((resolve, reject) => {
         window.electron.ipcRenderer
           .invoke('Auth:getAccountList', {})
@@ -85,28 +87,32 @@ export default function AuthModule() {
                         />
                       );
                     })}
-                    <Button
+                    {isOnline && <Button
                       className={styles.addButton}
-                      action={() =>
+                      action={() => {
                         getLogin().then((loggedUser) => {
-                          const operation = addAccount(loggedUser);
-                          toast.promise(operation, {
-                            pending:
-                              'Adding account ' + loggedUser.profile.name,
-                            success: 'Added Account ' + loggedUser.profile.name,
-                            error: 'We could add account',
-                          });
-                          operation.then(() => {
-                            reload();
-                          });
-                          operation.catch((err) => {
-                            toast.error(err.toString());
-                          });
-                        })
+                          if (isOnline) {
+                            const operation = addAccount(loggedUser);
+                            toast.promise(operation, {
+                              pending:
+                                'Adding account ' + loggedUser.profile.name,
+                              success:
+                                'Added Account ' + loggedUser.profile.name,
+                              error: 'We could add account'
+                            });
+                            operation.then(() => {
+                              reload();
+                            });
+                            operation.catch((err) => {
+                              toast.error(err.toString());
+                            });
+                          }
+                        });
+                      }
                       }
                       content={<Icon icon={addIcon} className={styles.icon} />}
                       type={ButtonType.Rectangle}
-                    />
+                    />}
                   </div>
                 );
               });

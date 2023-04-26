@@ -7,7 +7,6 @@ import Button, { ButtonType } from '../../public/Button';
 import Icon from '../../public/Icons/Icon';
 import logoutIcon from '../../../../assets/graphics/icons/leave.svg';
 import { toast } from 'react-toastify';
-import { MinecraftAccount } from '../../../../internal/AuthModule';
 
 export interface UserAction {
   accountIndex: number;
@@ -57,7 +56,7 @@ export default class UserCard extends React.Component<UserCardProps, {}> {
               <Button
                 action={(e) => {
                   this.logoutIcon();
-                  e.stopPropagation()
+                  e.stopPropagation();
                 }}
                 content={<Icon icon={logoutIcon} />}
                 type={ButtonType.Square}
@@ -71,12 +70,12 @@ export default class UserCard extends React.Component<UserCardProps, {}> {
   }
 
   private logoutIcon() {
-    console.log("Login out...");
     if (this.props.action === undefined || !this.props.action.action.logOut)
       throw new Error('action Logout() is not permitted, or action is null');
 
     const id: number = this.props.action.accountIndex;
     const reloadAction = this.props.action.reloadFunc;
+    console.log(`Login out: ${id}`);
     const actionRes = toast.promise(
       window.electron.ipcRenderer.invoke('Auth:LogOut', { accountIndex: id }),
       {
@@ -96,12 +95,12 @@ export default class UserCard extends React.Component<UserCardProps, {}> {
     });
   }
   private selectAccount() {
-    console.log("Selecting...");
     if (this.props.action === undefined || !this.props.action.action.select)
       throw new Error(
         'action SelectAccount() is not permitted, or action is null'
       );
     const id: number = this.props.action.accountIndex;
+    console.log(`Selecting: ${id}`);
     window.electron.ipcRenderer.sendMessage('Auth:SelectAccount', {
       index: id,
     });

@@ -14,7 +14,7 @@ import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import {
   installExtension,
-  REACT_DEVELOPER_TOOLS,
+  REACT_DEVELOPER_TOOLS
 } from 'electron-extension-installer';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
@@ -28,8 +28,7 @@ import {
   AddAccount, getAccountList,
   getSelectedAccount, getSelectedAccountId,
   Login,
-  LogOutAccount,
-  SwitchAccount
+  LogOutAccount, SelectAccount
 } from '../internal/AuthModule';
 import { Minecraft } from 'msmc';
 import { AuthProviderType } from '../internal/public/AuthPublic';
@@ -56,7 +55,7 @@ const createWindow = async () => {
         disableHtmlFullscreenWindowResize: true,
         preload: app.isPackaged
           ? path.join(__dirname, 'preload.js')
-          : path.join(__dirname, '../../.erb/dll/preload.js'),
+          : path.join(__dirname, '../../.erb/dll/preload.js')
       },
       titleBarStyle: 'hidden',
       transparent: true,
@@ -67,7 +66,7 @@ const createWindow = async () => {
       closable: true,
       title: 'Bush Launcher',
       darkTheme: true,
-      icon: getAssetPath('icon.png'),
+      icon: getAssetPath('icon.png')
     });
     mainWindow.setResizable(false);
     mainWindow.webContents
@@ -145,6 +144,7 @@ const createWindow = async () => {
     new AppUpdater();
   });
 };
+
 class AppUpdater {
   constructor() {
     log.transports.file.level = 'info';
@@ -219,7 +219,7 @@ ipcMain.handle('Auth:LogOut', (event, args: { accountIndex: number }) => {
 });
 ipcMain.handle('Auth:getSelectedAccount', () => getSelectedAccount());
 ipcMain.handle('Auth:getSelectedId', () => {
-  return getSelectedAccountId()
+  return getSelectedAccountId();
 });
 ipcMain.handle('Auth:getAccountList', () => getAccountList());
 ipcMain.handle(
@@ -229,7 +229,7 @@ ipcMain.handle(
   }
 );
 ipcMain.on('Auth:SelectAccount', (event, args: { index: number }) =>
-  SwitchAccount(args.index)
+  SelectAccount(args.index)
 );
 
 app.on('window-all-closed', () => {
@@ -249,7 +249,7 @@ ipcMain.handle('getData', (event, args: { dataPath: string }) => {
   return userDataStorage.get(args.dataPath);
 });
 ipcMain.on('updateData', (event, arg: { value: any; dataPath: any }) => {
-  userDataStorage.update(arg.dataPath, arg.value);
+  userDataStorage.update(arg.dataPath, arg.value)
 });
 ipcMain.handle('removeData', (event, arg: { dataPath: string }) => {
   return userDataStorage.remove(arg.dataPath);
@@ -260,7 +260,7 @@ app
   .then(async () => {
     if (isDebug) {
       await installExtension(REACT_DEVELOPER_TOOLS, {
-        loadExtensionOptions: { allowFileAccess: true },
+        loadExtensionOptions: { allowFileAccess: true }
       });
     }
     createWindow().then((res: any) => {

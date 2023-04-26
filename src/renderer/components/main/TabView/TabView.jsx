@@ -49,7 +49,7 @@ export default function TabView({
   const [whichIsSelected, select] = useState(contentList[selectedTabIndex]);
   function saveSelectedView(viewName) {
     window.electron.ipcRenderer.sendMessage('updateData', {
-      path: 'interface.selectedTab',
+      dataPath: 'interface.selectedTab',
       value: viewName,
     });
   }

@@ -19,7 +19,6 @@ export default function Loader({ content, className, style }) {
   }, [content]);
 
   const reload = () => {
-    console.log('re-rendering...');
     setIsLoading(true);
     content(reload)
       .then((data) => {

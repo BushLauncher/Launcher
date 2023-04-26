@@ -6,7 +6,6 @@ import VanillaView from './components/views/vanillaView';
 import Loader from './components/public/Loader';
 import { toast, ToastContainer } from 'react-toastify';
 import AuthModule from './components/main/Auth/AuthModule';
-import LoginPanel from './components/main/Auth/LoginPanel';
 
 export const defaultNotificationParams = {
   position: 'bottom-center',
@@ -16,10 +15,9 @@ export const defaultNotificationParams = {
   pauseOnHover: true,
   draggable: false,
   progress: undefined,
-  theme: 'dark',
+  theme: 'dark'
 };
 export default function App() {
-
   return (
     <Loader
       content={() => {
@@ -34,20 +32,17 @@ export default function App() {
                 build({
                   id: 'vanilla',
                   iconPath: grassBlockImg,
-                  content: VanillaView,
-                }),
-                build({
-                  id: 'test',
+                  content: VanillaView
                 }),
                 build({
                   id: 'settings',
                   iconPath: settingIcon,
-                  customStyle: { position: 'relative', top: '59%' },
-                }),
+                  customStyle: { position: "absolute", bottom: "10px" }
+                })
               ];
               toast.info('Loaded successfully', {
                 ...defaultNotificationParams,
-                ...{ autoClose: 2000, closeButton: false, pauseOnHover: false },
+                ...{ autoClose: 2000, closeButton: false, pauseOnHover: false }
               });
               resolve(
                 <div id={'MAIN'}>
@@ -60,11 +55,11 @@ export default function App() {
                     )}
                     params={{
                       collapsable: true,
-                      collapsed: true,
+                      collapsed: true
                     }}
                   />
                   <ToastContainer
-                    position="bottom-center"
+                    position='bottom-center'
                     autoClose={5000}
                     hideProgressBar={false}
                     newestOnTop={false}
@@ -73,7 +68,7 @@ export default function App() {
                     pauseOnFocusLoss
                     draggable={false}
                     pauseOnHover
-                    theme="dark"
+                    theme='dark'
                   />
                 </div>
               );

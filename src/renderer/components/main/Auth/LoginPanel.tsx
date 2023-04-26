@@ -11,6 +11,8 @@ import {
 import AuthProviderCard from './AuthProviderCard';
 import { toast } from 'react-toastify';
 import { MinecraftAccount } from '../../../../internal/AuthModule';
+import { globalStateContext } from '../../../index';
+import React from 'react';
 
 export interface loginInterface {
   resolve: (account: MinecraftAccount) => void;
@@ -21,7 +23,7 @@ const LoginPanel: React.FC<loginInterface> = (functions: loginInterface) => {
   const close = () => {
     functions.reject(knownError.ClosedByUser);
   };
-
+  const { isOnline } = React.useContext(globalStateContext);
   const content = (reload: () => {}) => {
     return new Promise((resolve, reject) => {
       resolve(
@@ -33,22 +35,29 @@ const LoginPanel: React.FC<loginInterface> = (functions: loginInterface) => {
               content={<Icon icon={closeIcon} className={styles.closeIcon} />}
               type={ButtonType.Square}
             />
-            <p className={styles.title}>{'Login to your account:'}</p>
+            <p className={styles.title}>
+              {isOnline ? 'Login to your account:' : 'You are offline'}
+            </p>
             <div className={styles.authProviderList}>
-              {Object.keys(AuthProviderType)
-                .map((name: any, index: number) => {
-                  const type: AuthProviderType = name;
-                  return (
-                    <AuthProviderCard
-                      type={type}
-                      key={index}
-                      reject={(err: errorCode) => toast.error(err.toString())}
-                      resolve={(account: MinecraftAccount) =>
-                        functions.resolve(account)
-                      }
-                    />
-                  );
-                })}
+              {isOnline
+                ? Object.keys(AuthProviderType).map(
+                    (name: any, index: number) => {
+                      const type: AuthProviderType = name;
+                      return (
+                        <AuthProviderCard
+                          type={type}
+                          key={index}
+                          reject={(err: errorCode) =>
+                            toast.error(err.toString())
+                          }
+                          resolve={(account: MinecraftAccount) =>
+                            functions.resolve(account)
+                          }
+                        />
+                      );
+                    }
+                  )
+                : null}
             </div>
           </div>
         </div>
