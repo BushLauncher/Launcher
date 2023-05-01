@@ -1,4 +1,5 @@
 @import 'react-toastify/dist/ReactToastify.css';
+
 @font-face {
   font-family: SquareFont;
   src: url(./../assets/fonts/Square.ttf);
@@ -9,21 +10,7 @@ body {
   padding: 0;
   background-color: var(--background-color);
 
-  --background-color: #232323;
-  --background-color-opacity: hsla(0, 2%, 12%, 0.82);
-  --secondary-background-color: #302f2f;
-  --third-background-color: #4b4949;
-  --hover-background-color: #5a5858;
-  --hover-background-color-opacity: #5a5858b3;
-  --bush-background-color: #252d27;
-  --text-color: #fff;
-  --unvalid: #932a2a;
-  --unvalid-secondary: #633434;
-  --valid: #39c457;
-  --valid-secondary: #2d8640;
-  --bush-primary: #1e954d;
-  --normal-size: 2vw;
-  --big-size: 3vw;
+
 }
 
 * {
@@ -33,7 +20,7 @@ body {
 
 #root {
   --toastify-color-light: #fff;
-  --toastify-color-dark: var(--secondary-background-color);
+  --toastify-color-dark: #302f2f;
   --toastify-color-info: #0396ff;
   --toastify-color-success: #24f106;
   --toastify-color-warning: #ffb103;
@@ -80,12 +67,20 @@ body {
   --toastify-color-progress-success: var(--toastify-color-success);
   --toastify-color-progress-warning: var(--toastify-color-warning);
   --toastify-color-progress-error: var(--toastify-color-error);
+
+
+  --normal-size: 2vw;
+  --big-size: 3vw;
+  --bush-primary: #1e954d;
 }
+
 
 #root,
 body,
 html,
-#MAIN {
+#MAIN,
+#Theme-container,
+.Theme-container{
   width: 100%;
   height: 100%;
   display: flex;

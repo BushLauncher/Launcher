@@ -1,8 +1,10 @@
-import { Version, defaultVersion, defaultGameType } from './public/GameData';
+import { defaultGameType, defaultVersion, Version } from './public/GameData';
 import { app } from 'electron';
-import { existsSync, readFileSync, writeFile, writeFileSync } from 'fs';
+import fs, { readFileSync, writeFileSync } from 'fs';
 import { userDataStorage } from '../main/main';
 import { Xbox } from 'msmc';
+import { Theme } from './public/ThemePublic';
+
 const path = require('path');
 const userPath = app.getPath('userData');
 const prefix: string = '[UserData]: ';
@@ -23,24 +25,28 @@ export function loadData() {
   if (res != undefined) SelectVersion(res);
   console.log(prefix + '--------');
 }
+
 export function SelectVersion(version: Version) {
   selected = version;
   userDataStorage.update('version.selected', version);
   console.log(
     'Selecting for: [' +
-      selected.gameType.toString().toLowerCase() +
-      ']: ' +
-      selected.id
+    selected.gameType.toString().toLowerCase() +
+    ']: ' +
+    selected.id
   );
 }
 
 interface InterfaceData {
   selectedTab: string;
+  theme: Theme;
 }
+
 interface AuthData {
   accountList: Xbox[];
   selectedAccount: number | null;
 }
+
 export interface defaultData {
   interface: InterfaceData;
   version: {
@@ -53,12 +59,13 @@ export function createDefaultData(): defaultData {
   return {
     auth: {
       accountList: [],
-      selectedAccount: null,
+      selectedAccount: null
     },
     version: { selected: defaultVersion(defaultGameType) },
     interface: {
       selectedTab: 'vanilla',
-    },
+      theme: Theme.Dark
+    }
   };
 }
 
@@ -69,6 +76,39 @@ export class Storage {
   constructor(private fileName: string) {
     this.storageFilePath = path.join(userPath, fileName + '.json');
     this.loadData();
+  }
+
+  public DeleteFile(): boolean {
+    try {
+      fs.unlinkSync(this.storageFilePath);
+      return true
+    } catch (err) {
+      console.error(err);
+      return false
+    }
+  }
+
+  get<T>(propertyPath: string): T | undefined {
+    const [key, propertyObject] = this.findProperty(propertyPath);
+    return propertyObject[key] as T;
+  }
+
+  set<T>(propertyPath: string, value: T): void {
+    const [key, propertyObject] = this.findProperty(propertyPath);
+    propertyObject[key] = value;
+    this.saveData();
+  }
+
+  update<T>(propertyPath: string, value: T): void {
+    const [key, propertyObject] = this.findProperty(propertyPath);
+    propertyObject[key] = value;
+    this.saveData();
+  }
+
+  remove(propertyPath: string): void {
+    const [key, propertyObject] = this.findProperty(propertyPath);
+    delete propertyObject[key];
+    this.saveData();
   }
 
   private findProperty(
@@ -98,33 +138,10 @@ export class Storage {
   }
 
   private saveData(customData?: any): void {
-    console.log("Saving All data");
+    console.log('Saving All data');
     writeFileSync(
       this.storageFilePath,
       JSON.stringify(customData ? customData : this.data)
     );
-  }
-
-  get<T>(propertyPath: string): T | undefined {
-    const [key, propertyObject] = this.findProperty(propertyPath);
-    return propertyObject[key] as T;
-  }
-
-  set<T>(propertyPath: string, value: T): void {
-    const [key, propertyObject] = this.findProperty(propertyPath);
-    propertyObject[key] = value;
-    this.saveData();
-  }
-
-  update<T>(propertyPath: string, value: T): void {
-    const [key, propertyObject] = this.findProperty(propertyPath);
-    propertyObject[key] = value;
-    this.saveData();
-  }
-
-  remove(propertyPath: string): void {
-    const [key, propertyObject] = this.findProperty(propertyPath);
-    delete propertyObject[key];
-    this.saveData();
   }
 }

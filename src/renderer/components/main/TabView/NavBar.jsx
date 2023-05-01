@@ -1,22 +1,26 @@
 import styles from './TabViewStyle.module.css';
-import ButtonStyle from '../../public/css/publicStyle.module.css';
+import ButtonStyle from '../../public/css/inputStyle.module.css';
 import Tab from './Tab';
-import Button, { ButtonType } from '../../public/Button';
+import Button, { ButtonType } from '../../public/Input/Button';
 import { useState } from 'react';
 import arrowIcon from '../../../../assets/graphics/icons/caret-left.svg';
 
 export default function TabNavBar({
-  whichIsSelected,
-  select,
-  tabList,
-  collapsable,
-  collapsed,
-}) {
+                                    whichIsSelected,
+                                    select,
+                                    tabList,
+                                    collapsable,
+                                    collapsed,
+                                    styleSettings
+                                  }) {
   const [isCollapsed, setCollapsed] = useState(collapsed ? collapsed : false);
   return (
     <div
       className={[styles.NavBar].join(' ')}
-      datacollapsed={collapsable ? isCollapsed.toString() : null}
+      data-collapsed={collapsable ? isCollapsed.toString() : null}
+      data-align={styleSettings.tabAlign !== undefined ? styleSettings.tabAlign : 'Top'}
+      data-visible={styleSettings.navBarBackgroundVisibility}
+      data-onselected={styleSettings.tabSelectionEffect}
     >
       {tabList.map((tab, index) => (
         <Tab
@@ -26,20 +30,20 @@ export default function TabNavBar({
           onSelect={(action) => select(index, action)}
         />
       ))}
-      {collapsable ? (
+      {collapsable && (
         <Button
           action={() => setCollapsed(!isCollapsed)}
           content={
             <img
               className={[ButtonStyle.img, styles.img].join(' ')}
               src={arrowIcon}
-              alt={'collapse Main Menu'}
+              alt={'collapse Menu'}
             />
           }
           type={ButtonType.Square}
           className={styles.CollapseButton}
         />
-      ) : null}
+      )}
     </div>
   );
 }

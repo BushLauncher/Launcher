@@ -7,30 +7,6 @@
 }
 /**********************************/
 
-.Button {
-  text-align: center;
-  height: 2vh;
-  background-color: var(--hover-background-color);
-  padding: 20px;
-  border-radius: 10px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-}
-
-.Button .img {
-  width: 100%;
-  height: 100%;
-  transition: all 0.5s ease-in-out;
-}
-
-.Button.square {
-  height: 3vw;
-  width: 3vw;
-}
-
-/****************************/
 
 .GameIcon {
   width: 10vw;

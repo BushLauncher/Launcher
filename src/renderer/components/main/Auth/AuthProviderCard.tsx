@@ -7,9 +7,8 @@ import errorIcon from '../../../../assets/graphics/icons/close.svg';
 
 import msIcon from '../../../../assets/graphics/icons/microsoft.svg';
 import { useState } from 'react';
-import Button, { ButtonType } from '../../public/Button';
-import { AuthProviderType, errorCode, knownAuthError } from '../../../../internal/public/AuthPublic';
-import { MinecraftAccount } from '../../../../internal/AuthModule';
+import Button, { ButtonType } from '../../public/Input/Button';
+import { AuthProviderType, errorCode, knownAuthError, MinecraftAccount } from '../../../../internal/public/AuthPublic';
 import { toast } from 'react-toastify';
 import { DecodeIpcMain } from '../../../../internal/public/ErrorDecoder';
 
@@ -83,7 +82,7 @@ const AuthProviderCard: React.FC<authProviderCard> = (
           <Icon icon={StateIcon(state)} className={styles.stateIcon} />
         </div>
       }
-      type={ButtonType.Square}
+      type={ButtonType.StyleLess}
     ></Button>
   );
 };

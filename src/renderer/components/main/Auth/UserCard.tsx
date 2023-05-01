@@ -1,38 +1,39 @@
 import React from 'react';
 import styles from './css/AuthModuleStyle.module.css';
 import MinecraftSkin from '../../public/MinecraftSkin';
-import { Minecraft } from 'msmc';
 import { ComponentsPublic } from '../../ComponentsPublic';
-import Button, { ButtonType } from '../../public/Button';
+import Button, { ButtonType } from '../../public/Input/Button';
 import Icon from '../../public/Icons/Icon';
 import logoutIcon from '../../../../assets/graphics/icons/leave.svg';
 import { toast } from 'react-toastify';
+import { AuthProviderType, MinecraftAccount } from '../../../../internal/public/AuthPublic';
+
+import msIcon from '../../../../assets/graphics/icons/microsoft.svg';
 
 export interface UserAction {
   accountIndex: number;
-  reloadFunc: () => {};
+  reloadFunc: () => void;
   action: {
     logOut: boolean;
     select: boolean;
   };
 }
+
 export interface UserCardProps extends ComponentsPublic {
-  user: Minecraft;
+  user: MinecraftAccount;
   action?: UserAction;
+  displayAuthMethode?: boolean;
 }
+
 export default class UserCard extends React.Component<UserCardProps, {}> {
   constructor(props: UserCardProps) {
     super(props);
   }
-  //PP
-  //Username
-  //actionButton
-  //disconnect
 
   render() {
     if (this.props.user.profile == undefined)
       throw new Error(
-        "[UserCardComponent]: Passed user don't has an MCProfile !"
+        '[UserCardComponent]: Passed user don\'t has an MCProfile !'
       );
     return (
       <div
@@ -42,6 +43,8 @@ export default class UserCard extends React.Component<UserCardProps, {}> {
           this.props.action?.action.select ? this.selectAccount() : null;
         }}
       >
+        {this.props.displayAuthMethode && <Icon className={styles.authIcon} icon={this.getIconFromAuth(this.props.user.authType)
+        } />}
         <div className={styles.data}>
           <MinecraftSkin
             userMCName={this.props.user.profile.name}
@@ -69,6 +72,13 @@ export default class UserCard extends React.Component<UserCardProps, {}> {
     );
   }
 
+  private getIconFromAuth(authType: AuthProviderType) {
+    switch (authType) {
+      case AuthProviderType.Microsoft:
+        return msIcon;
+    }
+  }
+
   private logoutIcon() {
     if (this.props.action === undefined || !this.props.action.action.logOut)
       throw new Error('action Logout() is not permitted, or action is null');
@@ -84,9 +94,9 @@ export default class UserCard extends React.Component<UserCardProps, {}> {
           render() {
             reloadAction();
             return 'Logged out';
-          },
+          }
         },
-        error: "We couldn't log out your account",
+        error: 'We couldn\'t log out your account'
       }
     );
     actionRes.catch((err) => {
@@ -94,6 +104,7 @@ export default class UserCard extends React.Component<UserCardProps, {}> {
       toast.error(err.toString());
     });
   }
+
   private selectAccount() {
     if (this.props.action === undefined || !this.props.action.action.select)
       throw new Error(
@@ -102,7 +113,7 @@ export default class UserCard extends React.Component<UserCardProps, {}> {
     const id: number = this.props.action.accountIndex;
     console.log(`Selecting: ${id}`);
     window.electron.ipcRenderer.sendMessage('Auth:SelectAccount', {
-      index: id,
+      index: id
     });
     this.props.action.reloadFunc();
   }

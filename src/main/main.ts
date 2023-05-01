@@ -12,10 +12,7 @@ import path from 'path';
 import { app, BrowserWindow, ipcMain, net, shell } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
-import {
-  installExtension,
-  REACT_DEVELOPER_TOOLS,
-} from 'electron-extension-installer';
+import { installExtension, REACT_DEVELOPER_TOOLS } from 'electron-extension-installer';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
 
@@ -31,10 +28,11 @@ import {
   getSelectedAccountId,
   Login,
   LogOutAccount,
-  SelectAccount,
+  LogOutAllAccount,
+  SelectAccount
 } from '../internal/AuthModule';
 import { Minecraft } from 'msmc';
-import { AuthProviderType } from '../internal/public/AuthPublic';
+import { AuthProviderType, MinecraftAccount } from '../internal/public/AuthPublic';
 
 const prefix = '[Main Process]: ';
 const createWindow = async () => {
@@ -47,6 +45,7 @@ const createWindow = async () => {
       return path.join(RESOURCES_PATH, ...dataPaths);
     };
 
+    // noinspection SpellCheckingInspection
     mainWindow = new BrowserWindow({
       show: false,
       width: 1080,
@@ -58,8 +57,9 @@ const createWindow = async () => {
         disableHtmlFullscreenWindowResize: true,
         preload: app.isPackaged
           ? path.join(__dirname, 'preload.js')
-          : path.join(__dirname, '../../.erb/dll/preload.js'),
+          : path.join(__dirname, '../../.erb/dll/preload.js')
       },
+      fullscreenable: false,
       titleBarStyle: 'hidden',
       transparent: true,
       frame: false,
@@ -69,7 +69,7 @@ const createWindow = async () => {
       closable: true,
       title: 'Bush Launcher',
       darkTheme: true,
-      icon: getAssetPath('icon.png'),
+      icon: getAssetPath('icon.png')
     });
     mainWindow.setResizable(false);
     mainWindow.webContents
@@ -80,7 +80,7 @@ const createWindow = async () => {
         const modifyMainText = (text: string) => {
           if (mainWindow !== null) {
             mainWindow.webContents.executeJavaScript(
-              `try{document.querySelector('#state').innerText = "${text}";}catch(err) {console.error("we couldn't set the text fro the main process");console.error(err)}`
+              `try{document.querySelector('#state').innerText = "${text}";}catch(err) {console.error("we couldn't set the text from the main process");console.error(err)}`
             );
           }
         };
@@ -124,9 +124,9 @@ const createWindow = async () => {
       //prevent next/previous mouse button
       mainWindow.webContents.executeJavaScript(
         'window.addEventListener("mouseup", (e) => {\n' +
-          '   if (e.button === 3 || e.button === 4)\n' +
-          '      e.preventDefault();\n' +
-          '});'
+        '   if (e.button === 3 || e.button === 4)\n' +
+        '      e.preventDefault();\n' +
+        '});'
       );
       if (process.env.START_MINIMIZED) {
         mainWindow.minimize();
@@ -221,11 +221,14 @@ ipcMain.on('Version:set', (event, version: Version) =>
 ipcMain.handle('Version:get', (event, args) => {
   return userData.getSelected();
 });
-ipcMain.handle('Auth:Add', (event, args: { user: Minecraft }) => {
+ipcMain.handle('Auth:Add', (event, args: { user: MinecraftAccount }) => {
   return AddAccount(args.user);
 });
 ipcMain.handle('Auth:LogOut', (event, args: { accountIndex: number }) => {
   return LogOutAccount(args.accountIndex);
+});
+ipcMain.handle('Auth:LogOutAll', (event, args: { accountIndex: number }) => {
+  return LogOutAllAccount();
 });
 ipcMain.handle('Auth:getSelectedAccount', () => getSelectedAccount());
 ipcMain.handle('Auth:getSelectedId', () => {
@@ -264,13 +267,16 @@ ipcMain.on('updateData', (event, arg: { value: any; dataPath: any }) => {
 ipcMain.handle('removeData', (event, arg: { dataPath: string }) => {
   return userDataStorage.remove(arg.dataPath);
 });
+ipcMain.handle('deleteAll', (event) => {
+  return userDataStorage.DeleteFile();
+});
 ////////////////////////////////////////////////////////
 app
   .whenReady()
   .then(async () => {
     if (isDebug) {
       await installExtension(REACT_DEVELOPER_TOOLS, {
-        loadExtensionOptions: { allowFileAccess: true },
+        loadExtensionOptions: { allowFileAccess: true }
       });
     }
     createWindow().then((res: any) => {

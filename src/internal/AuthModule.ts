@@ -2,8 +2,7 @@
 
 import { userDataStorage } from '../main/main';
 import { Auth, Minecraft, Xbox } from 'msmc';
-import { AuthProviderType, knownAuthError } from './public/AuthPublic';
-import { MCProfile } from 'msmc/types/assets';
+import { AuthProviderType, knownAuthError, MinecraftAccount } from './public/AuthPublic';
 
 const prefix = '[AuthModule Internal]: ';
 
@@ -11,18 +10,15 @@ const auth = new Auth('login');
 auth.on('load', (asset, message) =>
   console.log(prefix + asset + ' ' + message)
 );
-export interface MinecraftAccount {
-  readonly mcToken: string;
-  readonly profile: MCProfile | undefined;
-  readonly xuid: string;
-  readonly exp: number;
-}
+
+
 export function AddAccount(user: MinecraftAccount): boolean {
   console.log(prefix + prefix + 'Adding a new Account...');
   if (isAccountValid(user)) {
     return addToStorage(user);
   } else throw new Error('The new Account is not valid !');
 }
+
 export async function Login(type: AuthProviderType): Promise<MinecraftAccount> {
   return new Promise<MinecraftAccount>((resolve, reject) => {
     console.log(prefix + 'Login-in...');
@@ -38,12 +34,12 @@ export async function Login(type: AuthProviderType): Promise<MinecraftAccount> {
                 if (MinecraftLoggedUser.validate()) {
                   if (MinecraftLoggedUser.profile !== undefined) {
                     const User: MinecraftAccount =
-                      ConstructMinecraftUser(MinecraftLoggedUser);
+                      ConstructMinecraftUser(MinecraftLoggedUser, AuthProviderType.Microsoft);
                     console.log(
                       `${prefix}Logged new Account: ${User.profile?.name}`
                     );
                     resolve(User);
-                  } else throw new Error("User don't have Mc profile");
+                  } else throw new Error('User don\'t have Mc profile');
                 } else
                   throw new Error('The newest logged account is not valid !');
               })
@@ -66,7 +62,7 @@ export function SelectAccount(accountToSelect: number | MinecraftAccount) {
   if (typeof accountToSelect !== 'number') {
     const list: MinecraftAccount[] = getAccountList();
     if (!list.includes(accountToSelect))
-      throw new Error("Account list don't contain account: " + accountToSelect);
+      throw new Error('Account list don\'t contain account: ' + accountToSelect);
     id = list.indexOf(accountToSelect);
   } else id = accountToSelect;
   changeSelectedAccountId(id);
@@ -121,6 +117,14 @@ export function LogOutAccount(indexToLogOut: number) {
   //so juste remove from storage
   removeAccount(indexToLogOut);
 }
+
+export function LogOutAllAccount() {
+  //there isn't function to logout in msmc
+  //so juste remove all from storage
+  userDataStorage.set('auth.accountList', []);
+  userDataStorage.set('auth.selectedAccount', null);
+}
+
 function addToStorage(account: MinecraftAccount): boolean {
   try {
     const list: MinecraftAccount[] = addToList(account);
@@ -139,6 +143,7 @@ function UpdateStorageAccountList(list: MinecraftAccount[]) {
     throw new Error(err);
   }
 }
+
 function addToList(userToAdd: MinecraftAccount): MinecraftAccount[] {
   //to get the new account id: [list.length -1] because the account is added to the end of array
   const list: MinecraftAccount[] = getAccountList();
@@ -152,11 +157,12 @@ function removeFromList(indexToDelete: number): MinecraftAccount[] {
   return list;
 }
 
-function ConstructMinecraftUser(Minecraft: MinecraftAccount): MinecraftAccount {
+function ConstructMinecraftUser(Minecraft: Minecraft, authType: AuthProviderType): MinecraftAccount {
   return <MinecraftAccount>{
     mcToken: Minecraft.mcToken,
     profile: Minecraft.profile,
     xuid: Minecraft.xuid,
     exp: Minecraft.exp,
+    authType: authType
   };
 }

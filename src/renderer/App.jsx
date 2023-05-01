@@ -1,12 +1,12 @@
-import TabView, { build } from './components/main/TabView/TabView';
+import TabView from './components/main/TabView/TabView';
 import './defaultStyle.css';
 import grassBlockImg from '../assets/graphics/images/grass_block.png';
 import settingIcon from '../assets/graphics/icons/settings.svg';
 import VanillaView from './components/views/vanillaView';
 import Loader from './components/public/Loader';
 import { toast, ToastContainer } from 'react-toastify';
-import AuthModule from './components/main/Auth/AuthModule';
 import SettingsView from './components/views/SettingsView';
+import AuthModule from './components/main/Auth/AuthModule';
 
 export const defaultNotificationParams = {
   position: 'bottom-center',
@@ -16,7 +16,7 @@ export const defaultNotificationParams = {
   pauseOnHover: true,
   draggable: false,
   progress: undefined,
-  theme: 'dark'
+  theme: "dark"
 };
 export default function App() {
   return (
@@ -30,17 +30,17 @@ export default function App() {
               console.log('Selected Tab: ' + selectedTab);
 
               const content = [
-                build({
+                {
                   id: 'vanilla',
                   iconPath: grassBlockImg,
                   content: VanillaView
-                }),
-                build({
+                },
+                {
                   id: 'settings',
                   iconPath: settingIcon,
-                  customStyle: { position: 'absolute', bottom: '10px' },
+                  style: { position: 'absolute', bottom: '10px' },
                   content: SettingsView
-                })
+                }
               ];
               toast.info('Loaded successfully', {
                 ...defaultNotificationParams,
@@ -50,15 +50,11 @@ export default function App() {
                 <div id={'MAIN'}>
                   <AuthModule />
                   <TabView
-                    style={{ pos: 'left' }}
                     contentList={content}
                     selectedTabIndex={content.findIndex(
                       (e) => e.id === selectedTab
                     )}
-                    params={{
-                      collapsable: true,
-                      collapsed: true
-                    }}
+                    params={{ collapsable: true, collapsed: true, style: { orientation: 'Horizontal' } }}
                   />
                   <ToastContainer
                     position='bottom-center'
@@ -80,16 +76,4 @@ export default function App() {
       style={{ width: '100%', height: '100%' }}
     />
   );
-  /*return (
-    <Loader
-      content={(reload) => {
-        return new Promise((resolve, reject) =>
-          setTimeout(() => {
-            console.log('Component re-rendered');
-            resolve(<button onClick={reload}>{'test'}</button>);
-          }, 2000)
-        );
-      }}
-    />
-  );*/
 }

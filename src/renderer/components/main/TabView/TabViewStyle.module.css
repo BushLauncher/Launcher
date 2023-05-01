@@ -1,141 +1,188 @@
 .TabView {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    position: relative;
-    overflow: hidden;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  position: relative;
+  overflow: hidden;
 }
 
-.TabView[datapos='top'] {
-    flex-direction: column;
+.TabView[data-orientation='Vertical'] {
+  flex-direction: column;
 }
 
 .TabView .NavBar {
-    background-color: var(--secondary-background-color);
-    transition: all 0.3s ease-in-out;
-    --ml: 1vw;
-    position: relative;
-    flex: none;
+  background-color: var(--secondary-background-color);
+  transition: all 0.3s ease-in-out;
+  --ml: 1vw;
+  position: relative;
+  flex: none;
+}
+
+.TabView .NavBar[data-visible="false"]{
+  background-color: transparent;
 }
 
 
-.TabView[datapos='left'] .NavBar[datacollapsed='true'] {
-    width: 8.5vw;
+.TabView[data-orientation='Horizontal'] .NavBar[data-collapsed='true'] {
+  width: 8.5vw;
 }
 
-.TabView[datapos='left'] .NavBar {
-    height: 100%;
-    width: 20vw;
-    padding: 10px 0 10px 0;
-    box-sizing: border-box;
+.TabView[data-orientation='Horizontal'] .NavBar {
+  height: 100%;
+  width: 20vw;
+  padding: 10px 0 10px 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
-.TabView[datapos='top'] .NavBar {
-    height: 5vh;
-    width: 100%;
-    background-color: var(--secondary-background-color);
+.TabView[data-orientation='Horizontal'] .NavBar[data-align="Center"] {
+  justify-content: center;
+}
+.TabView[data-orientation='Horizontal'] .NavBar[data-align="Bottom"] {
+  justify-content: flex-end;
+}
+
+.TabView[data-orientation='Vertical'] .NavBar {
+  height: 5vh;
+  width: 100%;
+  --ml: 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  box-sizing: content-box;
+  border-radius: 20px 20px 0 0;
 }
 
 /***************************/
 .TabView .NavBar .CollapseButton {
-    transition: all 0.3s ease-in-out;
-    width: 2vw;
-    height: 2vw;
-    background-color: var(--third-background-color);
-    border-radius: 30%;
-    float: right;
-    position: absolute;
-    top: 45%;
-    padding: 5px;
-    cursor: pointer;
-    z-index: 10;
+  transition: all 0.3s ease-in-out;
+  width: 2vw;
+  height: 2vw;
+  background-color: var(--third-background-color);
+  border-radius: 30%;
+  float: right;
+  position: absolute;
+  top: 45%;
+  padding: 5px;
+  cursor: pointer;
+  z-index: 10;
 }
 
-.TabView .NavBar[datacollapsed='false'] .CollapseButton {
-    left: 94%;
+.TabView .NavBar[data-collapsed='false'] .CollapseButton {
+  left: 94%;
 }
 
-.TabView .NavBar[datacollapsed='true'] .CollapseButton {
-    left: 82%;
+.TabView .NavBar[data-collapsed='true'] .CollapseButton {
+  left: 82%;
 }
 
 .TabView .NavBar .CollapseButton .img {
-    transform: scale(1.7);
+  transform: scale(1.7);
   transition: all 0.3s ease-in-out;
 }
 
-.TabView .NavBar[datacollapsed='true'] .CollapseButton .img {
-    transform: scale(1.7) rotate(180deg);
+.TabView .NavBar[data-collapsed='true'] .CollapseButton .img {
+  transform: scale(1.7) rotate(180deg);
 }
 
 
 /***************************/
 .TabView .NavBar .Tab {
-    margin-left: var(--ml);
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 3vw;
-    cursor: pointer;
-    border-radius: 20px;
-    transition: all 0.3s ease-in-out;
+  margin-left: var(--ml);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  cursor: pointer;
+  border-radius: 20px;
+  transition: all 0.3s ease-in-out;
 }
 
 
 .TabView .NavBar .Tab:hover,
 .TabView .NavBar .Tab.selected {
-    background-color: var(--hover-background-color);
+  background-color: var(--hover-background-color);
+}
+/*unless if the style is "underline"*/
+.TabView .NavBar[data-onselected="Underline"] .Tab:hover,
+.TabView .NavBar[data-onselected="Underline"] .Tab.selected {
+  background-color: transparent;
+}
+.TabView .NavBar[data-onselected="Underline"] .Tab:hover .label::before,
+.TabView .NavBar[data-onselected="Underline"] .Tab.selected .label::before{
+  width: 100%;
 }
 
-.TabView[datapos='left'] .NavBar .Tab {
-    width: 90%;
-    height: 10vh;
+.TabView[data-orientation='Horizontal'] .NavBar .Tab {
+  width: 90%;
+  height: 10vh;
+}
+.TabView[data-orientation='Vertical'] .NavBar .Tab {
+  width: fit-content;
+  height: 8vh;
+  padding: 0 3vw 0 3vw;
+  border-radius: 10px 10px 0 0;
 }
 
-.TabView[datapos='left'] .NavBar[datacollapsed='true'] .Tab {
-    width: 10vh;
-    height: 10vh;
-    margin-left: var(--ml);
+.TabView[data-orientation='Horizontal'] .NavBar[data-collapsed='true'] .Tab {
+  width: 10vh;
+  height: 10vh;
+  /*margin-left: var(--ml);*/
 }
 
 .TabView .NavBar .Tab .icon {
-    height: 90%;
-    width: 5vw;
-    background-size: 4vw;
-    background-position: center;
-    background-repeat: no-repeat;
-    transition: all 0.5s ease-in-out;
-    flex: none;
-    margin-left: 0.6vw;
+  height: 90%;
+  width: 5vw;
+  background-size: 4vw;
+  background-position: center;
+  background-repeat: no-repeat;
+  transition: all 0.5s ease-in-out;
+  flex: none;
+  margin-left: 0.6vw;
 }
 
 
-.TabView[datapos='left'] .NavBar .Tab .label {
-    word-break: keep-all;
-    overflow: hidden;
-    font-size: 3vh;
-    font-weight: 300;
-    font-family: SquareFont, serif;
-    transition: all 0.5s ease-in-out;
-    text-align: center;
-    opacity: 1;
+.TabView[data-orientation='Horizontal'] .NavBar .Tab .label {
+  word-break: keep-all;
+  font-size: 3vh;
+  font-weight: 300;
+  font-family: SquareFont, serif;
+  transition: all 0.3s ease-in-out;
+  text-align: center;
+  opacity: 1;
+  position: relative;
+  margin-left: var(--ml);
 }
 
-.TabView[datapos='left'] .NavBar[datacollapsed='true'] .Tab .label {
-    opacity: 0;
+.TabView .NavBar[data-onselected="Underline"] .Tab .label::before{
+  content: '';
+  display: block;
+  height: 0.3vh;
+  width: 0;
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  background-color: var(--text-color);
+  transition: all 0.2s ease;
+}
+
+.TabView[data-orientation='Horizontal'] .NavBar[data-collapsed='true'] .Tab .label {
+  opacity: 0;
 }
 
 /***************************/
 .TabView .Viewer {
-    width: 100%;
+  width: 100%;
 }
 
-.TabView[datapos="left"] .Viewer {
-    height: 100%;
+.TabView[data-orientation="Horizontal"] .Viewer {
+  height: 100%;
 }
 
-.TabView[datapos="top"] .Viewer {
-    height: calc(100% - 5vh);
+.TabView[data-orientation="Vertical"] .Viewer {
+  height: calc(100% - 5vh);
 }
 
 /************************************/

@@ -1,5 +1,5 @@
 import styles from './css/AuthModuleStyle.module.css';
-import Button, { ButtonType } from '../../public/Button';
+import Button, { ButtonType } from '../../public/Input/Button';
 import Icon from '../../public/Icons/Icon';
 import arrowIcon from '../../../../assets/graphics/icons/arrow_down.svg';
 import addIcon from '../../../../assets/graphics/icons/plus.svg';
@@ -11,9 +11,11 @@ import { createRoot } from 'react-dom/client';
 import { knownAuthError } from '../../../../internal/public/AuthPublic';
 import LoginPanel from './LoginPanel';
 import { globalStateContext } from '../../../index';
+
 export async function getLogin() {
   return new Promise((resolve) => {
     const container = document.createElement('div');
+
     // noinspection JSCheckFunctionSignatures
     const root = createRoot(container);
     root.render(
@@ -37,7 +39,7 @@ export async function getLogin() {
         />
       </>
     );
-    document.body.appendChild(container);
+    document.querySelector('#Theme-container').appendChild(container);
   });
 }
 
@@ -52,6 +54,7 @@ export function addAccount(account) {
       });
   });
 }
+
 export default function AuthModule() {
   const [dropdownOpened, setDropdownOpen] = useState(false);
   const { isOnline } = React.useContext(globalStateContext);
@@ -77,12 +80,12 @@ export default function AuthModule() {
                             reloadFunc: reload,
                             action: {
                               logOut: selectedAccountId !== index,
-                              select: selectedAccountId !== index,
-                            },
+                              select: selectedAccountId !== index
+                            }
                           }}
                           className={[
                             styles.User,
-                            selectedAccountId === index && styles.selected,
+                            selectedAccountId === index && styles.selected
                           ].join(' ')}
                         />
                       );
@@ -130,7 +133,7 @@ export default function AuthModule() {
                   window.electron.ipcRenderer
                     .invoke('Auth:getSelectedAccount')
                     .then((user) =>
-                      resolve(<UserCard user={user} displayAction={false} />)
+                      resolve(<UserCard className={styles.user} user={user} displayAction={false} />)
                     )
                     .catch((err) => console.error(err))
                 );
@@ -146,7 +149,7 @@ export default function AuthModule() {
           <div
             className={[
               styles.dropdown,
-              !dropdownOpened ? styles.closed : null,
+              !dropdownOpened ? styles.closed : null
             ].join(' ')}
           >
             <Loader content={getUserList} />
