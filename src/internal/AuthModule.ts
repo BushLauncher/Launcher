@@ -2,7 +2,7 @@
 
 import { userDataStorage } from '../main/main';
 import { Auth, Minecraft, Xbox } from 'msmc';
-import { AuthProviderType, knownError } from './public/AuthPublic';
+import { AuthProviderType, knownAuthError } from './public/AuthPublic';
 import { MCProfile } from 'msmc/types/assets';
 
 const prefix = '[AuthModule Internal]: ';
@@ -47,10 +47,13 @@ export async function Login(type: AuthProviderType): Promise<MinecraftAccount> {
                 } else
                   throw new Error('The newest logged account is not valid !');
               })
-              .catch((err) => console.error(err));
+              .catch((err) => {
+                if (err == 'error.auth.xsts.userNotFound') reject(knownAuthError.UserDontHasGame);
+                else reject(err);
+              });
           })
           .catch((err: string) => {
-            if (err == 'error.gui.closed') reject(knownError.ClosedByUser);
+            if (err == 'error.gui.closed') reject(knownAuthError.ClosedByUser);
             else reject(err);
           });
       } else throw new Error(`The ${type} auth provider is not implemented`);

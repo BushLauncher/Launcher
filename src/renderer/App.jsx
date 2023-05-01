@@ -6,6 +6,7 @@ import VanillaView from './components/views/vanillaView';
 import Loader from './components/public/Loader';
 import { toast, ToastContainer } from 'react-toastify';
 import AuthModule from './components/main/Auth/AuthModule';
+import SettingsView from './components/views/SettingsView';
 
 export const defaultNotificationParams = {
   position: 'bottom-center',
@@ -37,7 +38,8 @@ export default function App() {
                 build({
                   id: 'settings',
                   iconPath: settingIcon,
-                  customStyle: { position: "absolute", bottom: "10px" }
+                  customStyle: { position: 'absolute', bottom: '10px' },
+                  content: SettingsView
                 })
               ];
               toast.info('Loaded successfully', {

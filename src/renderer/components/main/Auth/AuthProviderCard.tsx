@@ -8,12 +8,10 @@ import errorIcon from '../../../../assets/graphics/icons/close.svg';
 import msIcon from '../../../../assets/graphics/icons/microsoft.svg';
 import { useState } from 'react';
 import Button, { ButtonType } from '../../public/Button';
-import {
-  AuthProviderType,
-  errorCode,
-  knownError,
-} from '../../../../internal/public/AuthPublic';
+import { AuthProviderType, errorCode, knownAuthError } from '../../../../internal/public/AuthPublic';
 import { MinecraftAccount } from '../../../../internal/AuthModule';
+import { toast } from 'react-toastify';
+import { DecodeIpcMain } from '../../../../internal/public/ErrorDecoder';
 
 enum State {
   Normal,
@@ -21,6 +19,7 @@ enum State {
   Success,
   Error,
 }
+
 const StateIcon = (state: State) => {
   switch (state) {
     case State.Normal:
@@ -40,8 +39,8 @@ const ProviderData: {
   Microsoft: {
     icon: msIcon,
     label: 'Microsoft',
-    className: styles.Microsoft,
-  },
+    className: styles.Microsoft
+  }
 };
 
 export interface authProviderCard {
@@ -49,6 +48,7 @@ export interface authProviderCard {
   reject: (code: errorCode) => void;
   type: AuthProviderType;
 }
+
 const AuthProviderCard: React.FC<authProviderCard> = (
   props: authProviderCard
 ) => {
@@ -62,11 +62,13 @@ const AuthProviderCard: React.FC<authProviderCard> = (
         setState(State.Success);
         setTimeout(() => props.resolve(loggedAccount), 1000);
       })
-      .catch((err: any | knownError) => {
+      .catch((err: any | knownAuthError) => {
+        const decodedError: knownAuthError | string = DecodeIpcMain(err.toString());
         setState(State.Error);
         setTimeout(() => setState(State.Normal), 5000);
-        if (err in knownError)
-          if (err !== knownError.ClosedByUser) props.reject(err);
+        if (decodedError in knownAuthError) {
+          if (decodedError == knownAuthError.UserDontHasGame) toast.error('The Account don\'t has Minecraft Game !');
+        } else props.reject(err);
       });
   };
   const data = ProviderData[props.type];

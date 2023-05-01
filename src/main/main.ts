@@ -14,7 +14,7 @@ import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import {
   installExtension,
-  REACT_DEVELOPER_TOOLS
+  REACT_DEVELOPER_TOOLS,
 } from 'electron-extension-installer';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
@@ -25,10 +25,13 @@ import * as versionManager from '../internal/VersionManager';
 import * as userData from '../internal/userData';
 import { GameType, Version } from '../internal/public/GameData';
 import {
-  AddAccount, getAccountList,
-  getSelectedAccount, getSelectedAccountId,
+  AddAccount,
+  getAccountList,
+  getSelectedAccount,
+  getSelectedAccountId,
   Login,
-  LogOutAccount, SelectAccount
+  LogOutAccount,
+  SelectAccount,
 } from '../internal/AuthModule';
 import { Minecraft } from 'msmc';
 import { AuthProviderType } from '../internal/public/AuthPublic';
@@ -55,7 +58,7 @@ const createWindow = async () => {
         disableHtmlFullscreenWindowResize: true,
         preload: app.isPackaged
           ? path.join(__dirname, 'preload.js')
-          : path.join(__dirname, '../../.erb/dll/preload.js')
+          : path.join(__dirname, '../../.erb/dll/preload.js'),
       },
       titleBarStyle: 'hidden',
       transparent: true,
@@ -66,7 +69,7 @@ const createWindow = async () => {
       closable: true,
       title: 'Bush Launcher',
       darkTheme: true,
-      icon: getAssetPath('icon.png')
+      icon: getAssetPath('icon.png'),
     });
     mainWindow.setResizable(false);
     mainWindow.webContents
@@ -118,7 +121,13 @@ const createWindow = async () => {
 
     mainWindow.on('ready-to-show', () => {
       if (!mainWindow) throw new Error('"mainWindow" is not defined');
-
+      //prevent next/previous mouse button
+      mainWindow.webContents.executeJavaScript(
+        'window.addEventListener("mouseup", (e) => {\n' +
+          '   if (e.button === 3 || e.button === 4)\n' +
+          '      e.preventDefault();\n' +
+          '});'
+      );
       if (process.env.START_MINIMIZED) {
         mainWindow.minimize();
       } else {
@@ -138,6 +147,7 @@ const createWindow = async () => {
       shell.openExternal(edata.url);
       return { action: 'deny' };
     });
+
 
     // Remove this if your app does not use auto updates
     // eslint-disable-next-line
@@ -249,7 +259,7 @@ ipcMain.handle('getData', (event, args: { dataPath: string }) => {
   return userDataStorage.get(args.dataPath);
 });
 ipcMain.on('updateData', (event, arg: { value: any; dataPath: any }) => {
-  userDataStorage.update(arg.dataPath, arg.value)
+  userDataStorage.update(arg.dataPath, arg.value);
 });
 ipcMain.handle('removeData', (event, arg: { dataPath: string }) => {
   return userDataStorage.remove(arg.dataPath);
@@ -260,7 +270,7 @@ app
   .then(async () => {
     if (isDebug) {
       await installExtension(REACT_DEVELOPER_TOOLS, {
-        loadExtensionOptions: { allowFileAccess: true }
+        loadExtensionOptions: { allowFileAccess: true },
       });
     }
     createWindow().then((res: any) => {

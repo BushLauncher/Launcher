@@ -6,7 +6,7 @@ import closeIcon from '../../../../assets/graphics/icons/close.svg';
 import {
   AuthProviderType,
   errorCode,
-  knownError,
+  knownAuthError,
 } from '../../../../internal/public/AuthPublic';
 import AuthProviderCard from './AuthProviderCard';
 import { toast } from 'react-toastify';
@@ -21,7 +21,7 @@ export interface loginInterface {
 
 const LoginPanel: React.FC<loginInterface> = (functions: loginInterface) => {
   const close = () => {
-    functions.reject(knownError.ClosedByUser);
+    functions.reject(knownAuthError.ClosedByUser);
   };
   const { isOnline } = React.useContext(globalStateContext);
   const content = (reload: () => {}) => {

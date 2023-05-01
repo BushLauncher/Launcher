@@ -8,7 +8,7 @@ import Loader from '../../public/Loader';
 import UserCard from './UserCard';
 import { toast } from 'react-toastify';
 import { createRoot } from 'react-dom/client';
-import { knownError } from '../../../../internal/public/AuthPublic';
+import { knownAuthError } from '../../../../internal/public/AuthPublic';
 import LoginPanel from './LoginPanel';
 import { globalStateContext } from '../../../index';
 export async function getLogin() {
@@ -24,9 +24,9 @@ export async function getLogin() {
             root.unmount();
           }}
           reject={(err) => {
-            if (err in knownError) {
+            if (err in knownAuthError) {
               switch (err) {
-                case knownError.ClosedByUser: {
+                case knownAuthError.ClosedByUser: {
                   console.log('Login Panel closed by user');
                   root.unmount();
                   break;
