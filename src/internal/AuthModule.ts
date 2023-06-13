@@ -3,6 +3,7 @@
 import { userDataStorage } from '../main/main';
 import { Auth, Minecraft, Xbox } from 'msmc';
 import { AuthProviderType, knownAuthError, MinecraftAccount } from './public/AuthPublic';
+import { MSAuthToken } from 'msmc/types/auth/auth';
 
 const prefix = '[AuthModule Internal]: ';
 
@@ -34,7 +35,7 @@ export async function Login(type: AuthProviderType): Promise<MinecraftAccount> {
                 if (MinecraftLoggedUser.validate()) {
                   if (MinecraftLoggedUser.profile !== undefined) {
                     const User: MinecraftAccount =
-                      ConstructMinecraftUser(MinecraftLoggedUser, AuthProviderType.Microsoft);
+                      ConstructMinecraftUser(MinecraftLoggedUser, AuthProviderType.Microsoft, res.msToken);
                     console.log(
                       `${prefix}Logged new Account: ${User.profile?.name}`
                     );
@@ -81,7 +82,7 @@ function changeSelectedAccountId(id: number) {
 export function getAccountList(): MinecraftAccount[] {
   const list: MinecraftAccount[] | undefined =
     userDataStorage.get('auth.accountList');
-  if (list === undefined) throw new Error('Account list is undefined');
+  if (list === undefined) return [];
   return list;
 }
 
@@ -158,13 +159,15 @@ function removeFromList(indexToDelete: number): MinecraftAccount[] {
   return list;
 }
 
-function ConstructMinecraftUser(Minecraft: Minecraft, authType: AuthProviderType): MinecraftAccount {
+function ConstructMinecraftUser(Minecraft: Minecraft, authType: AuthProviderType, msToken: MSAuthToken): MinecraftAccount {
   return <MinecraftAccount>{
     mcToken: Minecraft.mcToken,
+    msToken: msToken,
     profile: Minecraft.profile,
     xuid: Minecraft.xuid,
     exp: Minecraft.exp,
-    authType: authType
+    authType: authType,
+    true: true
   };
 }
 

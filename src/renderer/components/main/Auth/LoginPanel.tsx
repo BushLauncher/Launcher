@@ -3,11 +3,7 @@ import styles from './css/LoginPanel.module.css';
 import Button, { ButtonType } from '../../public/Input/Button';
 import Icon from '../../public/Icons/Icon';
 import closeIcon from '../../../../assets/graphics/icons/close.svg';
-import {
-  AuthProviderType,
-  errorCode,
-  knownAuthError, MinecraftAccount
-} from '../../../../internal/public/AuthPublic';
+import { AuthProviderType, errorCode, knownAuthError, MinecraftAccount } from '../../../../internal/public/AuthPublic';
 import AuthProviderCard from './AuthProviderCard';
 import { toast } from 'react-toastify';
 import { globalStateContext } from '../../../index';
@@ -18,9 +14,11 @@ export interface loginInterface {
   reject: (code: errorCode) => void;
 }
 
-const LoginPanel: React.FC<loginInterface> = (functions: loginInterface) => {
+export default function LoginPanel({ functions, closable }: {
+  functions: loginInterface, closable?: boolean
+}) {
   const close = () => {
-    functions.reject(knownAuthError.ClosedByUser);
+    if (closable === undefined || closable) functions.reject(knownAuthError.ClosedByUser);
   };
   const { isOnline } = React.useContext(globalStateContext);
   const content = (reload: () => {}) => {
@@ -28,34 +26,32 @@ const LoginPanel: React.FC<loginInterface> = (functions: loginInterface) => {
       resolve(
         <div className={styles.LoginPanel}>
           <div className={styles.content}>
-            <Button
-              action={close}
-              className={styles.closeButton}
-              content={<Icon icon={closeIcon} className={styles.closeIcon} />}
-              type={ButtonType.Square}
-            />
+            {closable === undefined || closable &&
+              <Button action={close} className={styles.closeButton}
+                      content={<Icon icon={closeIcon} className={styles.closeIcon} />}
+                      type={ButtonType.Square} />}
             <p className={styles.title}>
               {isOnline ? 'Login to your account:' : 'You are offline'}
             </p>
             <div className={styles.authProviderList}>
               {isOnline
                 ? Object.keys(AuthProviderType).map(
-                    (name: any, index: number) => {
-                      const type: AuthProviderType = name;
-                      return (
-                        <AuthProviderCard
-                          type={type}
-                          key={index}
-                          reject={(err: errorCode) =>
-                            toast.error(err.toString())
-                          }
-                          resolve={(account: MinecraftAccount) =>
-                            functions.resolve(account)
-                          }
-                        />
-                      );
-                    }
-                  )
+                  (name: any, index: number) => {
+                    const type: AuthProviderType = name;
+                    return (
+                      <AuthProviderCard
+                        type={type}
+                        key={index}
+                        reject={(err: errorCode) =>
+                          toast.error(err.toString())
+                        }
+                        resolve={(account: MinecraftAccount) =>
+                          functions.resolve(account)
+                        }
+                      />
+                    );
+                  }
+                )
                 : null}
             </div>
           </div>
@@ -66,4 +62,3 @@ const LoginPanel: React.FC<loginInterface> = (functions: loginInterface) => {
 
   return <Loader content={content} className={undefined} style={undefined} />;
 };
-export default LoginPanel;

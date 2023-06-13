@@ -1,10 +1,9 @@
-import { getPotentialJavaLocations, installTask } from '@xmcl/installer';
+import { installTask } from '@xmcl/installer';
 import { GameType, LaunchTaskState, ProgressLaunchCallback, VersionData } from './public/GameData';
 import { knowGameError, knowGameErrorFormat } from './public/ErrorDecoder';
 import { diagnose, MinecraftIssueReport } from '@xmcl/core';
-import { ResolveXmclVersion } from './LaunchEngine';
+import { ResolveXmclVersion } from './PreLaunchEngine';
 import { locationRoot } from './VersionManager';
-import { userDataStorage } from '../main/main';
 import fs from 'fs';
 
 export async function verifyGameFiles(version: VersionData): Promise<true | MinecraftIssueReport> {
@@ -51,30 +50,20 @@ export async function InstallGameFiles(version: VersionData, callback: (callback
 }
 
 
-export async function resolveJavaPath(): Promise<string | undefined> {
-  const saved = getSavedJavaPath();
-  if (saved !== undefined) return saved;
-  return await findJava();
-}
+export function findFileRecursively(path: string, targetFileName: string): string | undefined {
+  const stack: string[] = [path];
+  while (stack.length > 0) {
+    const currentPath = stack.pop()!;
+    const files = fs.readdirSync(currentPath);
 
-export function getSavedJavaPath(): string | undefined {
-  const path: string | null | undefined = userDataStorage.get('saved.javaPath');
-  return (path != null && fs.existsSync(path)) ? path : undefined;
-}
+    for (const file of files) {
+      const filePath = `${currentPath}/${file}`;
+      const stats = fs.statSync(filePath);
 
-export function findJava(): Promise<string | undefined> {
-  return new Promise(async (resolve, reject) => {
-    await getPotentialJavaLocations()
-      .then((pathList: string[]) => {
-        //test for result
-        for (const path of pathList) {
-          if (fs.existsSync(path)) {
-            resolve(path);
-            return;
-          }
-        }
-        //if pathList empty or all tested path aren't valid
-        resolve(undefined);
-      }).catch(err => reject(err));
-  });
+      if (stats.isDirectory()) stack.push(filePath);
+      else if (file === targetFileName) return filePath;
+    }
+  }
+
+  return undefined;
 }

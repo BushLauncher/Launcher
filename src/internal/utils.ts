@@ -21,10 +21,3 @@ export const MinecraftVersionSorter = (a: string, b: string) => {
 
   return result;
 };
-try {
-  if (typeof process === 'object') {
-    module.exports = MinecraftVersionSorter;
-  }
-} catch (_error) {
-  // normal browser
-}

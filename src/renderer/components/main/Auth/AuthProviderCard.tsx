@@ -30,11 +30,12 @@ const StateIcon = (state: State) => {
       return errorIcon;
   }
 };
-
+//ProviderData shouldn't implement AuthProviderType.unknown
+// @ts-ignore
 const ProviderData: {
-  [key: string]: { icon: string; label: string; className: string };
+  [key in AuthProviderType]: { icon: string; label: string; className: string };
 } = {
-  Microsoft: {
+  [AuthProviderType.Microsoft]: {
     icon: msIcon,
     label: 'Microsoft',
     className: styles.Microsoft
@@ -47,10 +48,9 @@ export interface authProviderCard {
   type: AuthProviderType;
 }
 
-const AuthProviderCard: React.FC<authProviderCard> = (
-  props: authProviderCard
-) => {
+function AuthProviderCard(props: authProviderCard) {
   const [state, setState] = useState(State.Normal);
+  if (props.type === AuthProviderType.Unknown) return;
   const LogIn = (provider: AuthProviderType) => {
     setState(State.Pending);
     window.electron.ipcRenderer
@@ -81,7 +81,7 @@ const AuthProviderCard: React.FC<authProviderCard> = (
         }
       })
       .catch((err: any | knownAuthError) => {
-        //cannot by rejected because reject is resolved to get the error
+        //cannot be rejected because reject is resolved to get the error
       });
   };
   const data = ProviderData[props.type];

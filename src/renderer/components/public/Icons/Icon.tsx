@@ -2,7 +2,7 @@ import { ComponentsPublic } from '../../ComponentsPublic';
 import React from 'react';
 
 export interface IconProps extends ComponentsPublic {
-  icon: string | null;
+  icon: string | null | undefined;
   alt?: string;
 }
 export default class Icon extends React.Component<IconProps, {}> {

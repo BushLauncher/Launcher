@@ -2,7 +2,7 @@
  * DONT IMPORT FS, PATH, ELECTRON, etc...*/
 
 import { CallbackType, knowGameErrorFormat } from './ErrorDecoder';
-import { LaunchTask, ResolvedLaunchTask } from '../LaunchEngine';
+import { ResolvedPreLaunchTask } from '../PreLaunchEngine';
 
 export enum GameType {
   VANILLA = 'VANILLA'
@@ -14,13 +14,8 @@ export type VersionData = {
   installed?: boolean;
 };
 
-interface defaultGameLink {
-  gameType: GameType;
-  version: VersionData;
-}
-
-export const defaultGameType: GameType = GameType.VANILLA;
-export const defaultVersion = (gameType: GameType) => {
+export const getDefaultGameType: GameType = GameType.VANILLA;
+export const getDefaultVersion = (gameType: GameType) => {
   return supportedVersion[
     supportedVersion.findIndex((v) => v.gameType == gameType)
     ];
@@ -52,7 +47,21 @@ export enum LaunchOperationType {
   PostInstall = 'PostInstall'
 }
 
-export type ResolvedLaunchOperation = ResolvedLaunchTask
+export type ResolvedLaunchOperation = ResolvedPreLaunchTask
+
+export enum PreLaunchTasks {
+  VerifyAccount = 'VerifyAccount',
+  ParseJava = 'ParseJava',
+  ParseGameFile = 'ParseGameFile',
+  VerifyGameFile = 'VerifyGameFile',
+  InstallBootstrap = 'InstallBootstrap',
+  Launch = "Launch"
+};
+
+export type LaunchTask = {
+  id: keyof typeof PreLaunchTasks,
+  params?: any
+}
 
 export function sendUnImplementedException(task: LaunchTask): UpdateLaunchTaskCallback {
   return { task: task, displayText: 'Function ' + task.id + ' is not implemented', state: LaunchTaskState.error };
@@ -111,7 +120,6 @@ export interface StartedCallback extends Callback {
   type: CallbackType.Success;
 }
 
-
 export enum LaunchTaskState {
   starting,
   processing,
@@ -134,4 +142,20 @@ export interface ProgressLaunchCallback {
   return?: any,
   localProgress?: number
   state: LaunchTaskState
+}
+
+export interface PreLaunchProcess {
+  actions: LaunchTask[];
+  resolved: false;
+  internal: false;
+  version: VersionData;
+  launch: boolean;
+}
+
+export interface PreLaunchRunnableProcess {
+  actions: ResolvedLaunchOperation[];
+  resolved: true;
+  internal?: boolean;
+  version: VersionData;
+  launch: boolean;
 }

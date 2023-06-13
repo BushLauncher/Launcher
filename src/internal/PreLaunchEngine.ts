@@ -1,30 +1,21 @@
 import * as AccountManager from './AuthModule';
-import { knowGameError, knowGameErrorFormat } from './public/ErrorDecoder';
 import {
   LaunchOperationType,
+  LaunchTask,
   LaunchTaskState,
+  PreLaunchTasks,
   ProgressLaunchCallback,
-  ResolvedLaunchOperation,
   sendUnImplementedException,
   UpdateLaunchTaskCallback,
   VersionData
 } from './public/GameData';
 import { MinecraftIssueReport } from '@xmcl/core';
-import path from 'path';
-import { app } from 'electron';
-import fs from 'fs';
 import { getVersionList, MinecraftVersion } from '@xmcl/installer';
-import { InstallGameFiles, resolveJavaPath, verifyGameFiles } from './GameFileManager';
+import { InstallGameFiles, verifyGameFiles } from './GameFileManager';
 import { versionExist } from './VersionManager';
-import axios from 'axios';
-import admZip from 'adm-zip';
+import { installJava, resolveJavaPath } from './JavaEngine';
 
-export type LaunchTask = {
-  id: string,
-  params?: any
-}
-
-export abstract class ResolvedLaunchTask {
+export abstract class ResolvedPreLaunchTask {
   public type!: LaunchOperationType;
   public baseTask: LaunchTask;
 
@@ -54,7 +45,7 @@ export abstract class ResolvedLaunchTask {
 
 }
 
-export class VerifyAccount extends ResolvedLaunchTask {
+export class VerifyAccount extends ResolvedPreLaunchTask {
   constructor(baseTask: LaunchTask) {
     super(baseTask, LaunchOperationType.Verify);
   }
@@ -66,7 +57,7 @@ export class VerifyAccount extends ResolvedLaunchTask {
   }
 }
 
-export class ParseJava extends ResolvedLaunchTask {
+export class ParseJava extends ResolvedPreLaunchTask {
   constructor(baseTask: LaunchTask) {
     super(baseTask, LaunchOperationType.Parse);
   }
@@ -86,7 +77,7 @@ export interface ParseGameFileLaunchTask extends LaunchTask {
   params: { version: VersionData };
 }
 
-export class ParseGameFile extends ResolvedLaunchTask {
+export class ParseGameFile extends ResolvedPreLaunchTask {
   constructor(baseTask: ParseGameFileLaunchTask) {
     super(baseTask, LaunchOperationType.Parse);
   }
@@ -98,7 +89,7 @@ export class ParseGameFile extends ResolvedLaunchTask {
   }
 }
 
-export class VerifyGameFile extends ResolvedLaunchTask {
+export class VerifyGameFile extends ResolvedPreLaunchTask {
   constructor(baseTask: LaunchTask) {
     super(baseTask, LaunchOperationType.Verify);
   }
@@ -111,7 +102,7 @@ export class VerifyGameFile extends ResolvedLaunchTask {
 }
 
 //Minecraft craft bootstrapper like Forge, Fabric ect...
-export class InstallBootstrap extends ResolvedLaunchTask {
+export class InstallBootstrap extends ResolvedPreLaunchTask {
   constructor(baseTask: LaunchTask) {
     super(baseTask, LaunchOperationType.Install);
   }
@@ -122,46 +113,31 @@ export class InstallBootstrap extends ResolvedLaunchTask {
   }
 }
 
-export const resolveLaunchTask: (baseTask: LaunchTask | ParseGameFileLaunchTask) => ResolvedLaunchTask = (baseTask) => {
+
+export const resolvePreLaunchTask: (baseTask: LaunchTask | ParseGameFileLaunchTask) => ResolvedPreLaunchTask = (baseTask) => {
   switch (baseTask.id) {
-    case'VerifyAccount':
+    case PreLaunchTasks.VerifyAccount:
       return new VerifyAccount(baseTask);
-    case 'ParseJava':
+    case PreLaunchTasks.ParseJava:
       return new ParseJava(baseTask);
-    case 'ParseGameFile':
+    case PreLaunchTasks.ParseGameFile:
       return new ParseGameFile(<ParseGameFileLaunchTask>baseTask);
-    case 'VerifyGameFile':
+    case PreLaunchTasks.VerifyGameFile:
       return new VerifyGameFile(baseTask);
-    case 'InstallBootstrap':
+    case PreLaunchTasks.InstallBootstrap:
       return new InstallBootstrap(baseTask);
     default:
-      throw new Error('Operation ' + baseTask.id + ' not founded !');
+      throw new Error(`Operation ${baseTask.id} not founded !`);
   }
 
 };
 
-export function resolveLaunchTaskList(launchOperation: LaunchTask[]): ResolvedLaunchTask[] {
-  let taskList: ResolvedLaunchTask[] = [];
+export function resolvePreLaunchTaskList(launchOperation: LaunchTask[]): ResolvedPreLaunchTask[] {
+  let taskList: ResolvedPreLaunchTask[] = [];
   launchOperation.map((task, i) => {
-    taskList.push(resolveLaunchTask(task));
+    taskList.push(resolvePreLaunchTask(task));
   });
   return taskList;
-}
-
-export interface LaunchProcess {
-  actions: LaunchTask[];
-  resolved: false;
-  internal: false;
-  version: VersionData;
-  launch: boolean;
-}
-
-export interface LaunchRunnableProcess {
-  actions: ResolvedLaunchOperation[];
-  resolved: true;
-  internal?: boolean;
-  version: VersionData;
-  launch: boolean;
 }
 
 
@@ -218,97 +194,6 @@ export function parseJava(callback: (c: ProgressLaunchCallback) => void): Promis
   });
 }
 
-async function installJava(callback: (c: ProgressLaunchCallback) => void): Promise<string> {
-  console.log('installing...');
-  callback({ state: LaunchTaskState.processing, displayText: 'Installing Java...' });
-  const dir = path.join(app.getPath('userData'), 'Local Java\\');
-  const tempDownloadDir = path.join(app.getPath('userData'), 'Download Cache\\');
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir);
-  if (!fs.existsSync(tempDownloadDir)) fs.mkdirSync(tempDownloadDir);
-  const downloadData = await getJavaDownloadLink();
-  const zipPath = path.join(tempDownloadDir, downloadData.name);
-  //remove the extension: .zip
-  const destPath = path.join(dir, downloadData.name.replace('\\.([a-z]*$)', ''));
-  return new Promise<string>((resolve, reject) => {
-    console.log('Create stream');
-    const stream = fs.createWriteStream(zipPath);
-    console.log('Downloading...');
-    callback({ state: LaunchTaskState.processing, displayText: 'Downloading Java...' });
-    axios.get(downloadData.link, {
-      responseType: 'stream',
-      onDownloadProgress: progressEvent => {
-        const downloadPercentage = Math.floor(
-          (progressEvent.loaded * 100) / (progressEvent.total ? progressEvent.total : downloadData.size)
-        );
-        console.log('Downloading Java: ' + downloadPercentage + '%');
-        callback({
-          state: LaunchTaskState.processing,
-          displayText: 'Downloading Java...',
-          localProgress: downloadPercentage
-        });
-      }
-    })
-      .then(axiosResponse => {
-        return new Promise<void>((resolve, reject) => {
-          callback({ state: LaunchTaskState.processing, displayText: 'Writing Java...' });
-          axiosResponse.data.pipe(stream)
-            .on('finish', () => {
-              stream.end();
-              resolve();
-            })
-            .on('error', (error: any) => {
-              reject(error);
-              stream.end();
-            });
-        });
-      })
-      .then(() => {
-        console.log('Extraction started');
-        callback({ state: LaunchTaskState.processing, displayText: 'Extracting Java...' });
-        return new admZip(zipPath).extractAllTo(destPath, false, true);
-      })
-      .then(() => {
-        console.log('Extraction completed');
-        // Handle further operations after successful extraction
-        resolve(destPath);
-      })
-      .catch(err => console.error(err));
-
-  });
-}
-
-type JavaDownloadData = {
-  link: string,
-  name: string,
-  size: number,
-  releaseLink: string
-}
-
-async function getJavaDownloadLink(): Promise<JavaDownloadData> {
-  return new Promise((resolve, reject) => {
-    let os: string = process.platform;
-    if (os === 'win32') os = 'windows';
-    if (os === 'darwin') os = 'mac';
-    const url = `https://api.adoptium.net/v3/assets/latest/8/hotspot?architecture=x64&image_type=jre&os=${os}&vendor=eclipse`;
-    axios.get(url, {
-      responseType: 'json'
-    })
-      .then(jsonResponse => {
-        const packages = jsonResponse.data[0].binary.package;
-        resolve({
-          link: packages.link,
-          name: packages.name,
-          size: packages.size,
-          releaseLink: jsonResponse.data[0].release_link
-        });
-      }).catch(err => {
-      console.error('We couldn\'t get the json download data for ' + os);
-      console.error(err);
-      reject(<knowGameErrorFormat>{ ...knowGameError.JavaCannotGetDownloadDataError, additionalError: err });
-    });
-  });
-}
-
 export async function ResolveXmclVersion(version: VersionData): Promise<MinecraftVersion> {
   const versionList = await getVersionList();
   //.find can be null, but normally passed version id's exist
@@ -317,6 +202,3 @@ export async function ResolveXmclVersion(version: VersionData): Promise<Minecraf
     return MinecraftVersion.id === version.id;
   });
 }
-
-export { UpdateLaunchTaskCallback };
-

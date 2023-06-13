@@ -2,29 +2,27 @@ import {
   Callback,
   ErrorCallback,
   ExitedCallback,
+  LaunchTask,
   LaunchTaskState,
+  PreLaunchProcess,
+  PreLaunchRunnableProcess,
   ProgressCallback,
   StartedCallback,
+  UpdateLaunchTaskCallback,
   VersionData
 } from './public/GameData';
 import { CallbackType } from './public/ErrorDecoder';
-import {
-  LaunchProcess,
-  LaunchRunnableProcess,
-  LaunchTask,
-  parseJava,
-  ResolvedLaunchTask,
-  resolveLaunchTask,
-  resolveLaunchTaskList,
-  UpdateLaunchTaskCallback
-} from './LaunchEngine';
+import { parseJava, ResolvedPreLaunchTask, resolvePreLaunchTask, resolvePreLaunchTaskList } from './PreLaunchEngine';
 import { createMinecraftProcessWatcher, launch } from '@xmcl/core';
 import { ChildProcess } from 'child_process';
 import { locationRoot } from './VersionManager';
+import { getSelectedAccount, isAccountValid } from './AuthModule';
+import { MicrosoftAuthenticator } from '@xmcl/user';
+import { net } from 'electron';
 
-export async function Run(process: LaunchProcess | LaunchRunnableProcess, Callback: (callback: Callback) => void) {
+export async function RunPreLaunchProcess(process: PreLaunchProcess | PreLaunchRunnableProcess, Callback: (callback: Callback) => void) {
   //resolve process list if not
-  const operations: ResolvedLaunchTask[] = process.resolved ? process.actions : resolveLaunchTaskList(process.actions);
+  const operations: ResolvedPreLaunchTask[] = process.resolved ? process.actions : resolvePreLaunchTaskList(process.actions);
   const stepsCount = parseLaunch(operations);
   //Execute each task
   const createCallback = (callback: UpdateLaunchTaskCallback, index: number) => {
@@ -39,7 +37,6 @@ export async function Run(process: LaunchProcess | LaunchRunnableProcess, Callba
       task: callback,
       type: CallbackType.Progress
     });
-
   };
 
   for (const operation of operations) {
@@ -67,15 +64,19 @@ export async function Run(process: LaunchProcess | LaunchRunnableProcess, Callba
 
 }
 
-export function RunTask(task: ResolvedLaunchTask | LaunchTask, callback: (callback: UpdateLaunchTaskCallback) => void): Promise<UpdateLaunchTaskCallback> {
+export function RunTask(task: ResolvedPreLaunchTask | LaunchTask, callback: (callback: UpdateLaunchTaskCallback) => void): Promise<UpdateLaunchTaskCallback> {
   return new Promise(async (resolve, reject) => {
-    const _task = task instanceof ResolvedLaunchTask ? task : resolveLaunchTask(task);
-    const result: UpdateLaunchTaskCallback = await _task.run(callback);
-    resolve(result);
+    const _task = task instanceof ResolvedPreLaunchTask ? task : resolvePreLaunchTask(task);
+    try {
+      const result: UpdateLaunchTaskCallback = await _task.run(callback);
+      resolve(result);
+    } catch (err) {
+      console.error('Cannot execute task', err);
+    }
   });
 }
 
-export function parseLaunch(LaunchRunnable: LaunchRunnableProcess | LaunchProcess | ResolvedLaunchTask[]): number {
+export function parseLaunch(LaunchRunnable: PreLaunchRunnableProcess | PreLaunchProcess | ResolvedPreLaunchTask[]): number {
   return (Array.isArray(LaunchRunnable) ? LaunchRunnable.length : LaunchRunnable.actions.length) - 1;
 }
 
@@ -83,17 +84,27 @@ export function StopGame() {
 }
 
 export function Launch(version: VersionData, callback: (callback: StartedCallback) => void): Promise<ExitedCallback> {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
+    const account = getSelectedAccount();
+    if (account === null || !isAccountValid(account)) throw new Error('Cannot launch the game without valid logged account');
+    const getAccessToken = async () => {
+      const authenticator = new MicrosoftAuthenticator();
+      const { xstsResponse, xboxGameProfile } = await authenticator.acquireXBoxToken(account.msToken.access_token);
+      return await authenticator.loginMinecraftWithXBox(xstsResponse.DisplayClaims.xui[0].uhs, xstsResponse.Token);
+    };
     parseJava((c) => console.log('Internal Launch re-parse Java: ', c))
-      .then((javaPath: string) => {
-        console.log(javaPath);
+      .then(async (javaPath: string) => {
+        console.log('Launching minecraft ' + version.id + ' :' + '\nFor: ', account.profile, '\n from: ' + locationRoot + '\n java: ' + javaPath + '\n...');
         launch({
           gamePath: locationRoot,
           javaPath: javaPath,
           version: version.id,
-          //TODO: add accessToken (gameProfile, accessToken)
-          gameName: `BushLauncher Minecraft [${version.id}]`,
-          launcherName: `BushLauncher`
+          gameProfile: { id: account.profile.id, name: account.profile.name },
+          accessToken: net.isOnline() ? (await getAccessToken()).access_token : undefined,
+          launcherName: `BushLauncher`,
+          launcherBrand: `BushLauncher`,
+          gameName: `BushLauncher Minecraft [${version.id}]`
+
           //TODO: Server, to launch directly on server
         }).then((process: ChildProcess) => {
           const watcher = createMinecraftProcessWatcher(process);

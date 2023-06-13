@@ -12,31 +12,31 @@ import { knownAuthError } from '../../../../internal/public/AuthPublic';
 import LoginPanel from './LoginPanel';
 import { globalStateContext } from '../../../index';
 
-export async function getLogin() {
+export async function getLogin({ closable }) {
   return new Promise((resolve) => {
     const container = document.createElement('div');
-
     // noinspection JSCheckFunctionSignatures
     const root = createRoot(container);
     root.render(
       <>
         <LoginPanel
-          resolve={(loggedUser) => {
-            resolve(loggedUser);
-            root.unmount();
-          }}
-          reject={(err) => {
-            if (err in knownAuthError) {
-              switch (err) {
-                case knownAuthError.ClosedByUser: {
-                  console.log('Login Panel closed by user');
-                  root.unmount();
-                  break;
+          closable={closable}
+          functions={{
+            resolve: (loggedUser) => {
+              resolve(loggedUser);
+              root.unmount();
+            }, reject: (err) => {
+              if (err in knownAuthError) {
+                switch (err) {
+                  case knownAuthError.ClosedByUser: {
+                    console.log('Login Panel closed by user');
+                    root.unmount();
+                    break;
+                  }
                 }
-              }
-            } else console.warn(err);
-          }}
-        />
+              } else console.warn(err);
+            }
+          }} />
       </>
     );
     document.querySelector('#Theme-container').appendChild(container);
@@ -55,10 +55,29 @@ export function addAccount(account) {
   });
 }
 
+
+async function checkUserLogged(reload) {
+  const isAccount = (await window.electron.ipcRenderer.invoke('Auth:getSelectedAccount', {})) !== undefined;
+  if (!isAccount) {
+    const notification = toast.info('Hi, please log-in an Minecraft account', {
+      autoClose: false,
+      hideProgressBar: true
+    });
+    await addAccount(await getLogin({ closable: false }));
+    toast.dismiss(notification);
+    reload();
+  }
+}
+
 export default function AuthModule() {
   const [dropdownOpened, setDropdownOpen] = useState(false);
   const { isOnline } = React.useContext(globalStateContext);
-  const getData = (reload) => {
+  const [checked, setChecked] = useState(false);
+
+// noinspection JSIgnoredPromiseFromCall
+  checkUserLogged(() => setChecked(true));
+  const getData = async (reload) => {
+
     const getUserList = () => {
 
       return new Promise((resolve, reject) => {

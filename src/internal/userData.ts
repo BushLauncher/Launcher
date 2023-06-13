@@ -1,4 +1,4 @@
-import { defaultGameType, defaultVersion, VersionData } from './public/GameData';
+import { getDefaultGameType, getDefaultVersion, VersionData } from './public/GameData';
 import { app } from 'electron';
 import fs, { readFileSync, writeFileSync } from 'fs';
 import { userDataStorage } from '../main/main';
@@ -9,32 +9,17 @@ const path = require('path');
 const userPath = app.getPath('userData');
 const prefix: string = '[UserData]: ';
 
-let selected: VersionData | undefined = undefined;
-
-export function getSelected(): VersionData {
-  if (typeof selected === 'undefined') {
-    return defaultVersion(defaultGameType);
-  } else {
-    return selected;
-  }
-}
 
 export function loadData() {
-  console.log(prefix + 'Retrieving data from local storage...');
+  //console.log(prefix + 'Retrieving data from local storage...');
   const res: VersionData | undefined = userDataStorage.get('version.selected');
   if (res != undefined) SelectVersion(res);
-  console.log(prefix + '--------');
+  //console.log(prefix + '--------');
 }
 
-export function SelectVersion(version: VersionData) {
-  selected = version;
+export function SelectVersion(version: VersionData): void {
   userDataStorage.update('version.selected', version);
-  console.log(
-    'Selecting for: [' +
-    selected.gameType.toString().toLowerCase() +
-    ']: ' +
-    selected.id
-  );
+  console.log(`Selecting for: [${version.gameType.toString().toLowerCase()}]: ${version.id}`);
 }
 
 interface InterfaceData {
@@ -70,7 +55,7 @@ export function createDefaultData(): defaultData {
       accountList: [],
       selectedAccount: null
     },
-    version: { selected: defaultVersion(defaultGameType) },
+    version: { selected: getDefaultVersion(getDefaultGameType) },
     interface: {
       selectedTab: 'vanilla',
       theme: Theme.Dark,
@@ -148,13 +133,9 @@ export class Storage {
   }
 
   private saveData(customData?: any): void {
-    console.log('Saving All data');
-    writeFileSync(
-      this.storageFilePath,
-      JSON.stringify(customData ? customData : this.data)
-    );
+    //console.log('Saving All data');
+    writeFileSync(this.storageFilePath, JSON.stringify(customData ? customData : this.data));
   }
 }
-
 
 //TODO: Add an encryption system

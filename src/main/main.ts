@@ -19,8 +19,15 @@ import { resolveHtmlPath } from './util';
 import PreLoad from './load/load';
 import { update } from './downloader';
 import * as versionManager from '../internal/VersionManager';
-import * as userData from '../internal/userData';
-import { Callback, GameType, VersionData } from '../internal/public/GameData';
+import { getSelectedVersion } from '../internal/VersionManager';
+import * as userData from '../internal/UserData';
+import {
+  Callback,
+  GameType,
+  PreLaunchProcess,
+  PreLaunchRunnableProcess,
+  VersionData
+} from '../internal/public/GameData';
 import {
   AddAccount,
   getAccountList,
@@ -32,9 +39,8 @@ import {
   SelectAccount
 } from '../internal/AuthModule';
 import { AuthProviderType, MinecraftAccount } from '../internal/public/AuthPublic';
-import { Run } from '../internal/Launcher';
-import { LaunchProcess, LaunchRunnableProcess } from '../internal/LaunchEngine';
-import { getLaunchInternal } from '../internal/LaunchProcessPatern';
+import { RunPreLaunchProcess } from '../internal/Launcher';
+import { getLaunchInternal } from '../internal/PreLaunchProcessPatern';
 
 const prefix = '[Main Process]: ';
 const createWindow = async () => {
@@ -200,36 +206,21 @@ ipcMain.on('minimizeWindow', (event, args) =>
   BrowserWindow.getFocusedWindow()?.minimize()
 );
 ipcMain.handle('Version:getList', (event, args: { gameType: GameType }) => {
-  return new Promise((resolve, reject) => {
-    if (net.isOnline()) {
-      versionManager
-        .GetVersionList(args.gameType)
-        ?.then((versionList) => {
-          resolve(versionList);
-        })
-        ?.catch((err) => {
-          console.error(err);
-          reject(err);
-        });
-    } else {
-      versionManager
-        .GetLocalVersionList(args.gameType)
-        ?.then((versionList) => {
-          resolve(versionList);
-        })
-        ?.catch((err) => {
-          console.error(err);
-          reject(err);
-        });
-    }
+  return new Promise(async (resolve, reject) => {
+    if (net.isOnline()) resolve(await versionManager.GetVersionList(args.gameType).catch((err) => {
+      console.error(err);
+      reject(err);
+    }));
+    else resolve(versionManager.GetLocalVersionList(args.gameType));
   });
 });
-ipcMain.on('Version:set', (event, version: VersionData) =>
-  userData.SelectVersion(version)
-);
 ipcMain.handle('Version:get', (event, args) => {
-  return userData.getSelected();
+  return getSelectedVersion();
 });
+ipcMain.on('Version:set', (event, version: VersionData) => {
+  return userData.SelectVersion(version);
+});
+
 ipcMain.handle('Auth:Add', (event, args: { user: MinecraftAccount }) => {
   return AddAccount(args.user);
 });
@@ -260,14 +251,15 @@ ipcMain.handle(
 ipcMain.on('Auth:SelectAccount', (event, args: { index: number }) =>
   SelectAccount(args.index)
 );
+
 ipcMain.handle('Game:Launch', async (event, args: {
-  LaunchProcess: LaunchProcess | LaunchRunnableProcess | undefined
+  LaunchProcess: PreLaunchProcess | PreLaunchRunnableProcess | undefined
 }) => {
   const process = args.LaunchProcess === undefined ? getLaunchInternal() : args.LaunchProcess;
-  return Run(process,
+  return RunPreLaunchProcess(process,
     (callback: Callback) => {
       event.sender.send('GameLaunchCallback', callback);
-      console.log(callback);
+      //console.log(callback);
     })
     .catch(err => {
       console.error(err);

@@ -22,7 +22,7 @@ export default function App() {
   return (
     <Loader
       content={() => {
-        return new Promise((resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
           window.electron.ipcRenderer
             .invoke('getData', { dataPath: 'interface' })
             .then((interfaceData) => {

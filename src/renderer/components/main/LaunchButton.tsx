@@ -12,8 +12,12 @@ import {
   ErrorCallback,
   ExitedCallback,
   GameType,
+  getDefaultGameType,
+  getDefaultVersion,
   LaunchedCallback,
   LaunchTaskState,
+  PreLaunchProcess,
+  PreLaunchTasks,
   ProgressCallback,
   VersionData
 } from '../../../internal/public/GameData';
@@ -24,10 +28,9 @@ import CallbackMessage from '../public/CallbackMessage';
 import ProgressBar from '@ramonak/react-progress-bar';
 import { CallbackType } from '../../../internal/public/ErrorDecoder';
 
-function getSelected() {
-  return window.electron.ipcRenderer.invoke('Version:get', {});
+async function getSelected() {
+  return await window.electron.ipcRenderer.invoke('Version:get', {});
 }
-
 
 export enum LaunchButtonState {
   Normal = 'Normal',
@@ -67,13 +70,23 @@ export default function LaunchButton(props: LaunchButtonProps) {
         return LoadingIcon;
     }
   };
-  const requestLaunch = () => {
+  const requestLaunch = (version: VersionData) => {
+    const process: PreLaunchProcess = {
+      actions: [
+        { id: PreLaunchTasks.VerifyAccount },
+        { id: PreLaunchTasks.ParseJava },
+        { id: PreLaunchTasks.ParseGameFile, params: { version: version } }
+      ], launch: true,
+      version: version,
+      internal: false,
+      resolved: false
+    };
     setVersionSelector(false);
     setDisplayText('Initializing...');
     console.log('Requesting Launch...');
     //@ts-ignore
     window.electron.ipcRenderer.on('GameLaunchCallback', (callback: Callback) => decodeLaunchCallback(callback));
-    window.electron.ipcRenderer.invoke('Game:Launch', {}).then((exitedCallback: ExitedCallback) => {
+    window.electron.ipcRenderer.invoke('Game:Launch', {LaunchProcess: process}).then((exitedCallback: ExitedCallback) => {
       decodeLaunchCallback(exitedCallback);
     });
   };
@@ -118,16 +131,7 @@ export default function LaunchButton(props: LaunchButtonProps) {
           stepCount: callback.stepCount,
           currentStep: callback.stepId
         });
-        console.log(callback.stepId + ' + ' + lp + ' | ' + localStepPercentage + '  : ' + calculatedProgress + '\n', callback);
-        //1 + 99 | 99  : 66.33333333333333
-        //  {stepId: 1, stepCount: 2, task: {…}, type: 'Progress'}
-
-        // LaunchButton.tsx:105 1 + 100 | 100  : 66.66666666666667
-        //  {stepId: 1, stepCount: 2, task: {…}, type: 'Progress'}
-
-        // LaunchButton.tsx:105 1 + 0 | 100  : 33.333333333333336
-        //-------------------------/ We should retake localLP instead of 0
-        //  {stepId: 1, stepCount: 2, task: {…}, type: 'Progress'}
+        //console.log(callback.stepId + ' + ' + lp + ' | ' + localStepPercentage + '  : ' + calculatedProgress + '\n', callback);
         break;
       }
       case CallbackType.Error: {
@@ -139,13 +143,14 @@ export default function LaunchButton(props: LaunchButtonProps) {
           hideProgressBar: true,
           style: { width: 'auto' }
         });
-        console.log(callback);
+        //console.log(callback);
         break;
       }
       case CallbackType.Success: {
-        console.log(_callback);
+        //console.log(_callback);
         setDisplayText('Launched');
         setCurrentState(LaunchButtonState.Launched);
+        console.log('Game Launched');
         break;
       }
       case CallbackType.Closed: {
@@ -154,6 +159,7 @@ export default function LaunchButton(props: LaunchButtonProps) {
         setProgress({
           currentStep: -1, stepCount: 0, progressVal: 0
         });
+        console.log('Game Exited');
         break;
       }
       default :
@@ -166,56 +172,25 @@ export default function LaunchButton(props: LaunchButtonProps) {
       if (props.versionSelector) {
         getSelected().then((selectedVersion) => {
           resolve(
-            <div
-              className={styles.versionSelector}
-              onClick={() => {
-                setVersionSelector(state === LaunchButtonState.Normal && !isVersionSelectorOpened);
-              }}
-            >
+            <div className={styles.versionSelector} onClick={() => {
+              setVersionSelector(state === LaunchButtonState.Normal && !isVersionSelectorOpened);
+            }}>
               <div className={styles.dataContainer}>
-                <Icon
-                  className={styles.dropdownIcon}
-                  icon={downArrowIcon}
-                  alt={'open the dropdown'}
-                />
-                <p className={styles.versionText}>
-                  {selectedVersion.id.toString()}
-                </p>
+                <Icon className={styles.dropdownIcon} icon={downArrowIcon} alt={'open the dropdown'} />
+                <p className={styles.versionText}>{selectedVersion.id.toString()}</p>
               </div>
               <div className={styles.versionListDropdown}>
-                {
-                  <Loader
-                    content={(reload: () => void) => {
-                      return new Promise((resolve, reject) => {
-                        window.electron.ipcRenderer
-                          .invoke('Version:getList', { gameType: GameType.VANILLA })
-                          .then((list) => {
-                            resolve(
-                              list.map((version: VersionData, index: any) => {
-                                return (
-                                  <Version
-                                    version={{
-                                      id: version.id,
-                                      gameType: GameType.VANILLA
-                                    }}
-                                    key={index}
-                                    className={[
-                                      styles.version,
-                                      version.id === selectedVersion.id
-                                        ? styles.versionSelected
-                                        : ''
-                                    ].join(' ')}
-                                    isInstalled={version.installed}
-                                    selected={version.id === selectedVersion.id} tools={false} />
-                                );
-                              })
-                            );
-                          });
-                        window.electron.ipcRenderer.sendMessage('getVersionList', {});
-                      });
-                    }}
-                    className={styles.loaderContentVersion} style={undefined} />
-                }
+                <Loader content={async (reload: () => void) => {
+                  return (await window.electron.ipcRenderer.invoke('Version:getList', { gameType: GameType.VANILLA }))
+                    .map((version: VersionData, index: any) => {
+                      return (<Version version={{ id: version.id, gameType: GameType.VANILLA }} key={index}
+                                       className={[styles.version, version.id === selectedVersion.id ? styles.versionSelected : ''].join(' ')}
+                                       isInstalled={version.installed} selected={version.id === selectedVersion.id}
+                                       tools={false} canSelect={true} />);
+                    });
+                }}
+                        className={styles.loaderContentVersion} style={undefined} />
+
               </div>
             </div>
           );
@@ -226,7 +201,7 @@ export default function LaunchButton(props: LaunchButtonProps) {
   return (
 
     <div
-      className={[styles.LaunchButton, (state === LaunchButtonState.Normal ? (!isOnline ? styles.offlineStyle : '') : styles[state])]
+      className={[styles.LaunchButton, (!isOnline() ? styles.offlineStyle : '')]
         .join(' ')}
       style={props.customStyle}
       data-version-selector={props.versionSelector.toString()}
@@ -235,7 +210,19 @@ export default function LaunchButton(props: LaunchButtonProps) {
       <div className={styles.Content}>
         {/*to preserve HTML structure for css selector, the content is reorganized in css*/}
         <div className={styles.runContent}
-             onClick={() => (state === LaunchButtonState.Normal ? requestLaunch() : null)}>
+             onClick={async () => {
+               if (state === LaunchButtonState.Normal) {
+                 let version = await getSelected();
+                 if (version === undefined) {
+                   const defaultVersion = getDefaultVersion(getDefaultGameType);
+                   window.electron.ipcRenderer.sendMessage('Version:set', defaultVersion);
+                   version = defaultVersion;
+                 }
+                 requestLaunch(version);
+               } else {
+                 return null;
+               }
+             }}>
           <Icon
             className={styles.icon}
             icon={getIcon()}
@@ -256,9 +243,9 @@ export default function LaunchButton(props: LaunchButtonProps) {
         <ProgressBar completed={Math.ceil(progress.progressVal)}
                      maxCompleted={100}
                      className={styles.ProgressBar}
-                     bgColor={"#39c457"}
-                     baseBgColor={"#4b4949"}
-                     labelColor={"#fff"}
+                     bgColor={'#39c457'}
+                     baseBgColor={'#4b4949'}
+                     labelColor={'#fff'}
         />
       </div>
     </div>

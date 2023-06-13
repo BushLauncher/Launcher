@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react';
 export default function Loader({ content, className, style }) {
   const [isLoading, setIsLoading] = useState(true);
   const [currentContent, setCurrentContent] = useState(null);
-
   useEffect(() => {
     content(reload)
       .then((data) => {

@@ -6,9 +6,11 @@ import Button, { ButtonType } from '../../public/Input/Button';
 import Icon from '../../public/Icons/Icon';
 import logoutIcon from '../../../../assets/graphics/icons/leave.svg';
 import { toast } from 'react-toastify';
-import { AuthProviderType, MinecraftAccount } from '../../../../internal/public/AuthPublic';
+import { AuthProviderType, FakeMinecraftAccount, MinecraftAccount } from '../../../../internal/public/AuthPublic';
 
 import msIcon from '../../../../assets/graphics/icons/microsoft.svg';
+import unknownIcon from '../../../../assets/graphics/icons/close.svg';
+import unknownPlayerIcon from '../../../../assets/graphics/images/steve.png';
 
 export interface UserAction {
   accountIndex: number;
@@ -20,7 +22,7 @@ export interface UserAction {
 }
 
 export interface UserCardProps extends ComponentsPublic {
-  user: MinecraftAccount;
+  user: MinecraftAccount | undefined;
   action?: UserAction;
   displayAuthMethode?: boolean;
 }
@@ -31,10 +33,13 @@ export default class UserCard extends React.Component<UserCardProps, {}> {
   }
 
   render() {
-    if (this.props.user.profile == undefined)
-      throw new Error(
-        '[UserCardComponent]: Passed user don\'t has an MCProfile !'
-      );
+    const user: MinecraftAccount | FakeMinecraftAccount = !(this.props.user === undefined) ? this.props.user : {
+      profile: { id: 'not_logged_account', name: 'User' },
+      true: false,
+      authType: AuthProviderType.Unknown
+    };
+    if (user.profile == undefined)
+      throw new Error('[UserCardComponent]: Passed user don\'t has an MCProfile !');
     return (
       <div
         className={[styles.UserCard, this.props.className].join(' ')}
@@ -43,14 +48,15 @@ export default class UserCard extends React.Component<UserCardProps, {}> {
           this.props.action?.action.select ? this.selectAccount() : null;
         }}
       >
-        {this.props.displayAuthMethode && <Icon className={styles.authIcon} icon={this.getIconFromAuth(this.props.user.authType)
-        } />}
+        {this.props.displayAuthMethode &&
+          <Icon className={styles.authIcon} icon={this.getIconFromAuth(user.authType)
+          } />}
         <div className={styles.data}>
-          <MinecraftSkin
-            userMCName={this.props.user.profile.name}
+          {user.true ? <MinecraftSkin
+            userMCName={user.profile.name}
             className={styles.skin}
-          />
-          <p className={styles.userName}>{this.props.user.profile.name}</p>
+          /> : <Icon icon={unknownPlayerIcon} className={styles.skin} />}
+          <p className={styles.userName} style={!user.true ? { color: '#777' } : undefined}>{user.profile.name}</p>
         </div>
 
         {this.props.action && (
@@ -70,12 +76,15 @@ export default class UserCard extends React.Component<UserCardProps, {}> {
         )}
       </div>
     );
+
   }
 
   private getIconFromAuth(authType: AuthProviderType) {
     switch (authType) {
       case AuthProviderType.Microsoft:
         return msIcon;
+      case AuthProviderType.Unknown:
+        return unknownIcon;
     }
   }
 
