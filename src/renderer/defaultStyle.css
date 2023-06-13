@@ -5,12 +5,19 @@
   src: url(./../assets/fonts/Square.ttf);
 }
 
+@font-face {
+  font-family: Zelta-Six;
+  src: url(./../assets/fonts/Zelta-Six.otf);
+}
+@font-face {
+  font-family: Octosquares;
+  src: url(./../assets/fonts/Octosquares-Trial-Compressed-Regular.ttf);
+}
+
 body {
   margin: 0;
   padding: 0;
   background-color: var(--background-color);
-
-
 }
 
 * {
@@ -32,7 +39,7 @@ body {
   --toastify-icon-color-warning: var(--toastify-color-warning);
   --toastify-icon-color-error: var(--toastify-color-error);
 
-  --toastify-toast-width: 320px;
+  --toastify-toast-width: auto;
   --toastify-toast-background: #fff;
   --toastify-toast-min-height: 64px;
   --toastify-toast-max-height: 800px;
@@ -80,7 +87,7 @@ body,
 html,
 #MAIN,
 #Theme-container,
-.Theme-container{
+.Theme-container {
   width: 100%;
   height: 100%;
   display: flex;
@@ -98,8 +105,14 @@ div::-webkit-scrollbar-thumb {
   border-radius: 8px;
 }
 
-p {
+p, h1, h2, h3, h4, h5, h6 {
   color: var(--text-color);
   font-size: var(--normal-size);
   font-family: SquareFont, serif;
+  margin: 0;
 }
+
+a {
+  color: var(--valid);
+}
+

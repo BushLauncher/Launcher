@@ -8,7 +8,7 @@
 .ProfileList .logoutAllButton {
   position: absolute;
   right: 1vw;
-  top: 1vh;
+  top: -8vh;
   width: fit-content;
 }
 

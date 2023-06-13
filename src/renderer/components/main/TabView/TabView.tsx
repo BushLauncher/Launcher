@@ -17,6 +17,7 @@ export interface TabParams extends ComponentsPublic {
 export interface TabViewParameters {
   collapsable?: boolean;
   collapsed?: boolean;
+  onMenuCollapsed?: (collapsedState: boolean) => void;
   style?: TabViewStyle;
 }
 
@@ -24,7 +25,7 @@ export interface TabViewStyle {
   orientation?: 'Vertical' | 'Horizontal';
   tabAlign?: 'Top' | 'Center' | 'Bottom';
   navBarBackgroundVisibility?: boolean,
-  tabSelectionEffect?: "Background" | "Underline"
+  tabSelectionEffect?: 'Background' | 'Underline'
 }
 
 export interface TabViewProps extends ComponentsPublic {
@@ -61,6 +62,7 @@ export default function TabView(props: TabViewProps) {
       return props.params.collapsable != undefined ? props.params.collapsable : true;
     }/*else cannot collapse horizontal nav bar on a **Vertical** view*/
   }
+
   return (
     <div className={[styles.TabView, props.className].join(' ')}
          data-orientation={props.params?.style?.orientation ? props.params?.style.orientation : 'Horizontal'}>
@@ -69,8 +71,9 @@ export default function TabView(props: TabViewProps) {
         select={changeView}
         tabList={props.contentList}
         collapsable={getCollapsable()}
-        styleSettings={props.params?.style}
         collapsed={props?.params?.collapsed ? props?.params?.collapsed : false}
+        onCollapse={props.params?.onMenuCollapsed}
+        styleSettings={props.params?.style}
       />
       <TabViewer View={whichIsSelected.content ? whichIsSelected.content : EmptyView} />
     </div>

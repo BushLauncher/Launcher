@@ -1,4 +1,4 @@
-import { defaultGameType, defaultVersion, Version } from './public/GameData';
+import { defaultGameType, defaultVersion, VersionData } from './public/GameData';
 import { app } from 'electron';
 import fs, { readFileSync, writeFileSync } from 'fs';
 import { userDataStorage } from '../main/main';
@@ -9,9 +9,9 @@ const path = require('path');
 const userPath = app.getPath('userData');
 const prefix: string = '[UserData]: ';
 
-let selected: Version | undefined = undefined;
+let selected: VersionData | undefined = undefined;
 
-export function getSelected(): Version {
+export function getSelected(): VersionData {
   if (typeof selected === 'undefined') {
     return defaultVersion(defaultGameType);
   } else {
@@ -21,12 +21,12 @@ export function getSelected(): Version {
 
 export function loadData() {
   console.log(prefix + 'Retrieving data from local storage...');
-  const res: Version | undefined = userDataStorage.get('version.selected');
+  const res: VersionData | undefined = userDataStorage.get('version.selected');
   if (res != undefined) SelectVersion(res);
   console.log(prefix + '--------');
 }
 
-export function SelectVersion(version: Version) {
+export function SelectVersion(version: VersionData) {
   selected = version;
   userDataStorage.update('version.selected', version);
   console.log(
@@ -40,6 +40,7 @@ export function SelectVersion(version: Version) {
 interface InterfaceData {
   selectedTab: string;
   theme: Theme;
+  isMenuCollapsed: boolean;
 }
 
 interface AuthData {
@@ -47,16 +48,24 @@ interface AuthData {
   selectedAccount: number | null;
 }
 
+interface SavedData {
+  javaPath: string | null;
+}
+
 export interface defaultData {
   interface: InterfaceData;
   version: {
-    selected: Version;
+    selected: VersionData;
   };
   auth: AuthData;
+  saved: SavedData;
 }
 
 export function createDefaultData(): defaultData {
   return {
+    saved: {
+      javaPath: null
+    },
     auth: {
       accountList: [],
       selectedAccount: null
@@ -64,7 +73,8 @@ export function createDefaultData(): defaultData {
     version: { selected: defaultVersion(defaultGameType) },
     interface: {
       selectedTab: 'vanilla',
-      theme: Theme.Dark
+      theme: Theme.Dark,
+      isMenuCollapsed: true
     }
   };
 }
@@ -81,10 +91,10 @@ export class Storage {
   public DeleteFile(): boolean {
     try {
       fs.unlinkSync(this.storageFilePath);
-      return true
+      return true;
     } catch (err) {
       console.error(err);
-      return false
+      return false;
     }
   }
 
@@ -145,3 +155,6 @@ export class Storage {
     );
   }
 }
+
+
+//TODO: Add an encryption system

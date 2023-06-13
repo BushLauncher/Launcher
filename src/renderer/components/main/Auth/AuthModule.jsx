@@ -93,22 +93,24 @@ export default function AuthModule() {
                     {isOnline && <Button
                       className={styles.addButton}
                       action={() => {
-                        getLogin().then((loggedUser) => {
-                          if (isOnline) {
-                            const operation = addAccount(loggedUser);
-                            toast.promise(operation, {
-                              pending:
-                                'Adding account ' + loggedUser.profile.name,
-                              success:
-                                'Added Account ' + loggedUser.profile.name,
-                              error: 'We could add account'
-                            });
-                            operation.then(() => {
-                              reload();
-                            });
-                            operation.catch((err) => {
-                              toast.error(err.toString());
-                            });
+                        getLogin().then((response) => {
+                          if (!Object.values(knownAuthError).includes(response)) {
+                            if (isOnline) {
+                              const operation = addAccount(response);
+                              toast.promise(operation, {
+                                pending:
+                                  'Adding account ' + response.profile.name,
+                                success:
+                                  'Added Account ' + response.profile.name,
+                                error: 'We could add account'
+                              });
+                              operation.then(() => {
+                                reload();
+                              });
+                              operation.catch((err) => {
+                                toast.error(err.toString());
+                              });
+                            }
                           }
                         });
                       }

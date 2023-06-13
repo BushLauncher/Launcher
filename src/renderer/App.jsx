@@ -16,7 +16,7 @@ export const defaultNotificationParams = {
   pauseOnHover: true,
   draggable: false,
   progress: undefined,
-  theme: "dark"
+  theme: 'dark'
 };
 export default function App() {
   return (
@@ -24,10 +24,11 @@ export default function App() {
       content={() => {
         return new Promise((resolve, reject) => {
           window.electron.ipcRenderer
-            .invoke('getData', { dataPath: 'interface.selectedTab' })
-            .then((selectedTab) => {
-              selectedTab = selectedTab !== undefined ? selectedTab : 'vanilla';
-              console.log('Selected Tab: ' + selectedTab);
+            .invoke('getData', { dataPath: 'interface' })
+            .then((interfaceData) => {
+              const selectedTab = interfaceData.selectedTab !== undefined ? interfaceData.selectedTab : 'vanilla';
+              const collapsed = interfaceData.isMenuCollapsed !== undefined ? interfaceData.isMenuCollapsed : true;
+              console.log('Selected Tab: ' + interfaceData.selectedTab);
 
               const content = [
                 {
@@ -54,7 +55,14 @@ export default function App() {
                     selectedTabIndex={content.findIndex(
                       (e) => e.id === selectedTab
                     )}
-                    params={{ collapsable: true, collapsed: true, style: { orientation: 'Horizontal' } }}
+                    params={{
+                      collapsable: true, collapsed: collapsed, onMenuCollapsed: (collapseState) => {
+                        window.electron.ipcRenderer.sendMessage('updateData', {
+                          value: collapseState,
+                          dataPath: 'interface.isMenuCollapsed'
+                        });
+                      }, style: { orientation: 'Horizontal' }
+                    }}
                   />
                   <ToastContainer
                     position='bottom-center'

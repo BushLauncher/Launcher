@@ -70,7 +70,7 @@ export default class PreLoad {
             reject({
               updated: false,
               code: error.status,
-              message: error.message,
+              message: error.return,
             });
           });
       } else {

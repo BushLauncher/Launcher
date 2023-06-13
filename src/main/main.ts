@@ -20,7 +20,7 @@ import PreLoad from './load/load';
 import { update } from './downloader';
 import * as versionManager from '../internal/VersionManager';
 import * as userData from '../internal/userData';
-import { GameType, Version } from '../internal/public/GameData';
+import { Callback, GameType, VersionData } from '../internal/public/GameData';
 import {
   AddAccount,
   getAccountList,
@@ -31,8 +31,10 @@ import {
   LogOutAllAccount,
   SelectAccount
 } from '../internal/AuthModule';
-import { Minecraft } from 'msmc';
 import { AuthProviderType, MinecraftAccount } from '../internal/public/AuthPublic';
+import { Run } from '../internal/Launcher';
+import { LaunchProcess, LaunchRunnableProcess } from '../internal/LaunchEngine';
+import { getLaunchInternal } from '../internal/LaunchProcessPatern';
 
 const prefix = '[Main Process]: ';
 const createWindow = async () => {
@@ -182,6 +184,13 @@ ipcMain.on('ipc-example', async (event, arg) => {
   console.log(msgTemplate(arg));
   event.reply('ipc-example', msgTemplate('pong'));
 });
+app.on('window-all-closed', () => {
+  // Respect the OSX convention of having the application in memory even
+  // after all windows have been closed
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
+});
 /**
  * Add event listeners...
  */
@@ -215,7 +224,7 @@ ipcMain.handle('Version:getList', (event, args: { gameType: GameType }) => {
     }
   });
 });
-ipcMain.on('Version:set', (event, version: Version) =>
+ipcMain.on('Version:set', (event, version: VersionData) =>
   userData.SelectVersion(version)
 );
 ipcMain.handle('Version:get', (event, args) => {
@@ -238,19 +247,36 @@ ipcMain.handle('Auth:getAccountList', () => getAccountList());
 ipcMain.handle(
   'Auth:Login',
   async (event, args: { type: AuthProviderType }) => {
-    return await Login(args.type);
+    return new Promise<MinecraftAccount>((resolve, reject) => {
+      Login(args.type).then(res => resolve(res)).catch(err => {
+        console.log(err);
+        resolve(err);
+      });
+      //reject will not pass err and return string [Object object]
+
+    });
   }
 );
 ipcMain.on('Auth:SelectAccount', (event, args: { index: number }) =>
   SelectAccount(args.index)
 );
+ipcMain.handle('Game:Launch', async (event, args: {
+  LaunchProcess: LaunchProcess | LaunchRunnableProcess | undefined
+}) => {
+  const process = args.LaunchProcess === undefined ? getLaunchInternal() : args.LaunchProcess;
+  return Run(process,
+    (callback: Callback) => {
+      event.sender.send('GameLaunchCallback', callback);
+      console.log(callback);
+    })
+    .catch(err => {
+      console.error(err);
+      return err;
+    });
 
-app.on('window-all-closed', () => {
-  // Respect the OSX convention of having the application in memory even
-  // after all windows have been closed
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
+
+  //reject will not pass err and return string [Object object]
+
 });
 ////////////////////////////////////////////////////////
 
@@ -284,7 +310,8 @@ app
       userData.loadData();
       setTimeout(() => {
         if (mainWindow !== null)
-          mainWindow.loadURL(resolveHtmlPath('index.html'));
+          mainWindow.loadURL(resolveHtmlPath('index.html')).then(async () => {
+          });
       }, /*5000*/ 0);
       //INSUPPORTABLE
     });

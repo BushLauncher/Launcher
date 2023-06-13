@@ -10,7 +10,6 @@ import { useState } from 'react';
 import Button, { ButtonType } from '../../public/Input/Button';
 import { AuthProviderType, errorCode, knownAuthError, MinecraftAccount } from '../../../../internal/public/AuthPublic';
 import { toast } from 'react-toastify';
-import { DecodeIpcMain } from '../../../../internal/public/ErrorDecoder';
 
 enum State {
   Normal,
@@ -56,18 +55,33 @@ const AuthProviderCard: React.FC<authProviderCard> = (
     setState(State.Pending);
     window.electron.ipcRenderer
       .invoke('Auth:Login', { type: provider })
-      .then((loggedAccount: MinecraftAccount) => {
-        console.log(loggedAccount);
-        setState(State.Success);
-        setTimeout(() => props.resolve(loggedAccount), 1000);
+      .then((response: MinecraftAccount | string) => {
+        console.log(response);
+        if (Object.values(knownAuthError).includes(response as unknown as knownAuthError)) {
+          //error
+          setState(State.Error);
+          setTimeout(() => setState(State.Normal), 5000);
+          if (!Object.values(knownAuthError).includes(response as unknown as knownAuthError)) {
+            toast.error('Unexpected Error: ' + response);
+          } else {
+            //format response
+            response = knownAuthError[response as unknown as knownAuthError];
+
+            if (response == knownAuthError.UserDontHasGame) toast.error('The Account don\'t has Minecraft Game !');
+            if (response !== knownAuthError.ClosedByUser) props.reject(response);
+          }
+        } else {
+          //no error
+          console.log(response);
+          setState(State.Success);
+
+          //at this point response shouldn't be a string
+          if (typeof response === 'string') throw new Error('response souldn\'t be a string: (' + response + ')');
+          setTimeout(() => props.resolve(response as MinecraftAccount), 1000);
+        }
       })
       .catch((err: any | knownAuthError) => {
-        const decodedError: knownAuthError | string = DecodeIpcMain(err.toString());
-        setState(State.Error);
-        setTimeout(() => setState(State.Normal), 5000);
-        if (decodedError in knownAuthError) {
-          if (decodedError == knownAuthError.UserDontHasGame) toast.error('The Account don\'t has Minecraft Game !');
-        } else props.reject(err);
+        //cannot by rejected because reject is resolved to get the error
       });
   };
   const data = ProviderData[props.type];

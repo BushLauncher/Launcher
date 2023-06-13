@@ -25,7 +25,7 @@ export function update(potentialUpdate, callbackText) {
       .catch(error => {
         console.error('Cannot update: ')
         console.error(error)
-        reject({ updated: false, code: error.code, message: error.message })
+        reject({ updated: false, code: error.code, message: error.return })
       })
   })
 }
@@ -38,7 +38,7 @@ function download(url, callback) {
       url: [url],
       responseType: 'stream',
       onDownloadProgress: progressEvent => {
-        const downloadPercentage = Math.ceil(
+        const downloadPercentage = Math.floor(
           (progressEvent.loaded * 100) / progressEvent.total
         )
         console.log('Downloading: ' + downloadPercentage + '%')

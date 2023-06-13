@@ -1,4 +1,4 @@
-.Theme-Dark{
+.Theme-Dark {
   --background-color: #232323;
   --background-color-opacity: hsla(0, 2%, 12%, 0.82);
   --secondary-background-color: #302f2f;
@@ -7,21 +7,6 @@
   --hover-background-color-opacity: #5a5858b3;
   --bush-background-color: #252d27;
   --text-color: #fff;
-  --unvalid: #932a2a;
-  --unvalid-secondary: #633434;
-  --valid: #39c457;
-  --valid-secondary: #2d8640;
-}
-
-.Theme-Light{
-  --background-color: #dedede;
-  --background-color-opacity: #dededeb3;
-  --secondary-background-color: #bbbbbb;
-  --third-background-color: #a8a8a8;
-  --hover-background-color: #6e6e6e;
-  --hover-background-color-opacity: #6e6e6eb3;
-  --bush-background-color: #b6dec0;
-  --text-color: #000;
   --unvalid: #932a2a;
   --unvalid-secondary: #633434;
   --valid: #39c457;

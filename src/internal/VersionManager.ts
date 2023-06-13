@@ -1,4 +1,4 @@
-import { GameType, getVersion, isSupported, Version } from './public/GameData';
+import { GameType, getVersion, isSupported, VersionData } from './public/GameData';
 import { MinecraftVersion, MinecraftVersionList } from '@xmcl/installer';
 import { readdirSync } from 'fs';
 import path from 'path';
@@ -7,9 +7,9 @@ import { MinecraftVersionSorter } from './utils';
 const { getVersionList } = require('@xmcl/installer');
 
 const getAppDataPath = require('appdata-path');
-const locationRoot = getAppDataPath() + '\\.minecraft';
+export const locationRoot = getAppDataPath() + '\\.minecraft';
 
-export function GetVersionList(gameType: GameType) {
+export function GetVersionList(gameType: GameType): Promise<VersionData[]> | undefined {
   switch (gameType) {
     case GameType.VANILLA: {
       return new Promise((resolve, reject) => {
@@ -17,18 +17,17 @@ export function GetVersionList(gameType: GameType) {
         getVersionList()
           .then((response: MinecraftVersionList) => {
             //reindexing version list to get just the release
-            let versionList: Version[] = [];
+            let versionList: VersionData[] = [];
             Array.from(response.versions).forEach(
               (version: MinecraftVersion) => {
                 if (
                   version.type === 'release' &&
                   isSupported(gameType, version.id)
                 ) {
-                  let newVersion: Version = {
+                  let newVersion: VersionData = {
                     id: version.id,
                     gameType: gameType,
-                    xmclData: version,
-                    installed: isInstalled(version.id),
+                    installed: versionExist(version.id)
                   };
                   versionList.push(newVersion);
                 }
@@ -38,7 +37,6 @@ export function GetVersionList(gameType: GameType) {
           })
           .catch((err: any) => {
             console.error(err);
-            reject(err);
           });
       });
     }
@@ -48,7 +46,9 @@ export function GetVersionList(gameType: GameType) {
       );
   }
 }
-export function GetLocalVersionList(gameType: GameType) {
+
+export function GetLocalVersionList(gameType: GameType): Promise<VersionData[]> | undefined {
+  //TODO: make this function use Version.parse from @xmcl/installer
   switch (gameType) {
     case GameType.VANILLA: {
       return new Promise((resolve, reject) => {
@@ -56,7 +56,7 @@ export function GetLocalVersionList(gameType: GameType) {
         const regex = /^\b\d+\.\d+(\.\d+)?\b$/g;
         //get all folder in local appdata
         const foldersToProcess = readdirSync(localURL);
-        let minecraftVersionsList: Version[];
+        let minecraftVersionsList: VersionData[];
 
         minecraftVersionsList = foldersToProcess
           .filter(
@@ -64,8 +64,8 @@ export function GetLocalVersionList(gameType: GameType) {
           )
           .sort(MinecraftVersionSorter)
           .reverse()
-          .map((folder): Version => {
-            const version: Version = getVersion(gameType, folder);
+          .map((folder): VersionData => {
+            const version: VersionData = getVersion(gameType, folder);
             version.installed = true;
             /*got from locals files, so version folder exist*/
             return version;
@@ -76,13 +76,13 @@ export function GetLocalVersionList(gameType: GameType) {
     default:
       console.error(
         '[getLocalVersionList]: The gameType: ' +
-          gameType +
-          ' is not implemented'
+        gameType +
+        ' is not implemented'
       );
   }
 }
 
-export function isInstalled(versionName: string): boolean {
+export function versionExist(versionName: string): boolean {
   const localURL = locationRoot + '\\versions\\';
   const folderList = readdirSync(localURL);
   return folderList.includes(versionName);

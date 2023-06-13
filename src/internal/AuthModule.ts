@@ -67,6 +67,7 @@ export function SelectAccount(accountToSelect: number | MinecraftAccount) {
   } else id = accountToSelect;
   changeSelectedAccountId(id);
   console.log(prefix + 'Selected account: ' + id);
+  //TODO: Recheck account validity after select it
 }
 
 function changeSelectedAccountId(id: number) {
@@ -166,3 +167,4 @@ function ConstructMinecraftUser(Minecraft: Minecraft, authType: AuthProviderType
     authType: authType
   };
 }
+

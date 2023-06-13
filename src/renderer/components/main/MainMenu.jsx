@@ -1,4 +1,4 @@
-import MainIcon from '../public/mainIcon';
+import MainIcon from '../public/MainIcon';
 import styles from './css/mainComponentsStyle.module.css';
 import DataTextComponent from '../public/DataText';
 import FrameButton from './FrameButton';

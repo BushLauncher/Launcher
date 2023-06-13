@@ -2,7 +2,7 @@ import styles from './TabViewStyle.module.css';
 
 export default function Tab({ data, isSelected, onSelect }) {
   function getDisplayName() {
-    return data.displayName ? data.displayName : data.id.charAt(0).toUpperCase() + data.id.slice(1);
+    return data.id ? data.id : data.id.charAt(0).toUpperCase() + data.id.slice(1);
   }
 
   return (

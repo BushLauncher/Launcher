@@ -11,6 +11,7 @@ export default function TabNavBar({
                                     tabList,
                                     collapsable,
                                     collapsed,
+                                    onCollapse,
                                     styleSettings
                                   }) {
   const [isCollapsed, setCollapsed] = useState(collapsed ? collapsed : false);
@@ -32,7 +33,12 @@ export default function TabNavBar({
       ))}
       {collapsable && (
         <Button
-          action={() => setCollapsed(!isCollapsed)}
+          action={() => {
+            setCollapsed((prevState) => {
+              onCollapse(!prevState);
+              return !prevState;
+            });
+          }}
           content={
             <img
               className={[ButtonStyle.img, styles.img].join(' ')}
