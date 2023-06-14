@@ -3,18 +3,16 @@
 </a>
 
 
-# BushLauncher &middot; [![wakatime](https://wakatime.com/badge/user/c012f4b6-e3cf-4290-870c-c9799ff93f42/project/252f75ba-ae19-4e3e-b63a-924c9989c5af.svg)](https://wakatime.com/badge/user/c012f4b6-e3cf-4290-870c-c9799ff93f42/project/252f75ba-ae19-4e3e-b63a-924c9989c5af) ![Downloads](https://img.shields.io/github/downloads/Gagafeee/BushLauncher/total) 
+# BushLauncher &middot; ![GitHub release (latest by date)](https://img.shields.io/github/v/release/Gagafeee/BushLauncher?label=Last%20Version) [![wakatime](https://wakatime.com/badge/user/c012f4b6-e3cf-4290-870c-c9799ff93f42/project/252f75ba-ae19-4e3e-b63a-924c9989c5af.svg)](https://wakatime.com/badge/user/c012f4b6-e3cf-4290-870c-c9799ff93f42/project/252f75ba-ae19-4e3e-b63a-924c9989c5af)  
 > Playing Minecraft has never been so simple
 
-by [@Gagafeee](https://github.com/Gagafeee)<br/><br/>
-<a href="https://github.com/Gagafeee/BushLauncher/issues">Report Bug</a>  &middot;  <a href="https://github.com/Gagafeee/BushLauncher/issues">Request Feature</a>
+by [@Gagafeee](https://github.com/Gagafeee) | <a href="https://github.com/Gagafeee/BushLauncher/issues">Report Bug</a>  &middot;  <a href="https://github.com/Gagafeee/BushLauncher/issues">Request Feature</a>
+#
 
-<br/><br/>
-## About The Project
 
 ![Screen Shot](https://github.com/Gagafeee/BushLauncher/blob/b3d2165d01caa39f09079a62580f4b2a6986becb/assets/screen.png)
 
-### BushLauncher is a flexible Minecraft Launcher designed to simplify installation of the Minecraft game and its prerequisites, but also of mods, texture packs, etc.
+BushLauncher is a flexible Minecraft Launcher designed to simplify installation of the Minecraft game and its prerequisites, but also of mods, texture packs, etc.
 #
 BushLauncher use configuration system, you can create as many as you like and put whatever you like in : version, resourcepacks, mods, shaderpack...
 [^0]
