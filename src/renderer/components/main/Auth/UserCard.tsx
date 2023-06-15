@@ -16,8 +16,8 @@ export interface UserAction {
   accountIndex: number;
   reloadFunc: () => void;
   action: {
-    logOut: boolean;
-    select: boolean;
+    canLogOut: boolean;
+    canSelect: boolean;
   };
 }
 
@@ -38,14 +38,16 @@ export default class UserCard extends React.Component<UserCardProps, {}> {
       true: false,
       authType: AuthProviderType.Unknown
     };
+
     if (user.profile == undefined)
-      throw new Error('[UserCardComponent]: Passed user don\'t has an MCProfile !');
+      throw new Error('[UserCardComponent]: Passed user don\'t has a MCProfile !');
+
     return (
       <div
         className={[styles.UserCard, this.props.className].join(' ')}
-        style={this.props.style}
+        style={{ ...this.props.style, ...{ cursor: this.props.action?.action.canSelect ? 'pointer' : undefined } }}
         onClick={() => {
-          this.props.action?.action.select ? this.selectAccount() : null;
+          this.props.action?.action.canSelect ? this.selectAccount() : null;
         }}
       >
         {this.props.displayAuthMethode &&
@@ -61,7 +63,7 @@ export default class UserCard extends React.Component<UserCardProps, {}> {
 
         {this.props.action && (
           <div className={styles.ActionContainer}>
-            {this.props.action?.action.logOut && (
+            {this.props.action?.action.canLogOut && (
               <Button
                 action={(e) => {
                   this.logoutIcon();
@@ -89,7 +91,7 @@ export default class UserCard extends React.Component<UserCardProps, {}> {
   }
 
   private logoutIcon() {
-    if (this.props.action === undefined || !this.props.action.action.logOut)
+    if (this.props.action === undefined || !this.props.action.action.canLogOut)
       throw new Error('action Logout() is not permitted, or action is null');
 
     const id: number = this.props.action.accountIndex;
@@ -115,7 +117,7 @@ export default class UserCard extends React.Component<UserCardProps, {}> {
   }
 
   private selectAccount() {
-    if (this.props.action === undefined || !this.props.action.action.select)
+    if (this.props.action === undefined || !this.props.action.action.canSelect)
       throw new Error(
         'action SelectAccount() is not permitted, or action is null'
       );

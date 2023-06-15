@@ -86,7 +86,7 @@ export default function LaunchButton(props: LaunchButtonProps) {
     console.log('Requesting Launch...');
     //@ts-ignore
     window.electron.ipcRenderer.on('GameLaunchCallback', (callback: Callback) => decodeLaunchCallback(callback));
-    window.electron.ipcRenderer.invoke('Game:Launch', {LaunchProcess: process}).then((exitedCallback: ExitedCallback) => {
+    window.electron.ipcRenderer.invoke('GameEngine:Launch', {LaunchProcess: process}).then((exitedCallback: ExitedCallback) => {
       decodeLaunchCallback(exitedCallback);
     });
   };

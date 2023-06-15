@@ -1,0 +1,39 @@
+.pathSelector {
+  width: 50vw;
+  height: 10vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1vw;
+}
+
+.pathSelector .textArea {
+  width: 40vw;
+  height: 7vh;
+  white-space: nowrap;
+  word-wrap: normal;
+  word-break: keep-all;
+  overflow-wrap: normal;
+  background-color: var(--hover-background-color);
+  border: 0;
+  font-family: Octosquares;
+  font-size: 2.5vw;
+  color: var(--text-color);
+  border-radius: 10px;
+}
+
+.pathSelector .buttonContainer {
+  display: flex;
+  gap: 5px;
+}
+
+.pathSelector .button {
+
+}
+
+.VersionTool {
+  width: 100%;
+  min-height: 350px;
+  border-radius: 20px;
+  overflow: hidden;
+}

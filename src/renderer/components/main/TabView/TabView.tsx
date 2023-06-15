@@ -35,8 +35,10 @@ export interface TabViewProps extends ComponentsPublic {
 }
 
 export default function TabView(props: TabViewProps) {
-  if (props.contentList.length == 0)
+  if (props.contentList.length == 0) {
     console.warn('the TabView is empty ! (content == null)');
+    return <></>;
+  }
   const selectedTab: number = props.selectedTabIndex && props.selectedTabIndex != -1 ? props.selectedTabIndex : 0;
   const [whichIsSelected, select] = useState(props.contentList[selectedTab]);
 
@@ -75,7 +77,7 @@ export default function TabView(props: TabViewProps) {
         onCollapse={props.params?.onMenuCollapsed}
         styleSettings={props.params?.style}
       />
-      <TabViewer View={whichIsSelected.content ? whichIsSelected.content : EmptyView} />
+      <TabViewer View={whichIsSelected.content ? whichIsSelected.content : EmptyView} navBarVisibility={props.params?.style?.navBarBackgroundVisibility} />
     </div>
   );
 }

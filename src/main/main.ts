@@ -19,7 +19,7 @@ import { resolveHtmlPath } from './util';
 import PreLoad from './load/load';
 import { update } from './downloader';
 import * as versionManager from '../internal/VersionManager';
-import { getSelectedVersion } from '../internal/VersionManager';
+import { GetAllVersionList, getSelectedVersion } from '../internal/VersionManager';
 import * as userData from '../internal/UserData';
 import {
   Callback,
@@ -39,7 +39,7 @@ import {
   SelectAccount
 } from '../internal/AuthModule';
 import { AuthProviderType, MinecraftAccount } from '../internal/public/AuthPublic';
-import { RunPreLaunchProcess } from '../internal/Launcher';
+import { getLocationRoot, RunPreLaunchProcess } from '../internal/Launcher';
 import { getLaunchInternal } from '../internal/PreLaunchProcessPatern';
 
 const prefix = '[Main Process]: ';
@@ -205,8 +205,12 @@ ipcMain.on('closeApp', (event, args) => app.quit());
 ipcMain.on('minimizeWindow', (event, args) =>
   BrowserWindow.getFocusedWindow()?.minimize()
 );
-ipcMain.handle('Version:getList', (event, args: { gameType: GameType }) => {
+ipcMain.handle('Version:getList', (event, args: { gameType: GameType | undefined }) => {
   return new Promise(async (resolve, reject) => {
+    if (args.gameType === undefined) {
+      resolve(await GetAllVersionList());
+      return;
+    }
     if (net.isOnline()) resolve(await versionManager.GetVersionList(args.gameType).catch((err) => {
       console.error(err);
       reject(err);
@@ -252,7 +256,7 @@ ipcMain.on('Auth:SelectAccount', (event, args: { index: number }) =>
   SelectAccount(args.index)
 );
 
-ipcMain.handle('Game:Launch', async (event, args: {
+ipcMain.handle('GameEngine:Launch', async (event, args: {
   LaunchProcess: PreLaunchProcess | PreLaunchRunnableProcess | undefined
 }) => {
   const process = args.LaunchProcess === undefined ? getLaunchInternal() : args.LaunchProcess;
@@ -269,6 +273,10 @@ ipcMain.handle('Game:Launch', async (event, args: {
 
   //reject will not pass err and return string [Object object]
 
+});
+
+ipcMain.handle('GameEngine:getRootPath', (event, args) => {
+  return getLocationRoot();
 });
 ////////////////////////////////////////////////////////
 

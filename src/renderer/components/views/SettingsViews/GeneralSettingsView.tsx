@@ -1,5 +1,4 @@
-import Input from '../../public/Input/input';
-import styles from './css/GeneralViewStyle.module.css';
+import Input from '../../public/Input/Input';
 import Loader from '../../public/Loader';
 import { getAllTheme, getCurrentTheme, SetTheme } from '../../../scripts/ThemeManager';
 import { Theme } from '../../../../internal/public/ThemePublic';
@@ -7,7 +6,7 @@ import Dropdown from '../../public/Input/Dropdown';
 import React from 'react';
 import Button, { ButtonType } from '../../public/Input/Button';
 import ButtonStyle from '../../public/css/inputStyle.module.css';
-import defaultStyle from './css/DefaultSettingsView.module.css'
+import defaultStyle from './css/DefaultSettingsView.module.css';
 import { toast } from 'react-toastify';
 
 export default function GeneralSettingView() {

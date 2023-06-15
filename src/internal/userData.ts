@@ -35,6 +35,7 @@ interface AuthData {
 
 interface SavedData {
   javaPath: string | null;
+  rootPath: string | null;
 }
 
 export interface defaultData {
@@ -49,7 +50,8 @@ export interface defaultData {
 export function createDefaultData(): defaultData {
   return {
     saved: {
-      javaPath: null
+      javaPath: null,
+      rootPath: null
     },
     auth: {
       accountList: [],

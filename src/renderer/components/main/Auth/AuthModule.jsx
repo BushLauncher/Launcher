@@ -98,8 +98,8 @@ export default function AuthModule() {
                             accountIndex: index,
                             reloadFunc: reload,
                             action: {
-                              logOut: selectedAccountId !== index,
-                              select: selectedAccountId !== index
+                              canLogOut: selectedAccountId !== index,
+                              canSelect: selectedAccountId !== index
                             }
                           }}
                           className={[
@@ -112,7 +112,7 @@ export default function AuthModule() {
                     {isOnline && <Button
                       className={styles.addButton}
                       action={() => {
-                        getLogin().then((response) => {
+                        getLogin({ closable: true }).then((response) => {
                           if (!Object.values(knownAuthError).includes(response)) {
                             if (isOnline) {
                               const operation = addAccount(response);

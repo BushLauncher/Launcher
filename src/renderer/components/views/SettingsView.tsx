@@ -5,6 +5,7 @@ import background from '../../../assets/graphics/backgrounds/underwater.png';
 import GeneralSettingView from './SettingsViews/GeneralSettingsView';
 import ProfileSettingsView from './SettingsViews/ProfileSettingsView';
 import AboutView from './SettingsViews/AboutView';
+import VersionSettingsView from './SettingsViews/VersionSettingsView';
 
 export default function SettingsView() {
   const content: TabParams[] = [{
@@ -20,7 +21,9 @@ export default function SettingsView() {
   },
     {
       id: 'versions',
-      displayName: 'Game Versions'
+      displayName: 'Game Versions',
+      // @ts-ignore
+      content: VersionSettingsView
     },
     {
       id: 'notes',
@@ -32,7 +35,8 @@ export default function SettingsView() {
   return (<div className={defaultStyle.Main} style={{ padding: 0 }}>
     <TabView contentList={content}
              className={styles.tabview}
-             params={{ collapsable: false,
+             params={{
+               collapsable: false,
                style: {
                  orientation: 'Horizontal',
                  tabAlign: 'Center',

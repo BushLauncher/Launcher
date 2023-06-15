@@ -15,10 +15,11 @@ import { CallbackType } from './public/ErrorDecoder';
 import { parseJava, ResolvedPreLaunchTask, resolvePreLaunchTask, resolvePreLaunchTaskList } from './PreLaunchEngine';
 import { createMinecraftProcessWatcher, launch } from '@xmcl/core';
 import { ChildProcess } from 'child_process';
-import { locationRoot } from './VersionManager';
 import { getSelectedAccount, isAccountValid } from './AuthModule';
 import { MicrosoftAuthenticator } from '@xmcl/user';
 import { net } from 'electron';
+import getAppDataPath from 'appdata-path';
+import { userDataStorage } from '../main/main';
 
 export async function RunPreLaunchProcess(process: PreLaunchProcess | PreLaunchRunnableProcess, Callback: (callback: Callback) => void) {
   //resolve process list if not
@@ -83,6 +84,18 @@ export function parseLaunch(LaunchRunnable: PreLaunchRunnableProcess | PreLaunch
 export function StopGame() {
 }
 
+
+export function getLocationRoot(): string {
+  const storageRes: string | null | undefined = userDataStorage.get('saved.rootPath');
+  if (storageRes !== undefined && storageRes !== null) return storageRes;
+  else return setLocalLocationRoot(getAppDataPath() + '\\.minecraft');
+}
+
+function setLocalLocationRoot(path: string) {
+  userDataStorage.set('saved.rootPath', path);
+  return path;
+}
+
 export function Launch(version: VersionData, callback: (callback: StartedCallback) => void): Promise<ExitedCallback> {
   return new Promise(async (resolve, reject) => {
     const account = getSelectedAccount();
@@ -94,9 +107,9 @@ export function Launch(version: VersionData, callback: (callback: StartedCallbac
     };
     parseJava((c) => console.log('Internal Launch re-parse Java: ', c))
       .then(async (javaPath: string) => {
-        console.log('Launching minecraft ' + version.id + ' :' + '\nFor: ', account.profile, '\n from: ' + locationRoot + '\n java: ' + javaPath + '\n...');
+        console.log('Launching minecraft ' + version.id + ' :' + '\nFor: ', account.profile, '\n from: ' + getLocationRoot() + '\n java: ' + javaPath + '\n...');
         launch({
-          gamePath: locationRoot,
+          gamePath: getLocationRoot(),
           javaPath: javaPath,
           version: version.id,
           gameProfile: { id: account.profile.id, name: account.profile.name },

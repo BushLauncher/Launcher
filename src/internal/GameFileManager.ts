@@ -3,11 +3,11 @@ import { GameType, LaunchTaskState, ProgressLaunchCallback, VersionData } from '
 import { knowGameError, knowGameErrorFormat } from './public/ErrorDecoder';
 import { diagnose, MinecraftIssueReport } from '@xmcl/core';
 import { ResolveXmclVersion } from './PreLaunchEngine';
-import { locationRoot } from './VersionManager';
 import fs from 'fs';
+import { getLocationRoot } from './Launcher';
 
 export async function verifyGameFiles(version: VersionData): Promise<true | MinecraftIssueReport> {
-  const report = await diagnose(version.id, locationRoot);
+  const report = await diagnose(version.id, getLocationRoot());
   if (report.issues.length === 0) return true;
   else return report;
   //report can be analysed [https://github.com/Voxelum/minecraft-launcher-core-node/tree/master/packages/core#diagnose]
@@ -19,7 +19,7 @@ export async function InstallGameFiles(version: VersionData, callback: (callback
   switch (version.gameType) {
     case GameType.VANILLA: {
       return new Promise(async (resolve, reject) => {
-        const dir = locationRoot;
+        const dir = getLocationRoot();
         //TODO: add configurable .minecraft path
         console.warn('Installing Minecraft ' + version.gameType + ' in: ' + dir);
         const task = installTask(await ResolveXmclVersion(version), dir, {});

@@ -5,7 +5,8 @@ import { CallbackType, knowGameErrorFormat } from './ErrorDecoder';
 import { ResolvedPreLaunchTask } from '../PreLaunchEngine';
 
 export enum GameType {
-  VANILLA = 'VANILLA'
+  VANILLA = 'VANILLA',
+  TEST = 'TEST'
 }
 
 export type VersionData = {
@@ -29,7 +30,8 @@ export const supportedVersion: Array<VersionData> = [
   { id: '1.13.2', gameType: GameType.VANILLA },
   { id: '1.12.2', gameType: GameType.VANILLA },
   { id: '1.18.9', gameType: GameType.VANILLA },
-  { id: '1.7.10', gameType: GameType.VANILLA }
+  { id: '1.7.10', gameType: GameType.VANILLA },
+  { id: 'hmm', gameType: GameType.TEST }
 ];
 
 export enum LaunchOperationType {
@@ -55,7 +57,7 @@ export enum PreLaunchTasks {
   ParseGameFile = 'ParseGameFile',
   VerifyGameFile = 'VerifyGameFile',
   InstallBootstrap = 'InstallBootstrap',
-  Launch = "Launch"
+  Launch = 'Launch'
 };
 
 export type LaunchTask = {

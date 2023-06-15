@@ -111,7 +111,7 @@
 .UserCard {
   min-width: 20vw;
   width: fit-content;
-  height: 10vh;
+  height: 11vh;
   background-color: var(--secondary-background-color);
   display: flex;
   align-items: center;
@@ -120,6 +120,7 @@
   border-radius: 10px;
   box-sizing: border-box;
   padding: 0 1vw;
+
 }
 
 .UserCard .data {
