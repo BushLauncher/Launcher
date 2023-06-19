@@ -19,8 +19,9 @@ import { resolveHtmlPath } from './util';
 import PreLoad from './load/load';
 import { update } from './downloader';
 import * as versionManager from '../internal/VersionManager';
-import { GetAllVersionList, getSelectedVersion } from '../internal/VersionManager';
+import { GetAllVersionList, getSelectedVersion, getVersionMethode } from '../internal/VersionManager';
 import * as userData from '../internal/UserData';
+import { SetRootPath } from '../internal/UserData';
 import {
   Callback,
   GameType,
@@ -39,7 +40,7 @@ import {
   SelectAccount
 } from '../internal/AuthModule';
 import { AuthProviderType, MinecraftAccount } from '../internal/public/AuthPublic';
-import { getLocationRoot, RunPreLaunchProcess } from '../internal/Launcher';
+import { getDefaultRootPath, getLocationRoot, RunPreLaunchProcess } from '../internal/Launcher';
 import { getLaunchInternal } from '../internal/PreLaunchProcessPatern';
 
 const prefix = '[Main Process]: ';
@@ -201,22 +202,32 @@ app.on('window-all-closed', () => {
  * Add event listeners...
  */
 
-ipcMain.on('closeApp', (event, args) => app.quit());
-ipcMain.on('minimizeWindow', (event, args) =>
-  BrowserWindow.getFocusedWindow()?.minimize()
-);
-ipcMain.handle('Version:getList', (event, args: { gameType: GameType | undefined }) => {
+ipcMain.on('App:Close', (event, args) => app.quit());
+ipcMain.on('App:Minimize', (event, args) => BrowserWindow.getFocusedWindow()?.minimize());
+ipcMain.on('App:Relaunch', (event, args) => {
+  app.relaunch();
+  app.quit();
+});
+
+ipcMain.handle('Version:getList', (event, { gameType, type }: {
+  gameType: GameType | undefined,
+  type?: getVersionMethode
+}) => {
   return new Promise(async (resolve, reject) => {
-    if (args.gameType === undefined) {
-      resolve(await GetAllVersionList());
+    if (type === undefined) type = 'auto';
+    if (gameType === undefined) {
+      resolve(await GetAllVersionList(type));
       return;
     }
-    if (net.isOnline()) resolve(await versionManager.GetVersionList(args.gameType).catch((err) => {
+    if ((type === 'network' || type === 'auto') && net.isOnline()) resolve(await versionManager.GetVersionList(gameType).catch((err) => {
       console.error(err);
       reject(err);
     }));
-    else resolve(versionManager.GetLocalVersionList(args.gameType));
+    else resolve(versionManager.GetLocalVersionList(gameType));
   });
+});
+ipcMain.handle('Version:getTypeList', (event, args) => {
+  return Object.keys(GameType);
 });
 ipcMain.handle('Version:get', (event, args) => {
   return getSelectedVersion();
@@ -239,22 +250,17 @@ ipcMain.handle('Auth:getSelectedId', () => {
   return getSelectedAccountId();
 });
 ipcMain.handle('Auth:getAccountList', () => getAccountList());
-ipcMain.handle(
-  'Auth:Login',
-  async (event, args: { type: AuthProviderType }) => {
-    return new Promise<MinecraftAccount>((resolve, reject) => {
-      Login(args.type).then(res => resolve(res)).catch(err => {
-        console.log(err);
-        resolve(err);
-      });
-      //reject will not pass err and return string [Object object]
-
+ipcMain.handle('Auth:Login', async (event, args: { type: AuthProviderType }) => {
+  return new Promise<MinecraftAccount>((resolve, reject) => {
+    Login(args.type).then(res => resolve(res)).catch(err => {
+      console.log(err);
+      resolve(err);
     });
-  }
-);
-ipcMain.on('Auth:SelectAccount', (event, args: { index: number }) =>
-  SelectAccount(args.index)
-);
+    //reject will not pass err and return string [Object object]
+
+  });
+});
+ipcMain.on('Auth:SelectAccount', (event, args: { index: number }) => SelectAccount(args.index));
 
 ipcMain.handle('GameEngine:Launch', async (event, args: {
   LaunchProcess: PreLaunchProcess | PreLaunchRunnableProcess | undefined
@@ -269,8 +275,6 @@ ipcMain.handle('GameEngine:Launch', async (event, args: {
       console.error(err);
       return err;
     });
-
-
   //reject will not pass err and return string [Object object]
 
 });
@@ -278,8 +282,13 @@ ipcMain.handle('GameEngine:Launch', async (event, args: {
 ipcMain.handle('GameEngine:getRootPath', (event, args) => {
   return getLocationRoot();
 });
+ipcMain.handle('GameEngine:getDefaultRootPath', (event, args) => {
+  return getDefaultRootPath();
+});
+ipcMain.handle('Option:setRootPath', (event, args: { path: string }) => {
+  return SetRootPath(args.path);
+});
 ////////////////////////////////////////////////////////
-
 export const userDataStorage = new userData.Storage('user-preference');
 ipcMain.on('saveData', (event, arg: { dataPath: string; value: any }) => {
   userDataStorage.set(arg.dataPath, arg.value);

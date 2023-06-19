@@ -11,7 +11,7 @@
 }
 
 .TabView .NavBar {
-  background-color: var(--secondary-background-color);
+  background-color: var(--second-background-color);
   transition: all 0.3s ease-in-out;
   --ml: 1vw;
   position: relative;
@@ -178,14 +178,23 @@
 .TabView .Viewer {
   width: 100%;
   overflow: hidden;
+  box-sizing: border-box;
+  padding: 10px;
+  display: flex;
 }
+
+
 
 .TabView[data-orientation="Horizontal"] .Viewer {
   height: 100%;
+  flex-direction: column;
+  justify-content: flex-end;
 }
 
 .TabView[data-orientation="Vertical"] .Viewer {
   height: calc(100% - 5vh);
+  justify-content: flex-start;
+  flex-direction: row;
 }
 
 /************************************/

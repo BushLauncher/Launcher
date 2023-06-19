@@ -1,32 +1,38 @@
 import styles from './css/publicStyle.module.css';
 import icon from '../../../assets/graphics/icons/loading.svg';
 import { useEffect, useState } from 'react';
+import { ComponentsPublic } from '../ComponentsPublic';
 
-export default function Loader({ content, className, style }) {
+interface LoaderProps extends ComponentsPublic {
+  content: (reload: () => void) => Promise<Element | JSX.Element>;
+}
+
+export default function Loader({ content, className, style }: LoaderProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [currentContent, setCurrentContent] = useState(null);
   useEffect(() => {
     content(reload)
       .then((data) => {
+        // @ts-ignore
         setCurrentContent(data);
         setIsLoading(false);
       })
       .catch((error) => {
         console.error(error);
-        setIsLoading(false);
       });
   }, [content]);
 
   const reload = () => {
+    console.log("trigger reload");
     setIsLoading(true);
     content(reload)
       .then((data) => {
+        // @ts-ignore
         setCurrentContent(data);
         setIsLoading(false);
       })
       .catch((error) => {
         console.error(error);
-        setIsLoading(false);
       });
   };
 

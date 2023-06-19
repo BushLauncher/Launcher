@@ -3,8 +3,9 @@ import { GameType, LaunchTaskState, ProgressLaunchCallback, VersionData } from '
 import { knowGameError, knowGameErrorFormat } from './public/ErrorDecoder';
 import { diagnose, MinecraftIssueReport } from '@xmcl/core';
 import { ResolveXmclVersion } from './PreLaunchEngine';
-import fs from 'fs';
+import fs, { existsSync } from 'fs';
 import { getLocationRoot } from './Launcher';
+import path from 'path';
 
 export async function verifyGameFiles(version: VersionData): Promise<true | MinecraftIssueReport> {
   const report = await diagnose(version.id, getLocationRoot());

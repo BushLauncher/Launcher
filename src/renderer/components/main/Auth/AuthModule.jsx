@@ -61,7 +61,8 @@ async function checkUserLogged(reload) {
   if (!isAccount) {
     const notification = toast.info('Hi, please log-in an Minecraft account', {
       autoClose: false,
-      hideProgressBar: true
+      hideProgressBar: true,
+      closeButton: false
     });
     await addAccount(await getLogin({ closable: false }));
     toast.dismiss(notification);

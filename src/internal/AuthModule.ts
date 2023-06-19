@@ -14,7 +14,7 @@ auth.on('load', (asset, message) =>
 
 
 export function AddAccount(user: MinecraftAccount): boolean {
-  console.log(prefix + prefix + 'Adding a new Account...');
+  console.log(prefix + 'Adding a new Account...');
   if (isAccountValid(user)) {
     return addToStorage(user);
   } else throw new Error('The new Account is not valid !');

@@ -1,20 +1,31 @@
 import styles from './css/ProfileViewStyle.module.css';
-import Button, { ButtonType } from '../../public/Input/Button';
-import ButtonStyle from '../../public/css/inputStyle.module.css';
 import Loader from '../../public/Loader';
 import defaultStyle from './css/DefaultSettingsView.module.css';
 import UserCard from '../../main/Auth/UserCard';
+import { Button } from 'antd';
+import { useState } from 'react';
 
 export default function ProfileSettingsView() {
+  const [isLoading, _setLoadings] = useState<boolean[]>([]);
+  const setLoading = (index: number, val: boolean) => {
+    _setLoadings((prevLoadings) => {
+      const newLoadings = [...prevLoadings];
+      newLoadings[index] = true;
+      return newLoadings;
+    });
+  };
   return <div className={defaultStyle.View}>
     <div className={styles.ProfileList}>
       <p className={styles.title}>Profiles connectées:</p>
-      <Button action={() => {
-        window.electron.ipcRenderer.invoke('Auth:LogOutAll', {}).then(() => {
-          window.location.reload();
-        });
-      }} content={<p>Logout All</p>} type={ButtonType.Rectangle}
-              className={[ButtonStyle.danger, styles.logoutAllButton].join(' ')} />
+      <Button danger loading={isLoading[0]} onClick={
+        async () => {
+          setLoading(0, true);
+          await window.electron.ipcRenderer.invoke('Auth:LogOutAll', {}).catch(err => console.error(err));
+          window.electron.ipcRenderer.sendMessage('App:Relaunch', {});
+        }
+      } content={'Logout All'} type={'default'} className={styles.logoutAllButton}>
+        Logout All
+      </Button>
       <div className={styles.list}>
         <Loader content={(reload: () => void) => new Promise((resolve, reject) => {
           window.electron.ipcRenderer.invoke('Auth:getAccountList', {}).then(async (accountList: any[]) => {

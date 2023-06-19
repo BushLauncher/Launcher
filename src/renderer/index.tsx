@@ -6,6 +6,8 @@ import { getCurrentTheme } from './scripts/ThemeManager';
 import themeStyle from './Theme.module.css';
 import Loader from './components/public/Loader';
 import { Theme } from '../internal/public/ThemePublic';
+import { ConfigProvider, theme } from 'antd';
+import SettingsView from './components/views/SettingsView';
 
 const container = document.getElementById('root')!;
 const root = createRoot(container);
@@ -17,19 +19,21 @@ const globalState: { isOnline: boolean, theme: Promise<Theme> } = {
 
 export const globalStateContext = React.createContext(globalState);
 root.render(
-  <globalStateContext.Provider value={globalState}>
-    <Loader content={() => new Promise((resolve, reject) => {
-      globalState.theme.then((theme: Theme) => {
-        console.log(theme);
-        resolve(<div id={'Theme-container'} className={themeStyle['Theme-' + theme]}>
-          <MainMenuBar />
-          <App />
-        </div>);
-      });
+  <ConfigProvider theme={{ algorithm: theme.darkAlgorithm }}>
+    <globalStateContext.Provider value={globalState}>
+      <Loader content={() => new Promise((resolve, reject) => {
+        globalState.theme.then((theme: Theme) => {
+          console.log(theme);
+          resolve(<div id={'Theme-container'} className={themeStyle['Theme-' + theme]}>
+            <MainMenuBar />
+            <App />
 
-    })} className={'Theme-container'} style={undefined} />
+          </div>);
+        });
 
-  </globalStateContext.Provider>
+      })} className={'Theme-container'} style={undefined} />
+    </globalStateContext.Provider>
+  </ConfigProvider>
 );
 
 // calling IPC exposed from preload script

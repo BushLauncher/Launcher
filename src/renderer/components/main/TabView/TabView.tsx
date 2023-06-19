@@ -9,7 +9,7 @@ export interface TabParams extends ComponentsPublic {
   id: string,
   displayName?: string,
   iconPath?: string,
-  content?: Element,
+  content?: Element | (() => Element),
   onClickAction?: () => {},
   selected?: boolean
 }
@@ -34,13 +34,10 @@ export interface TabViewProps extends ComponentsPublic {
   params?: TabViewParameters
 }
 
-export default function TabView(props: TabViewProps) {
-  if (props.contentList.length == 0) {
-    console.warn('the TabView is empty ! (content == null)');
-    return <></>;
-  }
-  const selectedTab: number = props.selectedTabIndex && props.selectedTabIndex != -1 ? props.selectedTabIndex : 0;
-  const [whichIsSelected, select] = useState(props.contentList[selectedTab]);
+export default function TabView({ className, contentList, params, selectedTabIndex }: TabViewProps) {
+  if (contentList.length == 0) console.warn('the TabView is empty ! (content == null)');
+  const selectedTab: number = (selectedTabIndex && selectedTabIndex > 0 && selectedTabIndex <= contentList.length) ? selectedTabIndex : 0;
+  const [whichIsSelected, select] = useState(contentList[selectedTab]);
 
   function saveSelectedView(viewName: string) {
     window.electron.ipcRenderer.sendMessage('updateData', {
@@ -50,9 +47,10 @@ export default function TabView(props: TabViewProps) {
   }
 
   function changeView(tabIndex: number, action: () => {}) {
-    if (props.contentList[tabIndex]) {
-      select(props.contentList[tabIndex]);
-      saveSelectedView(props.contentList[tabIndex].id);
+    const tabData = contentList[tabIndex];
+    if (tabData) {
+      select(tabData);
+      saveSelectedView(tabData.id);
       //execute afterAction
       if (action) action();
     } else console.error(tabIndex + '\'s tab don\'t exist');
@@ -60,24 +58,25 @@ export default function TabView(props: TabViewProps) {
   }
 
   function getCollapsable() {
-    if (props.params?.style?.orientation === 'Horizontal') {
-      return props.params.collapsable != undefined ? props.params.collapsable : true;
+    if (params?.style?.orientation === 'Horizontal') {
+      return params.collapsable != undefined ? params.collapsable : true;
     }/*else cannot collapse horizontal nav bar on a **Vertical** view*/
   }
 
   return (
-    <div className={[styles.TabView, props.className].join(' ')}
-         data-orientation={props.params?.style?.orientation ? props.params?.style.orientation : 'Horizontal'}>
+    <div className={[styles.TabView, className].join(' ')}
+         data-orientation={params?.style?.orientation ? params?.style.orientation : 'Horizontal'}>
       <TabNavBar
         whichIsSelected={whichIsSelected}
         select={changeView}
-        tabList={props.contentList}
+        tabList={contentList}
         collapsable={getCollapsable()}
-        collapsed={props?.params?.collapsed ? props?.params?.collapsed : false}
-        onCollapse={props.params?.onMenuCollapsed}
-        styleSettings={props.params?.style}
+        collapsed={params?.collapsed ? params?.collapsed : false}
+        onCollapse={params?.onMenuCollapsed}
+        styleSettings={params?.style}
       />
-      <TabViewer View={whichIsSelected.content ? whichIsSelected.content : EmptyView} navBarVisibility={props.params?.style?.navBarBackgroundVisibility} />
+      <TabViewer View={whichIsSelected.content ? whichIsSelected.content : EmptyView}
+                 navBarVisibility={params?.style?.navBarBackgroundVisibility} />
     </div>
   );
 }

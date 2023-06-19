@@ -36,7 +36,7 @@
 .Dropdown {
   width: fit-content;
   height: 10vh;
-  background-color: var(--secondary-background-color);
+  background-color: var(--second-background-color);
   border-radius: 15px;
   padding: 0 2vw 0 2vw;
   position: relative;
@@ -51,6 +51,7 @@
 }
 
 .Dropdown .selectedContainer .label {
+
 }
 
 
@@ -69,7 +70,7 @@
   min-height: 5vh;
   max-height: 20vh;
   overflow: auto;
-  background-color: var(--secondary-background-color);
+  background-color: var(--second-background-color);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -96,4 +97,6 @@
 }
 
 .input .label {
+  word-break: keep-all;
+  white-space: nowrap;
 }

@@ -6,7 +6,6 @@ import ErrorIcon from '../../../assets/graphics/icons/close.svg';
 import downArrowIcon from '../../../assets/graphics/icons/arrow_down.svg';
 import Line from '../public/Line';
 import React, { useContext, useState } from 'react';
-import Version from '../public/Version';
 import {
   Callback,
   ErrorCallback,
@@ -27,6 +26,7 @@ import { toast } from 'react-toastify';
 import CallbackMessage from '../public/CallbackMessage';
 import ProgressBar from '@ramonak/react-progress-bar';
 import { CallbackType } from '../../../internal/public/ErrorDecoder';
+import Version from '../public/Version';
 
 async function getSelected() {
   return await window.electron.ipcRenderer.invoke('Version:get', {});
@@ -86,7 +86,7 @@ export default function LaunchButton(props: LaunchButtonProps) {
     console.log('Requesting Launch...');
     //@ts-ignore
     window.electron.ipcRenderer.on('GameLaunchCallback', (callback: Callback) => decodeLaunchCallback(callback));
-    window.electron.ipcRenderer.invoke('GameEngine:Launch', {LaunchProcess: process}).then((exitedCallback: ExitedCallback) => {
+    window.electron.ipcRenderer.invoke('GameEngine:Launch', { LaunchProcess: process }).then((exitedCallback: ExitedCallback) => {
       decodeLaunchCallback(exitedCallback);
     });
   };
@@ -167,41 +167,62 @@ export default function LaunchButton(props: LaunchButtonProps) {
     }
   }
 
-  const versionSelectorInit = (reload: () => void) => {
-    return new Promise((resolve, reject) => {
-      if (props.versionSelector) {
-        getSelected().then((selectedVersion) => {
-          resolve(
-            <div className={styles.versionSelector} onClick={() => {
-              setVersionSelector(state === LaunchButtonState.Normal && !isVersionSelectorOpened);
-            }}>
-              <div className={styles.dataContainer}>
-                <Icon className={styles.dropdownIcon} icon={downArrowIcon} alt={'open the dropdown'} />
-                <p className={styles.versionText}>{selectedVersion.id.toString()}</p>
-              </div>
-              <div className={styles.versionListDropdown}>
-                <Loader content={async (reload: () => void) => {
-                  return (await window.electron.ipcRenderer.invoke('Version:getList', { gameType: GameType.VANILLA }))
-                    .map((version: VersionData, index: any) => {
-                      return (<Version version={{ id: version.id, gameType: GameType.VANILLA }} key={index}
-                                       className={[styles.version, version.id === selectedVersion.id ? styles.versionSelected : ''].join(' ')}
-                                       isInstalled={version.installed} selected={version.id === selectedVersion.id}
-                                       tools={false} canSelect={true} />);
-                    });
-                }}
-                        className={styles.loaderContentVersion} style={undefined} />
-
-              </div>
-            </div>
-          );
+  const versionSelectorInit = async (reload: () => void): Promise<JSX.Element> => {
+    if (props.versionSelector) {
+      let selectedVersion = await getSelected();
+      const versionList = await window.electron.ipcRenderer.invoke('Version:getList', { gameType: GameType.VANILLA })
+        .catch(async err => {
+          const callback: ErrorCallback = {
+            stepId: -1,
+            stepCount: -1,
+            type: CallbackType.Error,
+            return: {
+              message: 'Error occurred',
+              desc: 'Cannot get versions from network',
+              resolution: err.message
+            }
+          };
+          toast.error(<CallbackMessage callback={callback} />, { toastId: 'Version:getListError' });
+          const localRes = await window.electron.ipcRenderer.invoke('Version:getList', {
+            gameType: GameType.VANILLA,
+            type: 'local'
+          });
+          selectedVersion = localRes[0];
+          return localRes;
         });
-      } else return null;
-    });
+      Object.freeze(selectedVersion);
+      return (
+        <div className={styles.versionSelector} onClick={() => {
+          setVersionSelector(state === LaunchButtonState.Normal && !isVersionSelectorOpened);
+        }}>
+          <div className={styles.dataContainer}>
+            <Icon className={styles.dropdownIcon} icon={downArrowIcon} alt={'open the dropdown'} />
+            <p className={styles.versionText}>{selectedVersion.id.toString()}</p>
+          </div>
+          <div className={styles.versionListDropdown}>
+
+            {versionList.map((version: VersionData, index: any) => {
+              return <Version version={{ id: version.id, gameType: GameType.VANILLA }}
+                              key={index}
+                              className={[styles.version, version.id === selectedVersion.id ? styles.versionSelected : ''].join(' ')}
+                              isInstalled={version.installed} selected={version.id === selectedVersion.id}
+                              tools={false}
+                              canSelect={true}
+              />;
+
+            })
+            }
+
+          </div>
+        </div>
+      );
+    } else return <div></div>;
+
   };
   return (
 
     <div
-      className={[styles.LaunchButton, (!isOnline() ? styles.offlineStyle : '')]
+      className={[styles.LaunchButton, (!isOnline() ? styles.offlineStyle : ''), styles[state]]
         .join(' ')}
       style={props.customStyle}
       data-version-selector={props.versionSelector.toString()}
