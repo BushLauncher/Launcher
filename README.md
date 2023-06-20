@@ -14,14 +14,14 @@ by [@Gagafeee](https://github.com/Gagafeee) | <a href="https://github.com/Gagafe
 
 BushLauncher is a flexible Minecraft Launcher designed to simplify installation of the Minecraft game and its prerequisites, but also of mods, texture packs, etc.
 #
-BushLauncher use configuration system, you can create as many as you like and put whatever you like in : version, resourcepacks, mods, shaderpack...
+BushLauncher uses a configuration system, you can create as many as you like and put whatever you like in : version, resourcepacks, mods, shaderpack…
 [^0]
 - [ ] :tired_face: Tired of always having to install stuff ?
   
     BushLauncher takes care of all,
   - [x] Java installation,
-  - [x] Minecraft installation,
-  - [ ] Mods update...
+  - [x] Minecraft's installation,
+  - [ ] Mods update…
 
 - [ ] :link: Want to play with your friends ?
 
@@ -29,17 +29,20 @@ BushLauncher use configuration system, you can create as many as you like and pu
 
 - [x] :busts_in_silhouette: Have multiple accounts ?
  
-  BushLancher supports multiple minecraft accounts with a switch system
+  BushLauncher supports multiple minecraft accounts with a switch system
+
+- [x] ❎ Offline mode
+- [x] 📂 File Manager (manage, install and diagnose your minecraft versions)
 
 [^0]: This projet is still under developpement so some features may not be available
 
 ## Built With
 
-BushLauncher use the power of [Electron](https://www.electronjs.org) and [React](https://legacy.reactjs.org/) to give you the best performances in any cases
+BushLauncher uses the power of [Electron](https://www.electronjs.org) and [React](https://legacy.reactjs.org/) to give you the best performances in any cases
 
 ## Getting Started
 
-Download last version of BushLauncher, login, and hit the play button !
+Download the last version of BushLauncher, login, and hit the play button !
 
 ## Contributing
 
