@@ -47,6 +47,7 @@ export default function App() {
                 ...defaultNotificationParams,
                 ...{ autoClose: 2000, closeButton: false, pauseOnHover: false }
               });
+
               resolve(
                 <div id={'MAIN'}>
                   <AuthModule />

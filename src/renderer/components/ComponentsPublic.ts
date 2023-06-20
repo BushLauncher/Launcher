@@ -1,4 +1,4 @@
 export interface ComponentsPublic {
   className?: string,
-  style?: {}
+  style?: React.CSSProperties
 }

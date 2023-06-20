@@ -5,6 +5,7 @@ import TabNavBar from './NavBar';
 import { ComponentsPublic } from '../../ComponentsPublic';
 import EmptyView from '../../views/emptyView';
 
+//TODO: add loading icon
 export interface TabParams extends ComponentsPublic {
   id: string,
   displayName?: string,

@@ -17,7 +17,7 @@ export default function VanillaView() {
       />
       <LaunchButton
         versionSelector={true}
-        customStyle={{
+        style={{
           position: 'absolute',
           top: '35%'
         }}

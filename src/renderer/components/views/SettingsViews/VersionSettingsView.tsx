@@ -37,35 +37,41 @@ export default function VersionSettingsView() {
     <Loader content={async (reload: () => any) => {
       // @ts-ignore
       const VersionTool = (): Promise<JSX.Element> => new Promise((resolve) => {
-        console.log('execute promise');
         const tabList: TabParams[] = [];
         window.electron.ipcRenderer.invoke('Version:getTypeList', {})
           .then((gameTypeList: string[]) => {
             const construct = gameTypeList.map(async (gameType) => {
               //get all versions from this gameType
-              await window.electron.ipcRenderer.invoke('Version:getList', { gameType: gameType, type: 'local' })
-                .then((versionList: VersionData[]) => {
-                  tabList.push({
-                    id: gameType,
-                    iconPath: getGameTypeIcon(gameType as unknown as GameType),
-                    displayName: gameType,
-                    /*@ts-ignore */
-                    content: versionList.length === 0 ? EmptyView() : (
-                      <div className={styles.scrollable}>
-                        {versionList.map((version, i) => <VersionCard version={version} key={i}
-                                                                      toolBox={{
-                                                                        diagnose: true,
-                                                                        uninstall: true,
-                                                                        reinstall: true,
-                                                                        callback: () => reload()
-                                                                      }} className={styles.card} />)}
-                      </div>
-                    )
-                  });
-                });
+
+              tabList.push({
+                id: gameType,
+                iconPath: getGameTypeIcon(gameType as unknown as GameType),
+                displayName: gameType,
+                /*@ts-ignore */
+                content: <Loader content={async (reload) => {
+                  const versionList: VersionData[] = await window.electron.ipcRenderer.invoke('Version:getList', { gameType: gameType/*, type: 'local'*/ }).catch(err => console.log(err));
+                  return versionList.length === 0 ? EmptyView :
+                    <div className={styles.scrollable}> {versionList.map((version, i) =>
+                      <VersionCard version={version} key={i}
+                                   toolBox={{
+                                     diagnose: { active: true },
+                                     uninstall: {
+                                       active: true,
+                                       callback: reload
+                                     },
+                                     install: {
+                                       active: true,
+                                       callback: reload
+                                     }
+                                   }} className={styles.card} />)}</div>;
+
+
+                }} />
+
+              });
+
             });
             Promise.all(construct).then(() => {
-              console.log('resolved');
               resolve(<TabView contentList={tabList} params={{
                 collapsable: false,
                 collapsed: true,

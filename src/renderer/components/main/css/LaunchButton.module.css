@@ -12,11 +12,24 @@
   min-width: 300px;
   padding: 10px 1vw;
   transition: all .5s;
+  position: relative;
+  z-index: 1;
   --bg-error: linear-gradient(159deg, #ff3c00 0%, #aa003b 100%);
   --bg-launched: linear-gradient(159deg, #22ff52 0%, rgba(76, 175, 80, 1) 100%);
   --bg-loading: linear-gradient(159deg, #159cf7 0%, #0a57d2 100%);
   --bg-normal: linear-gradient(124deg, rgba(21, 230, 99, 1) 0%, rgba(20, 218, 171, 1) 62%);
-  --bg-offline: linear-gradient(159deg, #dedede 0%, #9fa9c5 100%)
+  --bg-offline: linear-gradient(159deg, #dedede 0%, #9fa9c5 100%);
+}
+
+.LaunchButton.Square {
+  width: 5vw;
+  height: 5vw;
+  min-width: 5vw;
+}
+.LaunchButton.Square::before {
+  width: 5vw;
+  height: 5vw;
+  min-width: 5vw;
 }
 
 .LaunchButton .Content {
@@ -47,7 +60,7 @@
   height: 100%;
   transform: scale(2);
   transition: all .3s ease-in-out;
-  width: 3vw
+  width: 2vw
 }
 
 .LaunchButton .runContent .text {
@@ -67,7 +80,7 @@
   background: var(--bg-error)
 }
 
-.LaunchButton.Launched .runContent .icon {
+.LaunchButton.Launched:not(.Square) .runContent .icon {
   opacity: 0;
   width: 0
 }
@@ -125,13 +138,15 @@
   content: '';
   display: block;
   filter: blur(20px);
-  height: 13vh;
+  top: 0;
   opacity: .4;
   position: absolute;
   transform: scale(1.2);
   transition: opacity 0.3s, all .5s;
   width: 30vw;
-  z-index: -1
+  height: 12vh;
+  z-index: -1;
+  flex: none;
 }
 
 .LaunchButton:hover, .LaunchButton[data-version-selector='true'][data-version-selector-opened='true'], .LaunchButton.Loading, .LaunchButton.Error, .LaunchButton.Launched {

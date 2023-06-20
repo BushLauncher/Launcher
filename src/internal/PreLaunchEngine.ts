@@ -4,7 +4,7 @@ import {
   LaunchTask,
   LaunchTaskState,
   PreLaunchTasks,
-  ProgressLaunchCallback,
+  ProgressSubTaskCallback,
   sendUnImplementedException,
   UpdateLaunchTaskCallback,
   VersionData
@@ -31,7 +31,7 @@ export abstract class ResolvedPreLaunchTask {
 
   public abstract run(callback: (callback: UpdateLaunchTaskCallback) => void): Promise<UpdateLaunchTaskCallback>;
 
-  public getCallback(processingCallback: ProgressLaunchCallback): UpdateLaunchTaskCallback {
+  public getCallback(processingCallback: ProgressSubTaskCallback): UpdateLaunchTaskCallback {
     return {
       task: this.baseTask,
       state: LaunchTaskState.processing,
@@ -64,7 +64,7 @@ export class ParseJava extends ResolvedPreLaunchTask {
 
   public override async run(callback: (callback: UpdateLaunchTaskCallback) => void) {
     callback({ task: this.baseTask, state: LaunchTaskState.starting, displayText: 'Checking Java...' });
-    const data = await parseJava((c: ProgressLaunchCallback) => callback(this.getCallback(c)));
+    const data = await parseJava((c: ProgressSubTaskCallback) => callback(this.getCallback(c)));
     return <UpdateLaunchTaskCallback>{
       task: this.baseTask, state: LaunchTaskState.finished, data: {
         return: data
@@ -84,7 +84,7 @@ export class ParseGameFile extends ResolvedPreLaunchTask {
 
   public override async run(callback: (callback: UpdateLaunchTaskCallback) => void) {
     callback({ task: this.baseTask, state: LaunchTaskState.starting, displayText: 'Checking Minecraft files...' });
-    await parseGameFile(this.baseTask.params.version, (c: ProgressLaunchCallback) => callback(this.getCallback(c))).catch(err => console.error(err));
+    await parseGameFile(this.baseTask.params.version, (c: ProgressSubTaskCallback) => callback(this.getCallback(c))).catch(err => console.error(err));
     return <UpdateLaunchTaskCallback>{ task: this.baseTask, state: LaunchTaskState.finished };
   }
 }
@@ -141,7 +141,7 @@ export function resolvePreLaunchTaskList(launchOperation: LaunchTask[]): Resolve
 }
 
 
-export function parseGameFile(version: VersionData, callback: (callback: ProgressLaunchCallback) => void): Promise<void> {
+export function parseGameFile(version: VersionData, callback: (callback: ProgressSubTaskCallback) => void): Promise<void> {
   return new Promise(async (resolve, reject) => {
       const Install = () => InstallGameFiles(version, (c) => callback(c))
         .then(() => {
@@ -182,7 +182,7 @@ export function parseAccount(): boolean {
   return (account != null && AccountManager.isAccountValid(account));
 }
 
-export function parseJava(callback: (c: ProgressLaunchCallback) => void): Promise<string> {
+export function parseJava(callback: (c: ProgressSubTaskCallback) => void): Promise<string> {
   return new Promise<string>(async (resolve, reject) => {
     console.log('Parsing java...');
     callback({ state: LaunchTaskState.processing, displayText: 'Parsing Java...' });

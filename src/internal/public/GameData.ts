@@ -14,7 +14,6 @@ export type VersionData = {
   gameType: GameType;
   installed?: boolean;
 };
-
 export const getDefaultGameType: GameType = GameType.VANILLA;
 export const getDefaultVersion = (gameType: GameType) => {
   return supportedVersion[
@@ -58,7 +57,7 @@ export enum PreLaunchTasks {
   VerifyGameFile = 'VerifyGameFile',
   InstallBootstrap = 'InstallBootstrap',
   Launch = 'Launch'
-};
+}
 
 export type LaunchTask = {
   id: keyof typeof PreLaunchTasks,
@@ -139,7 +138,7 @@ export interface UpdateLaunchTaskCallback {
   }
 }
 
-export interface ProgressLaunchCallback {
+export interface ProgressSubTaskCallback {
   displayText?: string,
   return?: any,
   localProgress?: number

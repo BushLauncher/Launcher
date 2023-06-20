@@ -27,6 +27,7 @@ import CallbackMessage from '../public/CallbackMessage';
 import ProgressBar from '@ramonak/react-progress-bar';
 import { CallbackType } from '../../../internal/public/ErrorDecoder';
 import Version from '../public/Version';
+import { ComponentsPublic } from '../ComponentsPublic';
 
 async function getSelected() {
   return await window.electron.ipcRenderer.invoke('Version:get', {});
@@ -48,8 +49,28 @@ export type LoadingProgress = {
   stepCount: number,
   progressVal: number
 }
-export type LaunchButtonProps = { customStyle: any, versionSelector: boolean }
-export default function LaunchButton(props: LaunchButtonProps) {
+
+export interface LaunchButtonProps extends ComponentsPublic {
+  versionSelector: boolean,
+  type?: 'square' | 'default',
+  onRun?: (version: VersionData) => any,
+  onProgressCallback?: (callback: ProgressCallback) => any,
+  onError?: (err: ErrorCallback | any) => any
+  onExited?: (exitedCallback: ExitedCallback) => any
+  onLaunched?: () => any
+}
+
+export default function LaunchButton({
+                                       style,
+                                       versionSelector,
+                                       type,
+                                       onRun,
+                                       onExited,
+                                       onProgressCallback,
+                                       onLaunched,
+                                       onError
+                                     }: LaunchButtonProps) {
+  type = type === undefined ? 'default' : type;
   const [isVersionSelectorOpened, setVersionSelector] = useState(false);
   const [state, setCurrentState] = useState(LaunchButtonState.Normal);
   const [text, setDisplayText] = useState('Launch');
@@ -85,10 +106,13 @@ export default function LaunchButton(props: LaunchButtonProps) {
     setDisplayText('Initializing...');
     console.log('Requesting Launch...');
     //@ts-ignore
-    window.electron.ipcRenderer.on('GameLaunchCallback', (callback: Callback) => decodeLaunchCallback(callback));
-    window.electron.ipcRenderer.invoke('GameEngine:Launch', { LaunchProcess: process }).then((exitedCallback: ExitedCallback) => {
-      decodeLaunchCallback(exitedCallback);
+    window.electron.ipcRenderer.on('GameLaunchCallback', (callback: Callback) => {
+      decodeLaunchCallback(callback);
     });
+    window.electron.ipcRenderer.invoke('GameEngine:Launch', { LaunchProcess: process })
+      .then((exitedCallback: ExitedCallback) => {
+        decodeLaunchCallback(exitedCallback);
+      });
   };
 
 
@@ -96,6 +120,7 @@ export default function LaunchButton(props: LaunchButtonProps) {
     switch (_callback.type) {
       case CallbackType.Progress: {
         const callback: ProgressCallback = _callback as unknown as ProgressCallback;
+        if (onProgressCallback) onProgressCallback(callback);
         if (state !== LaunchButtonState.Loading) setCurrentState(LaunchButtonState.Loading);
         if (callback.task.displayText !== undefined) setDisplayText(callback.task.displayText);
         //add or update sub task
@@ -136,6 +161,7 @@ export default function LaunchButton(props: LaunchButtonProps) {
       }
       case CallbackType.Error: {
         const callback = _callback as unknown as ErrorCallback;
+        if (onError) onError(callback);
         setCurrentState(LaunchButtonState.Error);
         setDisplayText('Error');
         toast.error(<CallbackMessage callback={callback} />, {
@@ -147,13 +173,15 @@ export default function LaunchButton(props: LaunchButtonProps) {
         break;
       }
       case CallbackType.Success: {
-        //console.log(_callback);
+        if(onLaunched) onLaunched()
         setDisplayText('Launched');
         setCurrentState(LaunchButtonState.Launched);
         console.log('Game Launched');
         break;
       }
       case CallbackType.Closed: {
+        const callback = _callback as unknown as ExitedCallback
+        if(onExited) onExited(callback)
         setDisplayText('Launch');
         setCurrentState(LaunchButtonState.Normal);
         setProgress({
@@ -168,7 +196,7 @@ export default function LaunchButton(props: LaunchButtonProps) {
   }
 
   const versionSelectorInit = async (reload: () => void): Promise<JSX.Element> => {
-    if (props.versionSelector) {
+    if (versionSelector) {
       let selectedVersion = await getSelected();
       const versionList = await window.electron.ipcRenderer.invoke('Version:getList', { gameType: GameType.VANILLA })
         .catch(async err => {
@@ -222,10 +250,10 @@ export default function LaunchButton(props: LaunchButtonProps) {
   return (
 
     <div
-      className={[styles.LaunchButton, (!isOnline() ? styles.offlineStyle : ''), styles[state]]
+      className={[styles.LaunchButton, (!isOnline() ? styles.offlineStyle : undefined), (type === 'square' ? styles.Square : undefined), styles[state]]
         .join(' ')}
-      style={props.customStyle}
-      data-version-selector={props.versionSelector.toString()}
+      style={style}
+      data-version-selector={versionSelector.toString()}
       data-version-selector-opened={isVersionSelectorOpened}
     >
       <div className={styles.Content}>
@@ -239,6 +267,7 @@ export default function LaunchButton(props: LaunchButtonProps) {
                    window.electron.ipcRenderer.sendMessage('Version:set', defaultVersion);
                    version = defaultVersion;
                  }
+                 if (onRun) onRun(version);
                  requestLaunch(version);
                } else {
                  return null;
@@ -249,17 +278,17 @@ export default function LaunchButton(props: LaunchButtonProps) {
             icon={getIcon()}
             alt={'Launch the game Button'}
           />
-          <p className={styles.text}>{text}</p>
+          {type === 'default' && <p className={styles.text}>{text}</p>}
         </div>
-        <Loader
+        {versionSelector && <Loader
           content={versionSelectorInit}
-          className={styles.versionSelectorLoader} style={undefined} />
+          className={styles.versionSelectorLoader} style={undefined} />}
 
-        {props.versionSelector ? (
+        {versionSelector ? (
           <Line className={styles.line} direction={'vertical'} customStyle={undefined} />
         ) : null}
       </div>
-      <div className={styles.LoadingContent}>
+      {type === 'default' && <div className={styles.LoadingContent}>
         <p>{progress.currentStep + '/' + progress.stepCount}</p>
         <ProgressBar completed={Math.ceil(progress.progressVal)}
                      maxCompleted={100}
@@ -268,7 +297,7 @@ export default function LaunchButton(props: LaunchButtonProps) {
                      baseBgColor={'#4b4949'}
                      labelColor={'#fff'}
         />
-      </div>
+      </div>}
     </div>
   );
 }

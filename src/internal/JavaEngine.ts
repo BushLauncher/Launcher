@@ -1,4 +1,4 @@
-import { LaunchTaskState, ProgressLaunchCallback } from './public/GameData';
+import { LaunchTaskState, ProgressSubTaskCallback } from './public/GameData';
 import path from 'path';
 import { app } from 'electron';
 import fs from 'fs';
@@ -11,7 +11,7 @@ import { findFileRecursively } from './GameFileManager';
 
 const prefix = '[JavaEngine]: ';
 
-export async function installJava(callback: (c: ProgressLaunchCallback) => void): Promise<string> {
+export async function installJava(callback: (c: ProgressSubTaskCallback) => void): Promise<string> {
   console.log(prefix + prefix + 'installing Java...');
   callback({ state: LaunchTaskState.processing, displayText: 'Installing Java...' });
   const dir = path.join(app.getPath('userData'), 'Local Java\\');

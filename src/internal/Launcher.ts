@@ -88,7 +88,11 @@ export function StopGame() {
 export function getLocationRoot(): string {
   const storageRes: string | null | undefined = userDataStorage.get('saved.rootPath');
   if (storageRes !== undefined && storageRes !== null) return storageRes;
-  else return setLocalLocationRoot(getAppDataPath() + '\\.minecraft');
+  else return setLocalLocationRoot(getDefaultRootPath());
+}
+
+export function getDefaultRootPath(): string {
+  return getAppDataPath() + '\\.minecraft';
 }
 
 function setLocalLocationRoot(path: string) {
@@ -117,7 +121,7 @@ export function Launch(version: VersionData, callback: (callback: StartedCallbac
           launcherName: `BushLauncher`,
           launcherBrand: `BushLauncher`,
           gameName: `BushLauncher Minecraft [${version.id}]`
-
+          //TODO: set game icon name and Discord RTC
           //TODO: Server, to launch directly on server
         }).then((process: ChildProcess) => {
           const watcher = createMinecraftProcessWatcher(process);

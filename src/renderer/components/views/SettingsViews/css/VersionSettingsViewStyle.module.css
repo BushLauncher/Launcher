@@ -1,34 +1,35 @@
+.View {
+  max-height: 75vh;
+}
 .pathSelector {
-  width: 50vw;
+  width: 30vw;
   height: 10vh;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 1vw;
+  position: relative;
 }
 
 .pathSelector .textArea {
   width: 40vw;
-  height: 7vh;
   white-space: nowrap;
   word-wrap: normal;
   word-break: keep-all;
   overflow-wrap: normal;
-  background-color: var(--hover-background-color);
-  border: 0;
-  font-family: Octosquares;
+ /* background-color: var(--hover-background-color);*/
   font-size: 2.5vw;
   color: var(--text-color);
   border-radius: 10px;
 }
 
-.pathSelector .buttonContainer {
-  display: flex;
-  gap: 5px;
-}
-
-.pathSelector .button {
-
+.pathSelector .icon {
+  width: 3vw;
+  height: 3vw;
+  position: absolute;
+  left: -4vw;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .VersionTool {
@@ -36,4 +37,19 @@
   min-height: 350px;
   border-radius: 20px;
   overflow: hidden;
+  justify-content: flex-start;
+}
+
+.VersionTool .scrollable {
+  width: 100%;
+  overflow-y: scroll;
+  gap: 1vh;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  box-sizing: border-box;
+  padding-left: 5vw;
+}
+.VersionTool .scrollable .card {
+  flex: none;
 }

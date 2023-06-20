@@ -1,5 +1,5 @@
 import { installTask } from '@xmcl/installer';
-import { GameType, LaunchTaskState, ProgressLaunchCallback, VersionData } from './public/GameData';
+import { GameType, LaunchTaskState, ProgressSubTaskCallback, VersionData } from './public/GameData';
 import { knowGameError, knowGameErrorFormat } from './public/ErrorDecoder';
 import { diagnose, MinecraftIssueReport } from '@xmcl/core';
 import { ResolveXmclVersion } from './PreLaunchEngine';
@@ -7,14 +7,19 @@ import fs, { existsSync } from 'fs';
 import { getLocationRoot } from './Launcher';
 import path from 'path';
 
-export async function verifyGameFiles(version: VersionData): Promise<true | MinecraftIssueReport> {
-  const report = await diagnose(version.id, getLocationRoot());
-  if (report.issues.length === 0) return true;
-  else return report;
-  //report can be analysed [https://github.com/Voxelum/minecraft-launcher-core-node/tree/master/packages/core#diagnose]
+export async function verifyGameFiles(version: VersionData, path?: string): Promise<true | MinecraftIssueReport> {
+  return new Promise(async (resolve, reject) => {
+    path = path || getLocationRoot();
+    if (!existsSync(path)) reject('path don\' exist');
+    console.log(`Diagnosing ${version.gameType} ${version.id}`);
+    const report = await diagnose(version.id, path);
+    if (report.issues.length === 0) resolve(true);
+    else resolve(report);
+    //report can be analysed [https://github.com/Voxelum/minecraft-launcher-core-node/tree/master/packages/core#diagnose]
+  });
 }
 
-export async function InstallGameFiles(version: VersionData, callback: (callback: ProgressLaunchCallback) => void): Promise<void> {
+export async function InstallGameFiles(version: VersionData, callback: (callback: ProgressSubTaskCallback) => void): Promise<void> {
   console.log('Installing game file');
   callback({ state: LaunchTaskState.processing, displayText: 'Installing Minecraft files...' });
   switch (version.gameType) {
@@ -50,6 +55,27 @@ export async function InstallGameFiles(version: VersionData, callback: (callback
 
 }
 
+export async function UninstallGameFiles(version: VersionData, rootPath?: string, callback?: (callback: ProgressSubTaskCallback) => void): Promise<void> {
+  return new Promise(async (resolve, reject) => {
+    rootPath = rootPath || getLocationRoot();
+    const folderPath = path.join(rootPath, 'versions', version.id);
+
+    if (callback) callback({ state: LaunchTaskState.starting, displayText: 'Initializing...' });
+    if (existsSync(folderPath)) {
+      if (callback) callback({ state: LaunchTaskState.processing, displayText: 'Deleting...' });
+      switch (version.gameType) {
+        case GameType.VANILLA: {
+          //just delete version folder
+          deleteFolderRecursive(folderPath);
+          setTimeout(() => resolve(), 20000);
+          break;
+        }
+        default:
+          throw new Error(version.gameType + ' is not implemented in \'UninstallGameFile\' function');
+      }
+    } else reject('Cannot find folder: ' + folderPath);
+  });
+}
 
 export function findFileRecursively(path: string, targetFileName: string): string | undefined {
   const stack: string[] = [path];
@@ -68,3 +94,17 @@ export function findFileRecursively(path: string, targetFileName: string): strin
 
   return undefined;
 }
+
+const deleteFolderRecursive = function(path: string) {
+  if (fs.existsSync(path)) {
+    fs.readdirSync(path).forEach(function(file) {
+      const curPath = path + '/' + file;
+      if (fs.lstatSync(curPath).isDirectory()) { // recurse
+        deleteFolderRecursive(curPath);
+      } else { // delete file
+        fs.unlinkSync(curPath);
+      }
+    });
+    fs.rmdirSync(path);
+  }
+};

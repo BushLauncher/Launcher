@@ -42,6 +42,7 @@ import {
 import { AuthProviderType, MinecraftAccount } from '../internal/public/AuthPublic';
 import { getDefaultRootPath, getLocationRoot, RunPreLaunchProcess } from '../internal/Launcher';
 import { getLaunchInternal } from '../internal/PreLaunchProcessPatern';
+import { InstallGameFiles, UninstallGameFiles, verifyGameFiles } from '../internal/GameFileManager';
 
 const prefix = '[Main Process]: ';
 const createWindow = async () => {
@@ -234,6 +235,16 @@ ipcMain.handle('Version:get', (event, args) => {
 });
 ipcMain.on('Version:set', (event, version: VersionData) => {
   return userData.SelectVersion(version);
+});
+
+ipcMain.handle('VersionManager:Uninstall', async (event, args: { version: VersionData, path?: string }) => {
+  return await UninstallGameFiles(args.version, args.path, (callback) => event.sender.send('VersionManager:Uninstall', callback));
+});
+ipcMain.handle('VersionManager:Diagnose', async (event, args: { version: VersionData, path?: string }) => {
+  return await verifyGameFiles(args.version, args.path);
+});
+ipcMain.handle('VersionManager:Install', async (event, args: { version: VersionData }) => {
+  return await InstallGameFiles(args.version, (callback) => event.sender.send('VersionManager:Install', callback));
 });
 
 ipcMain.handle('Auth:Add', (event, args: { user: MinecraftAccount }) => {

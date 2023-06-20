@@ -22,6 +22,14 @@ export function SelectVersion(version: VersionData): void {
   console.log(`Selecting for: [${version.gameType.toString().toLowerCase()}]: ${version.id}`);
 }
 
+export function SetRootPath(path: string): boolean {
+  if (fs.existsSync(path)) {
+    console.log(prefix + 'Set root Path: ' + path);
+    userDataStorage.set('saved.rootPath', path);
+    return true;
+  } else return false;
+}
+
 interface InterfaceData {
   selectedTab: string;
   theme: Theme;

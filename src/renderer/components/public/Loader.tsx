@@ -23,7 +23,6 @@ export default function Loader({ content, className, style }: LoaderProps) {
   }, [content]);
 
   const reload = () => {
-    console.log("trigger reload");
     setIsLoading(true);
     content(reload)
       .then((data) => {

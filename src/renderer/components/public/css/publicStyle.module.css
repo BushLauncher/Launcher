@@ -149,3 +149,77 @@
   height: 100%;
 }
 
+/*****************************************/
+.VersionCard {
+  width: fit-content;
+  height: 10vh;
+  background-color: var(--second-background-color);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 2vw;
+  padding: 0.5vh 2vw;
+  border-radius: 10px;
+}
+.VersionCard .loadIcon {
+  height: 2vw;
+  width: 2vw;
+}
+.VersionCard .icon {
+  height: 7vh;
+  width: 7vh;
+}
+
+.VersionCard .buttonContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5vw;
+}
+
+.VersionCard .buttonContainer .button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+.VersionCard .buttonContainer .button .icon {
+  width: 2vw;
+  height: 2vw;
+}
+
+.toast {
+}
+
+.toast .text {
+  white-space: nowrap;
+  font-family: unset;
+  font-size: 3vh;
+}
+
+.toast .issuesContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1vh;
+  margin-top: 1vh;
+  overflow-y: scroll;
+  max-height: 26vh;
+}
+
+/***************************/
+.InstallReportCallbackMessage {
+  display: flex;
+}
+
+.InstallReportCallbackMessage .icon {
+  width: 3vh;
+  height: 3vh;
+}
+
+.InstallReportCallbackMessage .text {
+  white-space: nowrap;
+  font-family: unset;
+  font-size: 2vh;
+  padding: 0 1vw 0 0;
+}

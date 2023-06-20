@@ -29,6 +29,7 @@ export default function GeneralSettingView() {
         ));
       })} className={undefined} style={undefined} />} label={'Theme'} />
     <InputGroup
+      //TODO: Add popover
       input={<Button type={"primary"} content={'Delete all local Data'} onInput={(e) => requestDeleteAll()} danger size={'large'}>Delete all local Data</Button>}
       label={'User Data'} />
   </div>;
