@@ -1,0 +1,2 @@
+- [ ] Rework app starting
+- [ ] Build
