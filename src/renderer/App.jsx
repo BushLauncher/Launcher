@@ -6,18 +6,80 @@ import VanillaView from './components/views/vanillaView';
 import Loader from './components/public/Loader';
 import { toast, ToastContainer } from 'react-toastify';
 import SettingsView from './components/views/SettingsView';
-import AuthModule from './components/main/Auth/AuthModule';
+import AuthModule, { addAccount, getLogin } from './components/main/Auth/AuthModule';
+import AuthModuleStyle from './components/main/Auth/css/AuthModuleStyle.module.css';
+import { knownAuthError } from '../internal/public/AuthPublic';
 
-export const defaultNotificationParams = {
-  position: 'bottom-center',
-  autoClose: 5000,
-  hideProgressBar: false,
-  closeOnClick: false,
-  pauseOnHover: true,
-  draggable: false,
-  progress: undefined,
-  theme: 'dark'
+export const NotificationParam = {
+  info: {
+    autoClose: 2000, closeButton: false, pauseOnHover: false
+  },
+  success: {
+    type: 'success',
+    isLoading: false,
+    autoClose: undefined,
+    hideProgressBar: false
+  },
+  stuck: {
+    isLoading: false,
+    closeButton: true,
+    autoClose: false,
+    hideProgressBar: true
+  }
 };
+
+
+async function validateUser() {
+  return new Promise(async (resolve, reject) => {
+    const account = await window.electron.ipcRenderer.invoke('Auth:getSelectedAccount', {});
+    const accountId = await window.electron.ipcRenderer.invoke('Auth:getSelectedId', {});
+
+    const AuthNewAccount = async (toastId, add) => {
+      if (toastId === undefined) toastId = toast.info('Hi, please log-in a Minecraft account', {
+        autoClose: false,
+        hideProgressBar: true,
+        closeButton: false
+      });
+      const loggedUser = await getLogin({ closable: false });
+      if (add === undefined || add) await addAccount(loggedUser);
+      toast.dismiss(toastId);
+      resolve();
+    };
+
+
+    if (account === undefined) resolve(await AuthNewAccount());
+    else {
+      const notificationId = toast.loading('Checking your account ' + account.profile.name + '...', { toastId: 'AuthChecker' });
+      const res = await window.electron.ipcRenderer.invoke('Auth:refreshUser', { userId: accountId });
+      if (res === knownAuthError.CannotRefreshAccount) {
+        toast.update(notificationId, {
+          render: `Cannot re-auth your account ${account.profile.name}, please login an account`,
+          autoClose: false,
+          hideProgressBar: true,
+          closeButton: false,
+          isLoading: false,
+          type: 'warning'
+        });
+        await window.electron.ipcRenderer.invoke('Auth:LogOut', { accountIndex: accountId });
+        resolve(await AuthNewAccount('AuthChecker', true));
+      } else {
+        toast.update(notificationId, {
+          render() {
+            resolve();
+            return 'Hi ' + account.profile.name;
+          },
+          autoClose: 1500,
+          closeButton: false,
+          pauseOnHover: false,
+          isLoading: false,
+          type: 'success'
+        });
+      }
+
+    }
+  });
+}
+
 export default function App() {
   return (
     <Loader
@@ -43,14 +105,14 @@ export default function App() {
                   content: SettingsView
                 }
               ];
-              toast.info('Loaded successfully', {
-                ...defaultNotificationParams,
-                ...{ autoClose: 2000, closeButton: false, pauseOnHover: false }
-              });
+
 
               resolve(
                 <div id={'MAIN'}>
-                  <AuthModule />
+                  <Loader content={async () => {
+                    await validateUser();
+                    return <AuthModule />;
+                  }} className={AuthModuleStyle.AuthModule} />
                   <TabView
                     contentList={content}
                     selectedTabIndex={content.findIndex(
@@ -79,6 +141,9 @@ export default function App() {
                   />
                 </div>
               );
+              toast.info('Loaded successfully', {
+                autoClose: 1000, closeButton: false, pauseOnHover: false
+              });
             });
         });
       }}

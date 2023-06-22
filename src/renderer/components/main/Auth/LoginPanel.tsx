@@ -21,7 +21,7 @@ export default function LoginPanel({ functions, closable }: {
     if (closable === undefined || closable) functions.reject(knownAuthError.ClosedByUser);
   };
   const { isOnline } = React.useContext(globalStateContext);
-  const content = (reload: () => {}) => {
+  const content = () => {
     return new Promise((resolve, reject) => {
       resolve(
         <div className={styles.LoginPanel}>
@@ -60,5 +60,6 @@ export default function LoginPanel({ functions, closable }: {
     });
   };
 
+  // @ts-ignore
   return <Loader content={content} className={undefined} style={undefined} />;
 };

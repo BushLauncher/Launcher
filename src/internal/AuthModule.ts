@@ -20,6 +20,17 @@ export function AddAccount(user: MinecraftAccount): boolean {
   } else throw new Error('The new Account is not valid !');
 }
 
+export async function RefreshAccount(a: string | MinecraftAccount): Promise<MinecraftAccount | knownAuthError.CannotRefreshAccount> {
+  const refresh_token = (typeof a === 'string' ? a : a.msToken.refresh_token);
+  return auth.refresh(refresh_token).then(async res => {
+    return await XboxToUser(res);
+  }).catch(err => {
+    console.log('We couldn\'t refresh account, ', err);
+    return knownAuthError.CannotRefreshAccount;
+  });
+
+}
+
 export async function Login(type: AuthProviderType): Promise<MinecraftAccount> {
   return new Promise<MinecraftAccount>((resolve, reject) => {
     console.log(prefix + 'Login-in...');
@@ -28,26 +39,8 @@ export async function Login(type: AuthProviderType): Promise<MinecraftAccount> {
         console.log(`${prefix}Logging-in a new User with: ${type}`);
         auth
           .launch('electron')
-          .then((res: Xbox) => {
-            res
-              .getMinecraft()
-              .then((MinecraftLoggedUser: Minecraft) => {
-                if (MinecraftLoggedUser.validate()) {
-                  if (MinecraftLoggedUser.profile !== undefined) {
-                    const User: MinecraftAccount =
-                      ConstructMinecraftUser(MinecraftLoggedUser, AuthProviderType.Microsoft, res.msToken);
-                    console.log(
-                      `${prefix}Logged new Account: ${User.profile?.name}`
-                    );
-                    resolve(User);
-                  } else throw new Error('User don\'t have Mc profile');
-                } else
-                  throw new Error('The newest logged account is not valid !');
-              })
-              .catch((err) => {
-                if (err == 'error.auth.xsts.userNotFound') reject(knownAuthError.UserDontHasGame);
-                else reject(err);
-              });
+          .then(async (res: Xbox) => {
+            resolve(await XboxToUser(res));
           })
           .catch((err: string) => {
             if (err == 'error.gui.closed') reject(knownAuthError.ClosedByUser);
@@ -96,6 +89,12 @@ export function getSelectedAccount(): MinecraftAccount | null {
 
 export function getAccount(id: number): MinecraftAccount | null {
   return getAccountList()[id];
+}
+
+export function replaceAccount(id: number, account: MinecraftAccount) {
+  const list = getAccountList();
+  list[id] = account;
+  userDataStorage.update('auth.accountList', list);
 }
 
 export function removeAccount(indexToDelete: number) {
@@ -171,3 +170,23 @@ function ConstructMinecraftUser(Minecraft: Minecraft, authType: AuthProviderType
   };
 }
 
+function XboxToUser(xbox: Xbox): Promise<MinecraftAccount> {
+  return new Promise((resolve, reject) => {
+    xbox.getMinecraft()
+      .then((MinecraftLoggedUser: Minecraft) => {
+        if (MinecraftLoggedUser.validate()) {
+          if (MinecraftLoggedUser.profile !== undefined) {
+            const User: MinecraftAccount =
+              ConstructMinecraftUser(MinecraftLoggedUser, AuthProviderType.Microsoft, xbox.msToken);
+            console.log(`${prefix}Logged new Account: ${User.profile?.name}`);
+            resolve(User);
+          } else throw new Error('User don\'t have Mc profile');
+        } else
+          throw new Error('The newest logged account is not valid !');
+      })
+      .catch((err) => {
+        if (err == 'error.auth.xsts.userNotFound') reject(knownAuthError.UserDontHasGame);
+        else reject(err);
+      });
+  });
+}

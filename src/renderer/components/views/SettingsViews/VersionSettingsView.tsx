@@ -66,7 +66,7 @@ export default function VersionSettingsView() {
                                    }} className={styles.card} />)}</div>;
 
 
-                }} />
+                }} className={styles.scrollable} />
 
               });
 

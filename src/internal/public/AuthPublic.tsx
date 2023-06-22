@@ -10,7 +10,8 @@ export type errorCode = knownAuthError | string;
 
 export enum knownAuthError {
   ClosedByUser = 'ClosedByUser',
-  UserDontHasGame = 'UserDontHasGame'
+  UserDontHasGame = 'UserDontHasGame',
+  CannotRefreshAccount = 'CannotRefreshAccount'
 }
 
 export interface MinecraftAccount {
@@ -26,5 +27,5 @@ export interface MinecraftAccount {
 export interface FakeMinecraftAccount {
   readonly profile: MCProfile;
   readonly true: false;
-  readonly authType: AuthProviderType.Unknown
+  readonly authType: AuthProviderType.Unknown;
 }

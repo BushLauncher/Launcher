@@ -34,12 +34,15 @@ import {
   getAccountList,
   getSelectedAccount,
   getSelectedAccountId,
+  isAccountValid,
   Login,
   LogOutAccount,
   LogOutAllAccount,
+  RefreshAccount,
+  replaceAccount,
   SelectAccount
 } from '../internal/AuthModule';
-import { AuthProviderType, MinecraftAccount } from '../internal/public/AuthPublic';
+import { AuthProviderType, knownAuthError, MinecraftAccount } from '../internal/public/AuthPublic';
 import { getDefaultRootPath, getLocationRoot, RunPreLaunchProcess } from '../internal/Launcher';
 import { getLaunchInternal } from '../internal/PreLaunchProcessPatern';
 import { InstallGameFiles, UninstallGameFiles, verifyGameFiles } from '../internal/GameFileManager';
@@ -249,6 +252,15 @@ ipcMain.handle('VersionManager:Install', async (event, args: { version: VersionD
 
 ipcMain.handle('Auth:Add', (event, args: { user: MinecraftAccount }) => {
   return AddAccount(args.user);
+});
+ipcMain.handle('Auth:checkAccount', (event, args: { user: MinecraftAccount }) => {
+  return isAccountValid(args.user);
+});
+ipcMain.handle('Auth:refreshUser', async (event, args: { userId: number }) => {
+  const resolvedUser = getAccountList()[args.userId];
+  const newAccount = await RefreshAccount(resolvedUser);
+  if (newAccount === knownAuthError.CannotRefreshAccount) return newAccount;
+  return replaceAccount(args.userId, newAccount);
 });
 ipcMain.handle('Auth:LogOut', (event, args: { accountIndex: number }) => {
   return LogOutAccount(args.accountIndex);

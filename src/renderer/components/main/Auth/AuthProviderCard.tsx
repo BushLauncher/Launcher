@@ -48,15 +48,14 @@ export interface authProviderCard {
   type: AuthProviderType;
 }
 
-function AuthProviderCard(props: authProviderCard) {
+function AuthProviderCard(props: authProviderCard): JSX.Element {
   const [state, setState] = useState(State.Normal);
-  if (props.type === AuthProviderType.Unknown) return;
+  if (props.type === AuthProviderType.Unknown) return <div></div>;
   const LogIn = (provider: AuthProviderType) => {
     setState(State.Pending);
     window.electron.ipcRenderer
       .invoke('Auth:Login', { type: provider })
       .then((response: MinecraftAccount | string) => {
-        console.log(response);
         if (Object.values(knownAuthError).includes(response as unknown as knownAuthError)) {
           //error
           setState(State.Error);
@@ -72,7 +71,6 @@ function AuthProviderCard(props: authProviderCard) {
           }
         } else {
           //no error
-          console.log(response);
           setState(State.Success);
 
           //at this point response shouldn't be a string

@@ -12,6 +12,7 @@ import InstallReportCallbackMessage from './InstallReportCallbackMessage';
 import { useState } from 'react';
 import loadIcon from '../../../assets/graphics/icons/loading.svg';
 import LaunchButton from '../main/LaunchButton';
+import { NotificationParam } from '../../App';
 
 type activeAndCallback = { active: boolean, callback?: () => any }
 
@@ -79,7 +80,7 @@ export default function VersionCard({ version, toolBox, className, style }: Vers
         isLoading: false,
         closeButton: hasProblems,
         autoClose: hasProblems ? false : undefined,
-        hideProgressBar: (typeof res === 'object'),
+        hideProgressBar: hasProblems,
         render: !hasProblems ? <p className={styles.text}>{`No problems detected in version ${version.id}`}</p>
           : <div>
             <style>{'.Toastify__toast-icon {align-self: flex-start}'}</style>
@@ -116,12 +117,10 @@ export default function VersionCard({ version, toolBox, className, style }: Vers
       .then(() => {
         if(toolBox?.install?.callback) toolBox.install.callback()
         setLoading(false)
+        // @ts-ignore
         toast.update(id, {
-          type: 'success',
-          isLoading: false,
-          autoClose: undefined,
-          hideProgressBar: false,
-          render: 'Successfully installed ' + version.id
+          ...NotificationParam.success,
+          ...{ render: 'Successfully installed ' + version.id }
         });
       }).catch(err => {
         console.error(err);
