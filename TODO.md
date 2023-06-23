@@ -1,2 +1,8 @@
 - [ ] Rework app starting
 - [ ] Build
+- [ ] Ts apply
+- [ ] TabView persistence
+- [ ] Progress Bar on Launching
+- [ ] Register all launched Versions
+- [ ] Store returns of preLaunchOperations
+- [ ] Add an encryption system

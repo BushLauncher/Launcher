@@ -54,6 +54,7 @@ export default class UserCard extends React.Component<UserCardProps, {}> {
           <Icon className={styles.authIcon} icon={this.getIconFromAuth(user.authType)
           } />}
         <div className={styles.data}>
+          {/*TODO: Update from logged user local data*/}
           {user.true ? <MinecraftSkin
             userMCName={user.profile.name}
             className={styles.skin}

@@ -1,32 +1,35 @@
-import { LaunchTaskState, ProgressSubTaskCallback } from './public/GameData';
+import { LaunchTaskState, ProgressSubTaskCallback } from './public/GameDataPublic';
 import path from 'path';
 import { app } from 'electron';
 import fs from 'fs';
 import axios from 'axios';
 import admZip from 'adm-zip';
-import { knowGameError, knowGameErrorFormat } from './public/ErrorDecoder';
+import { knowErrorFormat, knowGameError } from './public/ErrorPublic';
 import { userDataStorage } from '../main/main';
-import { getPotentialJavaLocations } from '@xmcl/installer';
 import { findFileRecursively } from './GameFileManager';
 
 const prefix = '[JavaEngine]: ';
 
-export async function installJava(callback: (c: ProgressSubTaskCallback) => void): Promise<string> {
-  console.log(prefix + prefix + 'installing Java...');
+export async function InstallJava(callback: (c: ProgressSubTaskCallback) => void): Promise<string> {
+  console.warn(prefix + 'Installing Java...');
   callback({ state: LaunchTaskState.processing, displayText: 'Installing Java...' });
+
   const dir = path.join(app.getPath('userData'), 'Local Java\\');
   const tempDownloadDir = path.join(app.getPath('userData'), 'Download Cache\\');
   if (!fs.existsSync(dir)) fs.mkdirSync(dir);
   if (!fs.existsSync(tempDownloadDir)) fs.mkdirSync(tempDownloadDir);
+
   const downloadData = await getJavaDownloadLink();
   const zipPath = path.join(tempDownloadDir, downloadData.name);
   //remove the extension: .zip
   const destPath = path.join(dir, downloadData.name.replace('\\.([a-z]*$)', ''));
+
+
   return new Promise<string>((resolve, reject) => {
-    console.log(prefix + 'Create stream');
     const stream = fs.createWriteStream(zipPath);
     console.log(prefix + 'Downloading...');
     callback({ state: LaunchTaskState.processing, displayText: 'Downloading Java...' });
+
     axios.get(downloadData.link, {
       responseType: 'stream',
       onDownloadProgress: progressEvent => {
@@ -56,13 +59,12 @@ export async function installJava(callback: (c: ProgressSubTaskCallback) => void
         });
       })
       .then(() => {
-        console.log(prefix + 'Extraction started');
+        console.log(prefix + 'Extracting...');
         callback({ state: LaunchTaskState.processing, displayText: 'Extracting Java...' });
-        return new admZip(zipPath).extractAllTo(destPath, false, true);
+        return new admZip(zipPath).extractAllTo(destPath, true, true);
       })
       .then(() => {
         console.log(prefix + 'Extraction completed');
-        // Handle further operations after successful extraction
         const finalPath = findFileRecursively(destPath, 'javaw.exe');
         if (finalPath === undefined) throw new Error(finalPath);
         userDataStorage.set('saved.javaPath', finalPath);
@@ -73,14 +75,14 @@ export async function installJava(callback: (c: ProgressSubTaskCallback) => void
   });
 }
 
-export type JavaDownloadData = {
+export type javaDownloadData = {
   link: string,
   name: string,
   size: number,
   releaseLink: string
 }
 
-export async function getJavaDownloadLink(): Promise<JavaDownloadData> {
+export async function getJavaDownloadLink(): Promise<javaDownloadData> {
   return new Promise((resolve, reject) => {
     let os: string = process.platform;
     if (os === 'win32') os = 'windows';
@@ -98,15 +100,15 @@ export async function getJavaDownloadLink(): Promise<JavaDownloadData> {
           releaseLink: jsonResponse.data[0].release_link
         });
       }).catch(err => {
-      console.error('We couldn\'t get the json download data for ' + os);
+      console.error(prefix + 'We couldn\'t get the json download data for ' + os);
       console.error(err);
-      reject(<knowGameErrorFormat>{ ...knowGameError.JavaCannotGetDownloadDataError, additionalError: err });
+      reject(<knowErrorFormat>{ ...knowGameError.JavaCannotGetDownloadDataError, additionalError: err });
     });
   });
 }
 
 
-export async function resolveJavaPath(): Promise<string | undefined> {
+export async function ResolveJavaPath(): Promise<string | undefined> {
   const saved = getSavedJavaPath();
   return saved !== undefined && fs.existsSync(saved) ? saved : undefined;
   //return await findJava();
@@ -115,25 +117,4 @@ export async function resolveJavaPath(): Promise<string | undefined> {
 export function getSavedJavaPath(): string | undefined {
   const path: string | null | undefined = userDataStorage.get('saved.javaPath');
   return (path != null && fs.existsSync(path)) ? path : undefined;
-}
-
-/**
- * We won't search Java anymore, due to too multiple possibilities of Java version
- * @deprecated
- */
-export function findJava(): Promise<string | undefined> {
-  return new Promise(async (resolve, reject) => {
-    await getPotentialJavaLocations()
-      .then((pathList: string[]) => {
-        //test for result
-        for (const path of pathList) {
-          if (fs.existsSync(path)) {
-            resolve(path);
-            return;
-          }
-        }
-        //if pathList empty or all tested path aren't valid
-        resolve(undefined);
-      }).catch(err => reject(err));
-  });
 }

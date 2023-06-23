@@ -8,8 +8,9 @@ import errorIcon from '../../../../assets/graphics/icons/close.svg';
 import msIcon from '../../../../assets/graphics/icons/microsoft.svg';
 import { useState } from 'react';
 import Button, { ButtonType } from '../../public/Input/Button';
-import { AuthProviderType, errorCode, knownAuthError, MinecraftAccount } from '../../../../internal/public/AuthPublic';
+import { AuthProviderType, MinecraftAccount } from '../../../../internal/public/AuthPublic';
 import { toast } from 'react-toastify';
+import { errorCode, KnownAuthErrorType } from '../../../../internal/public/ErrorPublic';
 
 enum State {
   Normal,
@@ -56,18 +57,18 @@ function AuthProviderCard(props: authProviderCard): JSX.Element {
     window.electron.ipcRenderer
       .invoke('Auth:Login', { type: provider })
       .then((response: MinecraftAccount | string) => {
-        if (Object.values(knownAuthError).includes(response as unknown as knownAuthError)) {
+        if (Object.values(KnownAuthErrorType).includes(response as unknown as KnownAuthErrorType)) {
           //error
           setState(State.Error);
           setTimeout(() => setState(State.Normal), 5000);
-          if (!Object.values(knownAuthError).includes(response as unknown as knownAuthError)) {
+          if (!Object.values(KnownAuthErrorType).includes(response as unknown as KnownAuthErrorType)) {
             toast.error('Unexpected Error: ' + response);
           } else {
             //format response
-            response = knownAuthError[response as unknown as knownAuthError];
+            response = KnownAuthErrorType[response as unknown as KnownAuthErrorType];
 
-            if (response == knownAuthError.UserDontHasGame) toast.error('The Account don\'t has Minecraft Game !');
-            if (response !== knownAuthError.ClosedByUser) props.reject(response);
+            if (response == KnownAuthErrorType.UserDontHasGame) toast.error('The Account don\'t has Minecraft Game !');
+            if (response !== KnownAuthErrorType.ClosedByUser) props.reject(response);
           }
         } else {
           //no error
@@ -78,7 +79,7 @@ function AuthProviderCard(props: authProviderCard): JSX.Element {
           setTimeout(() => props.resolve(response as MinecraftAccount), 1000);
         }
       })
-      .catch((err: any | knownAuthError) => {
+      .catch((err: any | KnownAuthErrorType) => {
         //cannot be rejected because reject is resolved to get the error
       });
   };

@@ -1,54 +1,52 @@
 import {
   GameType,
+  GameVersion,
   getDefaultGameType,
   getDefaultVersion,
   getVersion,
-  isSupported,
-  supportedVersion,
-  VersionData
-} from './public/GameData';
+  isSupported
+} from './public/GameDataPublic';
 import { MinecraftVersion } from '@xmcl/installer';
 import { existsSync, readdirSync } from 'fs';
 import path from 'path';
-import { MinecraftVersionSorter } from './Utils';
+import { SortMinecraftVersion } from './Utils';
 import { userDataStorage } from '../main/main';
 import { getLocationRoot } from './Launcher';
 import { net } from 'electron';
 
-const { getVersionList } = require('@xmcl/installer');
+const { getVersionList: getXMCLVersionList } = require('@xmcl/installer');
 
-const getAppDataPath = require('appdata-path');
-
-export function getSelectedVersion(): VersionData | undefined {
-  const storage: VersionData | undefined = userDataStorage.get('version.selected');
-  return storage === undefined ? getDefaultVersion(getDefaultGameType) : storage;
+export function getSelectedVersion(): GameVersion | undefined {
+  const storageRes: GameVersion | undefined = userDataStorage.get('version.selected');
+  return (storageRes === undefined) ? getDefaultVersion(getDefaultGameType) : storageRes;
 }
 
 export type getVersionMethode = 'network' | 'local' | 'auto';
 
-export async function GetAllVersionList(methode?: getVersionMethode): Promise<VersionData[]> {
+export async function getAllVersionList(methode?: getVersionMethode): Promise<GameVersion[]> {
   if (methode === undefined) methode = 'auto';
-  let res: VersionData[] = [];
+  let res: GameVersion[] = [];
   for (const versionType of Object.values(GameType)) {
-    if (net.isOnline() && (methode === 'auto' || methode === 'network')) res = res.concat(await GetVersionList(versionType));
-    else res = res.concat(GetLocalVersionList(versionType));
+    if (net.isOnline() && (methode === 'auto' || methode === 'network')) res = res.concat(await getVersionList(versionType));
+    else res = res.concat(getLocalVersionList(versionType));
   }
   return res;
 }
 
-export async function GetVersionList(gameType: GameType): Promise<VersionData[]> {
-  return new Promise<VersionData[]>(async (resolve, reject) => {
+export async function getVersionList(gameType: GameType): Promise<GameVersion[]> {
+  return new Promise<GameVersion[]>(async (resolve, reject) => {
     switch (gameType) {
       case GameType.VANILLA: {
-        let foundedList: VersionData[] = [];
-        const versionList = await getVersionList().catch((err: any) => {
-          console.log(err);
-          reject('Cannot get minecraft version list' + err);
-        });
+        let foundedList: GameVersion[] = [];
+        const versionList = await getXMCLVersionList()
+          .catch((err: any) => {
+            console.log(err);
+            reject('Cannot get minecraft version list' + err);
+          });
         versionList.versions.forEach((version: MinecraftVersion) => {
-          //reindexing version list to get just the release
+          //reindexing version list to get only releases
           if (version.type === 'release' && isSupported(gameType, version.id)) {
-            let newVersion: VersionData = {
+            let newVersion: GameVersion = {
               id: version.id,
               gameType: gameType,
               installed: versionExist(version.id)
@@ -59,14 +57,6 @@ export async function GetVersionList(gameType: GameType): Promise<VersionData[]>
         resolve(foundedList);
         break;
       }
-      case GameType.TEST: {
-        resolve([{
-          id: supportedVersion[supportedVersion.length - 1].id,
-          gameType: gameType,
-          installed: versionExist(supportedVersion[supportedVersion.length - 1].id)
-        }]);
-        break;
-      }
       default:
         console.error(`[getVersionList]: The gameType: ${gameType} is not implemented`);
         resolve([]);
@@ -74,9 +64,8 @@ export async function GetVersionList(gameType: GameType): Promise<VersionData[]>
   });
 }
 
-export function GetLocalVersionList(gameType: GameType): VersionData[] {
+export function getLocalVersionList(gameType: GameType): GameVersion[] {
   const localURL = path.join(getLocationRoot(), 'versions');
-  //console.log('Searching for local minecraft version in ' + localURL + '...');
   //TODO: make this function use Version.parse from @xmcl/installer
   switch (gameType) {
     case GameType.VANILLA: {
@@ -84,20 +73,17 @@ export function GetLocalVersionList(gameType: GameType): VersionData[] {
       //get all folder in local appdata
       if (!existsSync(localURL)) return [];
       const foldersToProcess = readdirSync(localURL);
-      let minecraftVersionsList: VersionData[];
+      let minecraftVersionsList: GameVersion[];
       minecraftVersionsList = foldersToProcess
-        .filter((folder) => regex.test(folder) && isSupported(gameType, folder)).sort(MinecraftVersionSorter)
+        .filter((folder) => regex.test(folder) && isSupported(gameType, folder)).sort(SortMinecraftVersion)
         .reverse()
-        .map((folder): VersionData => {
-          const version: VersionData = getVersion(gameType, folder);
+        .map((folder): GameVersion => {
+          const version: GameVersion = getVersion(gameType, folder);
           version.installed = true;
           /*got from locals files, so version folder exist*/
           return version;
         });
       return minecraftVersionsList;
-    }
-    case GameType.TEST: {
-      return [{ id: 'test', gameType: GameType.TEST, installed: true }];
     }
     default:
       console.error(`[getLocalVersionList]: The gameType: ${gameType} is not implemented`);

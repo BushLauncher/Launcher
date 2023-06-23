@@ -1,10 +1,9 @@
-import { Callback } from '../../../internal/public/GameData';
+import { Callback, CallbackType } from '../../../internal/public/GameDataPublic';
 import styles from './css/publicStyle.module.css';
 import Icon from './Icons/Icon';
 import arrowIcon from '../../../assets/graphics/icons/caret-left.svg';
 import Button, { ButtonType } from './Input/Button';
 import { useState } from 'react';
-import { CallbackType } from '../../../internal/public/ErrorDecoder';
 
 
 export default function CallbackMessage({ callback }: { callback: Callback }) {

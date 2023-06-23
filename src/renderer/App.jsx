@@ -8,7 +8,8 @@ import { toast, ToastContainer } from 'react-toastify';
 import SettingsView from './components/views/SettingsView';
 import AuthModule, { addAccount, getLogin } from './components/main/Auth/AuthModule';
 import AuthModuleStyle from './components/main/Auth/css/AuthModuleStyle.module.css';
-import { knownAuthError } from '../internal/public/AuthPublic';
+
+import { KnownAuthErrorType } from '../internal/public/ErrorPublic';
 
 export const NotificationParam = {
   info: {
@@ -29,44 +30,61 @@ export const NotificationParam = {
 };
 
 
-async function validateUser() {
+async function validateUser(user, id, reloadFunc) {
   return new Promise(async (resolve, reject) => {
-    const account = await window.electron.ipcRenderer.invoke('Auth:getSelectedAccount', {});
-    const accountId = await window.electron.ipcRenderer.invoke('Auth:getSelectedId', {});
+    const account = user !== undefined ? user : await window.electron.ipcRenderer.invoke('Auth:getSelectedAccount', {});
+    const accountId = id !== undefined ? id : await window.electron.ipcRenderer.invoke('Auth:getSelectedId', {});
+    console.log('Verifying user ' + account?.profile?.name + ' at ' + accountId);
 
-    const AuthNewAccount = async (toastId, add) => {
-      if (toastId === undefined) toastId = toast.info('Hi, please log-in a Minecraft account', {
+    if (account === undefined) {
+      //Auth new
+      const notificationId = toast.info('Hi, please log-in a Minecraft account', {
         autoClose: false,
         hideProgressBar: true,
         closeButton: false
       });
-      const loggedUser = await getLogin({ closable: false });
-      if (add === undefined || add) await addAccount(loggedUser);
-      toast.dismiss(toastId);
+      await addAccount(await getLogin({ closable: false }));
+      toast.dismiss(notificationId);
       resolve();
-    };
-
-
-    if (account === undefined) resolve(await AuthNewAccount());
-    else {
-      const notificationId = toast.loading('Checking your account ' + account.profile.name + '...', { toastId: 'AuthChecker' });
-      const res = await window.electron.ipcRenderer.invoke('Auth:refreshUser', { userId: accountId });
-      if (res === knownAuthError.CannotRefreshAccount) {
-        toast.update(notificationId, {
-          render: `Cannot re-auth your account ${account.profile.name}, please login an account`,
-          autoClose: false,
-          hideProgressBar: true,
-          closeButton: false,
-          isLoading: false,
-          type: 'warning'
-        });
-        await window.electron.ipcRenderer.invoke('Auth:LogOut', { accountIndex: accountId });
-        resolve(await AuthNewAccount('AuthChecker', true));
+    } else {
+      const notificationId = toast.loading('Checking your account ' + account.profile.name + '...');
+      if (await window.electron.ipcRenderer.invoke('Auth:checkAccount', { user: account }) === false) {
+        console.log('account is not valid');
+        const res = await window.electron.ipcRenderer.invoke('Auth:refreshUser', { userId: accountId });
+        console.log(res);
+        if (res === KnownAuthErrorType.CannotRefreshAccount) {
+          console.log('Cannot re-auth account');
+          toast.update(notificationId, {
+            render: `We couldn't refresh data from your account ${account.profile.name}, please re-login as new`,
+            autoClose: false,
+            hideProgressBar: true,
+            closeButton: true,
+            isLoading: false,
+            type: 'warning'
+          });
+          await window.electron.ipcRenderer.invoke('Auth:LogOut', { accountIndex: accountId });
+          reloadFunc()
+          resolve();
+        } else {
+          console.log('Re authed account');
+          toast.update(notificationId, {
+            render() {
+              resolve();
+              return 'Hi ' + account.profile.name;
+            },
+            autoClose: 1500,
+            closeButton: false,
+            pauseOnHover: false,
+            isLoading: false,
+            type: 'success'
+          });
+        }
       } else {
+        console.log('account is valid');
         toast.update(notificationId, {
           render() {
             resolve();
-            return 'Hi ' + account.profile.name;
+            return 'Switched to ' + account.profile.name;
           },
           autoClose: 1500,
           closeButton: false,
@@ -75,7 +93,6 @@ async function validateUser() {
           type: 'success'
         });
       }
-
     }
   });
 }
@@ -109,8 +126,10 @@ export default function App() {
 
               resolve(
                 <div id={'MAIN'}>
-                  <Loader content={async () => {
-                    await validateUser();
+                  <Loader content={async (reload) => {
+                    window.electron.ipcRenderer.on('Auth:CheckAccountProcess',
+                      ({ user, id }) => validateUser(user, id, reload));
+                    await validateUser(undefined, undefined, reload);
                     return <AuthModule />;
                   }} className={AuthModuleStyle.AuthModule} />
                   <TabView

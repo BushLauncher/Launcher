@@ -7,10 +7,10 @@ const { execFile: child } = require('child_process');
 
 const prefix = '[Downloader, MainProcess]: ';
 
-export function update(potentialUpdate, callbackText) {
+export function Update(potentialUpdate, callbackText) {
   return new Promise((resolve, reject) => {
     callbackText('Starting Download...');
-    download(potentialUpdate.downloadData.url, downloadPercentage => {
+    Download(potentialUpdate.downloadData.url, downloadPercentage => {
       callbackText('Downloading... [' + downloadPercentage + '%]');
     })
       .then(appPath => {
@@ -31,7 +31,7 @@ export function update(potentialUpdate, callbackText) {
   });
 }
 
-function download(url, callback) {
+function Download(url, callback) {
   return new Promise((resolve, reject) => {
     console.log('updating...');
     axios({
@@ -48,12 +48,7 @@ function download(url, callback) {
     })
       .then(axiosResponse => {
         try {
-          axiosResponse.data
-            .pipe(
-              createWriteStream(
-                path.join(app.getPath('temp'), 'bushLauncherUpdate.exe')
-              )
-            )
+          axiosResponse.data.pipe(createWriteStream(path.join(app.getPath('temp'), 'bushLauncherUpdate.exe')))
             .on('finish', () => {
               resolve(join(app.getPath('temp'), 'bushLauncherUpdate.exe'));
             })

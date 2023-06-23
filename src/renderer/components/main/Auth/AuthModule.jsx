@@ -8,9 +8,9 @@ import Loader from '../../public/Loader';
 import UserCard from './UserCard';
 import { toast } from 'react-toastify';
 import { createRoot } from 'react-dom/client';
-import { knownAuthError } from '../../../../internal/public/AuthPublic';
 import LoginPanel from './LoginPanel';
 import { globalStateContext } from '../../../index';
+import { KnownAuthErrorType } from '../../../../internal/public/ErrorPublic';
 
 export async function getLogin({ closable }) {
   return new Promise((resolve) => {
@@ -26,11 +26,12 @@ export async function getLogin({ closable }) {
               resolve(loggedUser);
               root.unmount();
             }, reject: (err) => {
-              if (err in knownAuthError) {
+              if (err in KnownAuthErrorType) {
                 switch (err) {
-                  case knownAuthError.ClosedByUser: {
+                  case KnownAuthErrorType.ClosedByUser: {
                     console.log('Login Panel closed by user');
                     root.unmount();
+                    resolve(undefined);
                     break;
                   }
                 }
@@ -119,7 +120,7 @@ export default function AuthModule() {
                           className={styles.addButton}
                           action={() => {
                             getLogin({ closable: true }).then((response) => {
-                              if (!Object.values(knownAuthError).includes(response)) {
+                              if (response !== undefined && !Object.values(KnownAuthErrorType).includes(response)) {
                                 if (isOnline) {
                                   const operation = addAccount(response);
                                   toast.promise(operation, {

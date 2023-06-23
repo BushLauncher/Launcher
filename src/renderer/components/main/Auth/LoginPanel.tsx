@@ -3,11 +3,12 @@ import styles from './css/LoginPanel.module.css';
 import Button, { ButtonType } from '../../public/Input/Button';
 import Icon from '../../public/Icons/Icon';
 import closeIcon from '../../../../assets/graphics/icons/close.svg';
-import { AuthProviderType, errorCode, knownAuthError, MinecraftAccount } from '../../../../internal/public/AuthPublic';
+import { AuthProviderType, MinecraftAccount } from '../../../../internal/public/AuthPublic';
 import AuthProviderCard from './AuthProviderCard';
 import { toast } from 'react-toastify';
 import { globalStateContext } from '../../../index';
 import React from 'react';
+import { errorCode, KnownAuthErrorType } from '../../../../internal/public/ErrorPublic';
 
 export interface loginInterface {
   resolve: (account: MinecraftAccount) => void;
@@ -18,7 +19,7 @@ export default function LoginPanel({ functions, closable }: {
   functions: loginInterface, closable?: boolean
 }) {
   const close = () => {
-    if (closable === undefined || closable) functions.reject(knownAuthError.ClosedByUser);
+    if (closable === undefined || closable) functions.reject(KnownAuthErrorType.ClosedByUser);
   };
   const { isOnline } = React.useContext(globalStateContext);
   const content = () => {

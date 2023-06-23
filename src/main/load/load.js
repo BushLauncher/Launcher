@@ -1,7 +1,6 @@
 /*from the main Process*/
 const fs = require('fs');
 const { Octokit } = require('octokit');
-let loaded = false;
 const octokit = new Octokit();
 const pkg = require('../../../package.json').version;
 const prefix = '[PreLoad]: ';
@@ -50,7 +49,6 @@ export default class PreLoad {
             }
 
             //Process END
-            loaded = true;
             resolve({ exist: false, skipped: false });
           }
         });
@@ -62,7 +60,7 @@ export default class PreLoad {
     return new Promise((resolve, reject) => {
       if (this.isOnline) {
         callbackText('Checking for updates...');
-        this.checkForUpdatesExist()
+        this.CheckForUpdatesExist()
           .then((potentialUpdate) => {
             resolve(potentialUpdate);
           })
@@ -79,14 +77,11 @@ export default class PreLoad {
     });
   }
 
-  checkForUpdatesExist() {
+  CheckForUpdatesExist() {
     return new Promise((resolve, reject) => {
       console.log('Checking for updates...');
       octokit
-        .request('GET /repos/{owner}/{repo}/releases/latest', {
-          owner: 'Gagafeee',
-          repo: 'BushLauncher',
-        })
+        .request('GET /repos/Gagafeee/BushLauncher/releases/latest')
         .then((r) => {
           console.log('Got response from GitHub API');
           let res = r.data;

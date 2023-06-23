@@ -3,7 +3,7 @@ import Loader from '../../public/Loader';
 import { useState } from 'react';
 import styles from './css/VersionSettingsViewStyle.module.css';
 import defaultStyle from './css/DefaultSettingsView.module.css';
-import { GameType, VersionData } from '../../../../internal/public/GameData';
+import { GameType, GameVersion } from '../../../../internal/public/GameDataPublic';
 import TabView, { TabParams } from '../../main/TabView/TabView';
 import { AutoComplete } from 'antd';
 import Icon from '../../public/Icons/Icon';
@@ -49,7 +49,7 @@ export default function VersionSettingsView() {
                 displayName: gameType,
                 /*@ts-ignore */
                 content: <Loader content={async (reload) => {
-                  const versionList: VersionData[] = await window.electron.ipcRenderer.invoke('Version:getList', { gameType: gameType/*, type: 'local'*/ }).catch(err => console.log(err));
+                  const versionList: GameVersion[] = await window.electron.ipcRenderer.invoke('Version:getList', { gameType: gameType/*, type: 'local'*/ }).catch(err => console.log(err));
                   return versionList.length === 0 ? EmptyView :
                     <div className={styles.scrollable}> {versionList.map((version, i) =>
                       <VersionCard version={version} key={i}

@@ -1,4 +1,4 @@
-import { ProgressSubTaskCallback, VersionData } from '../../../internal/public/GameData';
+import { ProgressSubTaskCallback, GameVersion } from '../../../internal/public/GameDataPublic';
 import Icon from './Icons/Icon';
 import { getGameTypeIcon } from '../views/SettingsViews/VersionSettingsView';
 import styles from './css/publicStyle.module.css';
@@ -17,7 +17,7 @@ import { NotificationParam } from '../../App';
 type activeAndCallback = { active: boolean, callback?: () => any }
 
 interface VersionCardProps extends ComponentsPublic {
-  version: VersionData,
+  version: GameVersion,
   toolBox?: {
     uninstall?: activeAndCallback,
     diagnose?: activeAndCallback,

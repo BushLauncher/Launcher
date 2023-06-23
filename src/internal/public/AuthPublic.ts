@@ -6,14 +6,6 @@ export enum AuthProviderType {
   Unknown = 'Unknown'
 }
 
-export type errorCode = knownAuthError | string;
-
-export enum knownAuthError {
-  ClosedByUser = 'ClosedByUser',
-  UserDontHasGame = 'UserDontHasGame',
-  CannotRefreshAccount = 'CannotRefreshAccount'
-}
-
 export interface MinecraftAccount {
   readonly mcToken: string;
   readonly profile: MCProfile;

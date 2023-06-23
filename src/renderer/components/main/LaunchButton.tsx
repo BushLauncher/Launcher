@@ -7,7 +7,7 @@ import downArrowIcon from '../../../assets/graphics/icons/arrow_down.svg';
 import Line from '../public/Line';
 import React, { useContext, useState } from 'react';
 import {
-  Callback,
+  Callback, CallbackType,
   ErrorCallback,
   ExitedCallback,
   GameType,
@@ -18,14 +18,13 @@ import {
   PreLaunchProcess,
   PreLaunchTasks,
   ProgressCallback,
-  VersionData
-} from '../../../internal/public/GameData';
+  GameVersion
+} from '../../../internal/public/GameDataPublic';
 import Loader from '../public/Loader';
 import { globalStateContext } from '../../index';
 import { toast } from 'react-toastify';
 import CallbackMessage from '../public/CallbackMessage';
 import ProgressBar from '@ramonak/react-progress-bar';
-import { CallbackType } from '../../../internal/public/ErrorDecoder';
 import Version from '../public/Version';
 import { ComponentsPublic } from '../ComponentsPublic';
 
@@ -53,7 +52,7 @@ export type LoadingProgress = {
 export interface LaunchButtonProps extends ComponentsPublic {
   versionSelector: boolean,
   type?: 'square' | 'default',
-  onRun?: (version: VersionData) => any,
+  onRun?: (version: GameVersion) => any,
   onProgressCallback?: (callback: ProgressCallback) => any,
   onError?: (err: ErrorCallback | any) => any
   onExited?: (exitedCallback: ExitedCallback) => any
@@ -91,7 +90,7 @@ export default function LaunchButton({
         return LoadingIcon;
     }
   };
-  const requestLaunch = (version: VersionData) => {
+  const requestLaunch = (version: GameVersion) => {
     const process: PreLaunchProcess = {
       actions: [
         { id: PreLaunchTasks.VerifyAccount },
@@ -229,7 +228,7 @@ export default function LaunchButton({
           </div>
           <div className={styles.versionListDropdown}>
 
-            {versionList.map((version: VersionData, index: any) => {
+            {versionList.map((version: GameVersion, index: any) => {
               return <Version version={{ id: version.id, gameType: GameType.VANILLA }}
                               key={index}
                               className={[styles.version, version.id === selectedVersion.id ? styles.versionSelected : ''].join(' ')}

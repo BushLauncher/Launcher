@@ -7,7 +7,6 @@ import themeStyle from './Theme.module.css';
 import Loader from './components/public/Loader';
 import { Theme } from '../internal/public/ThemePublic';
 import { ConfigProvider, theme } from 'antd';
-import SettingsView from './components/views/SettingsView';
 
 const container = document.getElementById('root')!;
 const root = createRoot(container);

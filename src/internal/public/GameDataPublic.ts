@@ -1,15 +1,11 @@
-/*CAN BE LOADED FROM RENDERER PROCESS
- * DONT IMPORT FS, PATH, ELECTRON, etc...*/
-
-import { CallbackType, knowGameErrorFormat } from './ErrorDecoder';
+import { knowErrorFormat } from './ErrorPublic';
 import { ResolvedPreLaunchTask } from '../PreLaunchEngine';
 
 export enum GameType {
-  VANILLA = 'VANILLA',
-  TEST = 'TEST'
+  VANILLA = 'VANILLA'
 }
 
-export type VersionData = {
+export type GameVersion = {
   id: string;
   gameType: GameType;
   installed?: boolean;
@@ -17,10 +13,10 @@ export type VersionData = {
 export const getDefaultGameType: GameType = GameType.VANILLA;
 export const getDefaultVersion = (gameType: GameType) => {
   return supportedVersion[
-    supportedVersion.findIndex((v) => v.gameType == gameType)
+    supportedVersion.findIndex((v) => v.gameType === gameType)
     ];
 };
-export const supportedVersion: Array<VersionData> = [
+export const supportedVersion: Array<GameVersion> = [
   { id: '1.20', gameType: GameType.VANILLA },
   { id: '1.19.4', gameType: GameType.VANILLA },
   { id: '1.18.2', gameType: GameType.VANILLA },
@@ -29,8 +25,7 @@ export const supportedVersion: Array<VersionData> = [
   { id: '1.13.2', gameType: GameType.VANILLA },
   { id: '1.12.2', gameType: GameType.VANILLA },
   { id: '1.18.9', gameType: GameType.VANILLA },
-  { id: '1.7.10', gameType: GameType.VANILLA },
-  { id: 'hmm', gameType: GameType.TEST }
+  { id: '1.7.10', gameType: GameType.VANILLA }
 ];
 
 export enum LaunchOperationType {
@@ -48,7 +43,6 @@ export enum LaunchOperationType {
   PostInstall = 'PostInstall'
 }
 
-export type ResolvedLaunchOperation = ResolvedPreLaunchTask
 
 export enum PreLaunchTasks {
   VerifyAccount = 'VerifyAccount',
@@ -64,11 +58,6 @@ export type LaunchTask = {
   params?: any
 }
 
-export function sendUnImplementedException(task: LaunchTask): UpdateLaunchTaskCallback {
-  return { task: task, displayText: 'Function ' + task.id + ' is not implemented', state: LaunchTaskState.error };
-}
-
-
 export const isSupported = (gameType: GameType, id: string): boolean => {
   for (const version of supportedVersion) {
     if (version.id === id && version.gameType === gameType) {
@@ -77,20 +66,21 @@ export const isSupported = (gameType: GameType, id: string): boolean => {
   }
   return false;
 };
-export const getVersion = (gameType: GameType, id: string): VersionData => {
-  if (isSupported(gameType, id)) {
-    for (const version of supportedVersion) {
-      if (version.id === id && version.gameType === gameType) return version;
-    }
-    throw new Error(
-      'Cannot get minecraft version: ' + id + ' in GameType: ' + gameType + '.'
-    );
-  } else {
-    throw new Error(
-      'Version ' + id + 'isn\'t unsupported, \n maybe is the wrong gameType'
-    );
+
+export function getVersion(gameType: GameType, id: string): GameVersion {
+  if (!isSupported(gameType, id)) throw new Error(`Version ${id}, isn't unsupported, maybe is the wrong gameType`);
+  for (const version of supportedVersion) {
+    if (version.id === id && version.gameType === gameType) return version;
   }
-};
+  throw new Error(`Cannot get minecraft version: ${id} in GameType: ${gameType}.`);
+}
+
+export enum CallbackType {
+  Error = 'Error',
+  Progress = 'Progress',
+  Success = 'Success',
+  Closed = 'Closed',
+}
 
 export interface Callback {
   stepId: number,
@@ -101,7 +91,7 @@ export interface Callback {
 
 export interface ErrorCallback extends Callback {
   type: CallbackType.Error,
-  return: knowGameErrorFormat | string
+  return: knowErrorFormat | string
 }
 
 export interface ProgressCallback extends Callback {
@@ -149,14 +139,14 @@ export interface PreLaunchProcess {
   actions: LaunchTask[];
   resolved: false;
   internal: false;
-  version: VersionData;
+  version: GameVersion;
   launch: boolean;
 }
 
 export interface PreLaunchRunnableProcess {
-  actions: ResolvedLaunchOperation[];
+  actions: ResolvedPreLaunchTask[];
   resolved: true;
   internal?: boolean;
-  version: VersionData;
+  version: GameVersion;
   launch: boolean;
 }

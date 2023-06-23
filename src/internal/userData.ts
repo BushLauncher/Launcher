@@ -1,4 +1,4 @@
-import { getDefaultGameType, getDefaultVersion, VersionData } from './public/GameData';
+import { GameVersion, getDefaultGameType, getDefaultVersion } from './public/GameDataPublic';
 import { app } from 'electron';
 import fs, { readFileSync, writeFileSync } from 'fs';
 import { userDataStorage } from '../main/main';
@@ -11,13 +11,11 @@ const prefix: string = '[UserData]: ';
 
 
 export function loadData() {
-  //console.log(prefix + 'Retrieving data from local storage...');
-  const res: VersionData | undefined = userDataStorage.get('version.selected');
+  const res: GameVersion | undefined = userDataStorage.get('version.selected');
   if (res != undefined) SelectVersion(res);
-  //console.log(prefix + '--------');
 }
 
-export function SelectVersion(version: VersionData): void {
+export function SelectVersion(version: GameVersion): void {
   userDataStorage.update('version.selected', version);
   console.log(`Selecting for: [${version.gameType.toString().toLowerCase()}]: ${version.id}`);
 }
@@ -49,7 +47,7 @@ interface SavedData {
 export interface defaultData {
   interface: InterfaceData;
   version: {
-    selected: VersionData;
+    selected: GameVersion;
   };
   auth: AuthData;
   saved: SavedData;
@@ -143,7 +141,6 @@ export class Storage {
   }
 
   private saveData(customData?: any): void {
-    //console.log('Saving All data');
     writeFileSync(this.storageFilePath, JSON.stringify(customData ? customData : this.data));
   }
 }

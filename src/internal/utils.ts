@@ -1,4 +1,4 @@
-export const MinecraftVersionSorter = (a: string, b: string) => {
+export const SortMinecraftVersion = (a: string, b: string) => {
   const aSplit = a.split('.').map((s) => parseInt(s));
   const bSplit = b.split('.').map((s) => parseInt(s));
 
@@ -16,8 +16,7 @@ export const MinecraftVersionSorter = (a: string, b: string) => {
 
   if (result != 0) return result;
 
-  result =
-    aSplit.length == bSplit.length ? 0 : aSplit.length < bSplit.length ? -1 : 1; // longer length wins
+  result = aSplit.length == bSplit.length ? 0 : aSplit.length < bSplit.length ? -1 : 1; // longer length wins
 
   return result;
 };
