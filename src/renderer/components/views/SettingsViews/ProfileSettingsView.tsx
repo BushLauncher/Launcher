@@ -27,21 +27,24 @@ export default function ProfileSettingsView() {
         Logout All
       </Button>
       <div className={styles.list}>
-        <Loader content={(reload: () => void) => new Promise((resolve, reject) => {
-          window.electron.ipcRenderer.invoke('Auth:getAccountList', {}).then(async (accountList: any[]) => {
-            const selected = await window.electron.ipcRenderer.invoke('Auth:getSelectedId', {});
-            resolve(
-              accountList.map((account, index) => {
-                const isSelected: boolean = index === selected;
-                return <UserCard displayAuthMethode={true} user={account} key={index} action={{
-                  accountIndex: index,
-                  reloadFunc: reload,
-                  action: { canLogOut: !isSelected, canSelect: !isSelected }
-                }} style={{ backgroundColor: (isSelected ? 'var(--hover-background-color)' : null) }} />;
-              })
-            );
-          });
-        })} className={styles.list} style={undefined} />
+        <Loader content={(reload: () => void) =>
+          new Promise((resolve, reject) => {
+            window.electron.ipcRenderer.invoke('Auth:getAccountList', {})
+              .then(async (accountList: any[]) => {
+                const selected = await window.electron.ipcRenderer.invoke('Auth:getSelectedId', {});
+                resolve(
+                  // @ts-ignore
+                  accountList.map((account, index) => {
+                    const isSelected: boolean = index === selected;
+                    return <UserCard displayAuthMethode={true} user={account} key={index} action={{
+                      accountIndex: index,
+                      reloadFunc: reload,
+                      action: { canLogOut: !isSelected, canSelect: !isSelected }
+                    }} style={{ backgroundColor: (isSelected ? 'var(--hover-background-color)' : undefined) }} />;
+                  })
+                );
+              });
+          })} className={styles.list} style={undefined} />
       </div>
     </div>
   </div>;

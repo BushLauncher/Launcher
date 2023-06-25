@@ -7,7 +7,7 @@ const { execFile: child } = require('child_process');
 
 const prefix = '[Downloader, MainProcess]: ';
 
-export function Update(potentialUpdate, callbackText) {
+module.exports.Update = function Update(potentialUpdate, callbackText) {
   return new Promise((resolve, reject) => {
     callbackText('Starting Download...');
     Download(potentialUpdate.downloadData.url, downloadPercentage => {

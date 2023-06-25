@@ -1,16 +1,9 @@
-import {
-  GameType,
-  GameVersion,
-  getDefaultGameType,
-  getDefaultVersion,
-  getVersion,
-  isSupported
-} from './public/GameDataPublic';
+import {  GameType,  GameVersion,  getDefaultGameType,  getDefaultVersion,  getVersion,  isSupported} from '../../public/GameDataPublic';
 import { MinecraftVersion } from '@xmcl/installer';
 import { existsSync, readdirSync } from 'fs';
 import path from 'path';
 import { SortMinecraftVersion } from './Utils';
-import { userDataStorage } from '../main/main';
+import { userDataStorage } from '../main';
 import { getLocationRoot } from './Launcher';
 import { net } from 'electron';
 

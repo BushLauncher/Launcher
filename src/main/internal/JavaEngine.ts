@@ -1,11 +1,11 @@
-import { LaunchTaskState, ProgressSubTaskCallback } from './public/GameDataPublic';
+import { LaunchTaskState, ProgressSubTaskCallback } from '../../public/GameDataPublic';
 import path from 'path';
 import { app } from 'electron';
 import fs from 'fs';
 import axios from 'axios';
 import admZip from 'adm-zip';
-import { knowErrorFormat, knowGameError } from './public/ErrorPublic';
-import { userDataStorage } from '../main/main';
+import { knowErrorFormat, knowGameError } from '../../public/ErrorPublic';
+import { userDataStorage } from '../main';
 import { findFileRecursively } from './GameFileManager';
 
 const prefix = '[JavaEngine]: ';

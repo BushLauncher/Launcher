@@ -1,5 +1,5 @@
 import { ParseGameFile, ParseJava, VerifyAccount } from './PreLaunchEngine';
-import { GameType, GameVersion, getVersion, PreLaunchRunnableProcess } from './public/GameDataPublic';
+import { GameType, GameVersion, getVersion, PreLaunchRunnableProcess } from '../../public/GameDataPublic';
 
 export const getLaunchInternal: () => PreLaunchRunnableProcess = () => {
   const v: GameVersion = getVersion(GameType.VANILLA, '1.19.4');

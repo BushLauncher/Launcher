@@ -1,23 +1,15 @@
 /* eslint global-require: off, no-console: off, promise/always-return: off */
 import path from 'path';
 import { app, BrowserWindow, ipcMain, net, shell } from 'electron';
-import { installExtension, REACT_DEVELOPER_TOOLS } from 'electron-extension-installer';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
-
 import PreLoad from './load/load';
 import { Update } from './downloader';
-import * as versionManager from '../internal/VersionManager';
-import { getAllVersionList, getSelectedVersion, getVersionMethode } from '../internal/VersionManager';
-import * as userData from '../internal/UserData';
-import { SetRootPath } from '../internal/UserData';
-import {
-  Callback,
-  GameType,
-  GameVersion,
-  PreLaunchProcess,
-  PreLaunchRunnableProcess
-} from '../internal/public/GameDataPublic';
+import * as versionManager from './internal/VersionManager';
+import { getAllVersionList, getSelectedVersion, getVersionMethode } from './internal/VersionManager';
+import * as userData from './internal/UserData';
+import { SetRootPath } from './internal/UserData';
+import { Callback, GameType, GameVersion, PreLaunchProcess, PreLaunchRunnableProcess } from '../public/GameDataPublic';
 import {
   AddAccount,
   getAccountList,
@@ -30,14 +22,26 @@ import {
   RefreshAccount,
   ReplaceAccount,
   SelectAccount
-} from '../internal/AuthModule';
-import { AuthProviderType, MinecraftAccount } from '../internal/public/AuthPublic';
-import { getDefaultRootPath, getLocationRoot, RunPreLaunchProcess } from '../internal/Launcher';
-import { getLaunchInternal } from '../internal/PreLaunchProcessPatern';
-import { InstallGameFiles, UninstallGameFiles, VerifyGameFiles } from '../internal/GameFileManager';
-import { KnownAuthErrorType } from '../internal/public/ErrorPublic';
+} from './internal/AuthModule';
+import { AuthProviderType, MinecraftAccount } from '../public/AuthPublic';
+import { getDefaultRootPath, getLocationRoot, RunPreLaunchProcess } from './internal/Launcher';
+import { getLaunchInternal } from './internal/PreLaunchProcessPatern';
+import { InstallGameFiles, UninstallGameFiles, VerifyGameFiles } from './internal/GameFileManager';
+import { KnownAuthErrorType } from '../public/ErrorPublic';
+import { installExtensions } from './extension-installer';
 
 const prefix = '[Main Process]: ';
+export let mainWindow: BrowserWindow | null = null;
+if (process.env.NODE_ENV === 'production') {
+  const sourceMapSupport = require('source-map-support');
+  sourceMapSupport.install();
+}
+const isDebug =
+  process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
+
+if (isDebug) {
+  require('electron-debug')();
+}
 const createWindow = async () => {
   return new Promise(async (resolve, reject) => {
     const RESOURCES_PATH = app.isPackaged
@@ -47,6 +51,8 @@ const createWindow = async () => {
     const getAssetPath = (...dataPaths: string[]): string => {
       return path.join(RESOURCES_PATH, ...dataPaths);
     };
+
+    console.log('Creating win');
 
     // noinspection SpellCheckingInspection
     mainWindow = new BrowserWindow({
@@ -75,62 +81,66 @@ const createWindow = async () => {
       icon: getAssetPath('icon.png')
     });
     mainWindow.setResizable(false);
-    mainWindow.webContents
-      .loadFile('./src/main/load/mainLoad.html')
-      .then(() => {
-        console.log('executing js...');
-        const tempPath = app.getPath('temp').replaceAll('\\', '/');
-        const modifyMainText = (text: string) => {
-          if (mainWindow !== null) {
-            mainWindow.webContents.executeJavaScript(
-              `try{document.querySelector('#state').innerText = "${text}";}catch(err) {console.error("we couldn't set the text from the main process");console.error(err)}`
-            );
-          }
-        };
-        new PreLoad(modifyMainText, tempPath)
-          .run()
-          .then(async (response) => {
-            const installUpdate = async (toDownload: any) => {
-              Update(toDownload, (text: string) => modifyMainText(text)).then(
-                (update: any) => {
-                  if (update.updated) {
-                    modifyMainText('Restarting...');
-                    resolve({ mustRestart: true });
-                    //must restart
-                  } else {
-                    console.error(prefix + update);
-                  }
+    mainWindow.webContents.openDevTools();
+    const resolvedHtmlPath = resolveHtmlPath('index.html')
+    const loadingOperation = (process.env.NODE_ENV === 'development')
+      ? mainWindow.webContents.loadURL(resolvedHtmlPath)
+      : mainWindow.loadFile( resolvedHtmlPath);
+    loadingOperation.then(() => {
+      console.log('executing js...');
+      const tempPath = app.getPath('temp').replaceAll('\\', '/');
+      const modifyMainText = (text: string) => {
+        if (mainWindow !== null) {
+          mainWindow.webContents.executeJavaScript(
+            `try{document.querySelector('#state').innerText = "${text}";}catch(err) {console.error("we couldn't set the text from the main process";console.error(err)})`
+          );
+        }
+      };
+      new PreLoad(modifyMainText, tempPath)
+        .run()
+        .then(async (response) => {
+          const installUpdate = async (toDownload: any) => {
+            Update(toDownload, (text: string) => modifyMainText(text)).then(
+              (update: any) => {
+                if (update.updated) {
+                  modifyMainText('Restarting...');
+                  resolve({ mustRestart: true });
+                  //must restart
+                } else {
+                  console.error(prefix + update);
                 }
-              );
-            };
-            if (response.skipped == true) {
-              //offline mode
-              modifyMainText('Starting Offline mode...');
-              console.log(prefix + 'Starting offline mode');
-              resolve({ mustRestart: false });
-            } else {
-              if (response.exist) {
-                await installUpdate(response);
-              } else {
-                console.log(prefix + 'No update available !, starting...');
-                modifyMainText('Starting...');
-                //continue loading this version
-                resolve({ mustRestart: false });
               }
+            );
+          };
+          if (response.skipped == true) {
+            //offline mode
+            modifyMainText('Starting Offline mode...');
+            console.log(prefix + 'Starting offline mode');
+            resolve({ mustRestart: false });
+          } else {
+            if (response.exist) {
+              await installUpdate(response);
+            } else {
+              console.log(prefix + 'No update available !, starting...');
+              modifyMainText('Starting...');
+              //continue loading this version
+              resolve({ mustRestart: false });
             }
-          })
-          .catch((err) => console.error(err));
-      });
+          }
+        })
+        .catch((err) => console.error(err));
+    });
 
     mainWindow.on('ready-to-show', () => {
       if (!mainWindow) throw new Error('"mainWindow" is not defined');
       //prevent next/previous mouse button
       mainWindow.webContents.executeJavaScript(
-        'window.addEventListener("mouseup", (e) => {\n' +
-        '   if (e.button === 3 || e.button === 4)\n' +
-        '      e.preventDefault();\n' +
-        '});'
+        `window.addEventListener("mouseup", (e) => {
+                if (e.button === 3 || e.button === 4) e.preventDefault();
+              });`
       );
+      console.log('showing');
+      mainWindow.webContents.executeJavaScript('console.log(\'showing\')');
       if (process.env.START_MINIMIZED) {
         mainWindow.minimize();
       } else {
@@ -154,21 +164,8 @@ const createWindow = async () => {
   });
 };
 
-export let mainWindow: BrowserWindow | null = null;
 
-if (process.env.NODE_ENV === 'production') {
-  const sourceMapSupport = require('source-map-support');
-  sourceMapSupport.install();
-}
-
-const isDebug =
-  process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
-
-if (isDebug) {
-  require('electron-debug')();
-}
 ///////////////////////////////////
-
 ipcMain.on('App:Close', (event, args) => app.quit());
 ipcMain.on('App:Minimize', (event, args) => BrowserWindow.getFocusedWindow()?.minimize());
 ipcMain.on('App:Relaunch', (event, args) => {
@@ -295,12 +292,7 @@ ipcMain.handle('deleteAll', (event) => {
 app
   .whenReady()
   .then(async () => {
-    if (isDebug) {
-      await installExtension(REACT_DEVELOPER_TOOLS, {
-        loadExtensionOptions: { allowFileAccess: true }
-      });
-    }
-
+    if (isDebug) await installExtensions();
     createWindow()
       .then((res: any) => {
         if (res.mustRestart) app.quit();

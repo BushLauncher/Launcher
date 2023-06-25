@@ -1,4 +1,4 @@
-import { ProgressSubTaskCallback, GameVersion } from '../../../internal/public/GameDataPublic';
+import { ProgressSubTaskCallback, GameVersion } from '../../../public/GameDataPublic';
 import Icon from './Icons/Icon';
 import { getGameTypeIcon } from '../views/SettingsViews/VersionSettingsView';
 import styles from './css/publicStyle.module.css';

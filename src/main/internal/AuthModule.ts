@@ -1,8 +1,9 @@
-import { mainWindow, userDataStorage } from '../main/main';
+import { mainWindow, userDataStorage } from '../main';
 import { Auth, Minecraft, Xbox } from 'msmc';
-import { AuthProviderType, MinecraftAccount } from './public/AuthPublic';
+import { AuthProviderType, MinecraftAccount } from '../../public/AuthPublic';
 import { MSAuthToken } from 'msmc/types/auth/auth';
-import { KnownAuthErrorType } from './public/ErrorPublic';
+import { KnownAuthErrorType } from '../../public/ErrorPublic';
+
 
 const prefix = '[AuthModule Internal]: ';
 

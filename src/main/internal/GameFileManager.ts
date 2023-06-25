@@ -1,6 +1,6 @@
 import { installTask } from '@xmcl/installer';
-import { GameType, GameVersion, LaunchTaskState, ProgressSubTaskCallback } from './public/GameDataPublic';
-import { knowErrorFormat, knowGameError } from './public/ErrorPublic';
+import { GameType, GameVersion, LaunchTaskState, ProgressSubTaskCallback } from '../../public/GameDataPublic';
+import { knowErrorFormat, knowGameError } from '../../public/ErrorPublic';
 import { diagnose, MinecraftIssueReport } from '@xmcl/core';
 import { ResolveXmclVersion } from './PreLaunchEngine';
 import fs, { existsSync } from 'fs';

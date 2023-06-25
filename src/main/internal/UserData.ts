@@ -1,15 +1,12 @@
-import { GameVersion, getDefaultGameType, getDefaultVersion } from './public/GameDataPublic';
+import { GameVersion, getDefaultGameType, getDefaultVersion } from '../../public/GameDataPublic';
 import { app } from 'electron';
 import fs, { readFileSync, writeFileSync } from 'fs';
-import { userDataStorage } from '../main/main';
+import { userDataStorage } from '../main';
 import { Xbox } from 'msmc';
-import { Theme } from './public/ThemePublic';
+import { Theme } from '../../public/ThemePublic';
 
 const path = require('path');
-const userPath = app.getPath('userData');
 const prefix: string = '[UserData]: ';
-
-
 export function loadData() {
   const res: GameVersion | undefined = userDataStorage.get('version.selected');
   if (res != undefined) SelectVersion(res);
@@ -77,7 +74,7 @@ export class Storage {
   private readonly storageFilePath: string;
 
   constructor(private fileName: string) {
-    this.storageFilePath = path.join(userPath, fileName + '.json');
+    this.storageFilePath = path.join(app.getPath('userData'), fileName + '.json');
     this.loadData();
   }
 

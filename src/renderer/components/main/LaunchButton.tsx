@@ -19,7 +19,7 @@ import {
   PreLaunchTasks,
   ProgressCallback,
   GameVersion
-} from '../../../internal/public/GameDataPublic';
+} from '../../../public/GameDataPublic';
 import Loader from '../public/Loader';
 import { globalStateContext } from '../../index';
 import { toast } from 'react-toastify';

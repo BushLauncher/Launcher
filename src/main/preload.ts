@@ -1,9 +1,12 @@
 // Disable no-unused-vars, broken for spread args
 /* eslint no-unused-vars: off */
-import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
+const { contextBridge, ipcRenderer } = require('electron');
+import { IpcRendererEvent } from 'electron'
+
+console.log(ipcRenderer);
 
 export type Channels = string;
-
+console.log(ipcRenderer);
 const electronHandler = {
   ipcRenderer: {
     sendMessage(channel: Channels, args: { [key: string]: unknown }) {
@@ -30,9 +33,6 @@ const electronHandler = {
     chrome: () => process.versions.chrome,
     electron: () => process.versions.electron,
     app: () => process.env.npm_package_version
-  },
-  receive: async (channel: Channels, func: any) => {
-    return ipcRenderer.on(channel, (event, ...args) => func(...args));
   }
 };
 

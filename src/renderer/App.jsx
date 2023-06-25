@@ -9,7 +9,7 @@ import SettingsView from './components/views/SettingsView';
 import AuthModule, { addAccount, getLogin } from './components/main/Auth/AuthModule';
 import AuthModuleStyle from './components/main/Auth/css/AuthModuleStyle.module.css';
 
-import { KnownAuthErrorType } from '../internal/public/ErrorPublic';
+import { KnownAuthErrorType } from '../public/ErrorPublic';
 
 export const NotificationParam = {
   info: {

@@ -3,7 +3,7 @@ import Loader from '../../public/Loader';
 import { useState } from 'react';
 import styles from './css/VersionSettingsViewStyle.module.css';
 import defaultStyle from './css/DefaultSettingsView.module.css';
-import { GameType, GameVersion } from '../../../../internal/public/GameDataPublic';
+import { GameType, GameVersion } from '../../../../public/GameDataPublic';
 import TabView, { TabParams } from '../../main/TabView/TabView';
 import { AutoComplete } from 'antd';
 import Icon from '../../public/Icons/Icon';

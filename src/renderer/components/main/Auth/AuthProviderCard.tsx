@@ -8,9 +8,9 @@ import errorIcon from '../../../../assets/graphics/icons/close.svg';
 import msIcon from '../../../../assets/graphics/icons/microsoft.svg';
 import { useState } from 'react';
 import Button, { ButtonType } from '../../public/Input/Button';
-import { AuthProviderType, MinecraftAccount } from '../../../../internal/public/AuthPublic';
+import { AuthProviderType, MinecraftAccount } from '../../../../public/AuthPublic';
 import { toast } from 'react-toastify';
-import { errorCode, KnownAuthErrorType } from '../../../../internal/public/ErrorPublic';
+import { errorCode, KnownAuthErrorType } from '../../../../public/ErrorPublic';
 
 enum State {
   Normal,

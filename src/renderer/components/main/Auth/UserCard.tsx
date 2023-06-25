@@ -6,7 +6,7 @@ import Button, { ButtonType } from '../../public/Input/Button';
 import Icon from '../../public/Icons/Icon';
 import logoutIcon from '../../../../assets/graphics/icons/leave.svg';
 import { toast } from 'react-toastify';
-import { AuthProviderType, FakeMinecraftAccount, MinecraftAccount } from '../../../../internal/public/AuthPublic';
+import { AuthProviderType, FakeMinecraftAccount, MinecraftAccount } from '../../../../public/AuthPublic';
 
 import msIcon from '../../../../assets/graphics/icons/microsoft.svg';
 import unknownIcon from '../../../../assets/graphics/icons/close.svg';

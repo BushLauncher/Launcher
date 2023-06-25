@@ -1,13 +1,5 @@
 import * as AccountManager from './AuthModule';
-import {
-  GameVersion,
-  LaunchOperationType,
-  LaunchTask,
-  LaunchTaskState,
-  PreLaunchTasks,
-  ProgressSubTaskCallback,
-  UpdateLaunchTaskCallback
-} from './public/GameDataPublic';
+import {  GameVersion,  LaunchOperationType,  LaunchTask,  LaunchTaskState,  PreLaunchTasks,  ProgressSubTaskCallback,  UpdateLaunchTaskCallback} from '../../public/GameDataPublic';
 import { getVersionList, MinecraftVersion } from '@xmcl/installer';
 import { InstallGameFiles, VerifyGameFiles } from './GameFileManager';
 import { versionExist } from './VersionManager';

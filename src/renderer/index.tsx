@@ -5,8 +5,9 @@ import MainMenuBar from './components/main/MainMenu';
 import { getCurrentTheme } from './scripts/ThemeManager';
 import themeStyle from './Theme.module.css';
 import Loader from './components/public/Loader';
-import { Theme } from '../internal/public/ThemePublic';
+import { Theme } from '../public/ThemePublic';
 import { ConfigProvider, theme } from 'antd';
+import { ElectronHandler } from '../main/preload';
 
 const container = document.getElementById('root')!;
 const root = createRoot(container);
@@ -15,7 +16,12 @@ const globalState: { isOnline: boolean, theme: Promise<Theme> } = {
   isOnline: navigator.onLine,
   theme: getCurrentTheme()
 };
-
+declare global {
+  // eslint-disable-next-line no-unused-vars
+  interface Window {
+    electron: ElectronHandler;
+  }
+}
 export const globalStateContext = React.createContext(globalState);
 root.render(
   <ConfigProvider theme={{ algorithm: theme.darkAlgorithm }}>

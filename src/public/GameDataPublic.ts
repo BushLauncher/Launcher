@@ -1,5 +1,5 @@
 import { knowErrorFormat } from './ErrorPublic';
-import { ResolvedPreLaunchTask } from '../PreLaunchEngine';
+import { ResolvedPreLaunchTask } from '../main/internal/PreLaunchEngine';
 
 export enum GameType {
   VANILLA = 'VANILLA'

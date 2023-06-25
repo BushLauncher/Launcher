@@ -1,7 +1,7 @@
 import InputGroup from '../../public/Input/InputGroup';
 import Loader from '../../public/Loader';
 import { getAllTheme, getCurrentTheme, SetTheme } from '../../../scripts/ThemeManager';
-import { Theme } from '../../../../internal/public/ThemePublic';
+import { Theme } from '../../../../public/ThemePublic';
 import React from 'react';
 import defaultStyle from './css/DefaultSettingsView.module.css';
 import { toast } from 'react-toastify';

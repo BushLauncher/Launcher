@@ -1,17 +1,4 @@
-import {
-  Callback,
-  CallbackType,
-  ErrorCallback,
-  ExitedCallback,
-  GameVersion,
-  LaunchTask,
-  LaunchTaskState,
-  PreLaunchProcess,
-  PreLaunchRunnableProcess,
-  ProgressCallback,
-  StartedCallback,
-  UpdateLaunchTaskCallback
-} from './public/GameDataPublic';
+import {  Callback,  CallbackType,  ErrorCallback,  ExitedCallback,  GameVersion,  LaunchTask,  LaunchTaskState,  PreLaunchProcess,  PreLaunchRunnableProcess,  ProgressCallback,  StartedCallback,  UpdateLaunchTaskCallback} from '../../public/GameDataPublic';
 import { parseJava, ResolvedPreLaunchTask, ResolvePreLaunchTask, ResolvePreLaunchTaskList } from './PreLaunchEngine';
 import { createMinecraftProcessWatcher, launch } from '@xmcl/core';
 import { ChildProcess } from 'child_process';
@@ -19,7 +6,7 @@ import { getSelectedAccount, isAccountValid } from './AuthModule';
 import { MicrosoftAuthenticator } from '@xmcl/user';
 import { net } from 'electron';
 import getAppDataPath from 'appdata-path';
-import { userDataStorage } from '../main/main';
+import { userDataStorage } from '../main';
 
 const prefix = '[Launcher]: ';
 

@@ -10,7 +10,7 @@ import { toast } from 'react-toastify';
 import { createRoot } from 'react-dom/client';
 import LoginPanel from './LoginPanel';
 import { globalStateContext } from '../../../index';
-import { KnownAuthErrorType } from '../../../../internal/public/ErrorPublic';
+import { KnownAuthErrorType } from '../../../../public/ErrorPublic';
 
 export async function getLogin({ closable }) {
   return new Promise((resolve) => {

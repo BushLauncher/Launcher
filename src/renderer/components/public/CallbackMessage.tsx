@@ -1,4 +1,4 @@
-import { Callback, CallbackType } from '../../../internal/public/GameDataPublic';
+import { Callback, CallbackType } from '../../../public/GameDataPublic';
 import styles from './css/publicStyle.module.css';
 import Icon from './Icons/Icon';
 import arrowIcon from '../../../assets/graphics/icons/caret-left.svg';
