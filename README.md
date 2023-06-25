@@ -1,5 +1,5 @@
 <a href="https://github.com/Gagafeee/BushLauncher">
-  <img src="https://github.com/Gagafeee/BushLauncher/blob/f637797f50756355513cd340b45b692299973570/assets/icon.png?raw=true" alt="BushLauncher_Icon" width="180" height="180" align="left">
+  <img src="./assets/icon.png" alt="BushLauncher_Icon" width="180" height="180" align="left">
 </a>
 
 
@@ -10,7 +10,7 @@ by [@Gagafeee](https://github.com/Gagafeee) | <a href="https://github.com/Gagafe
 #
 
 
-![Screen Shot](https://github.com/Gagafeee/BushLauncher/blob/b3d2165d01caa39f09079a62580f4b2a6986becb/assets/screen.png)
+![Screen Shot](./.erb/img/screen.png)
 
 BushLauncher is a flexible Minecraft Launcher designed to simplify installation of the Minecraft game and its prerequisites, but also of mods, texture packs, etc.
 #
