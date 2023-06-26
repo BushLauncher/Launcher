@@ -34,11 +34,13 @@
 .mainMenuBar .data .frameData .title {
   font-weight: 300;
   font-size: 3vh;
+  white-space: nowrap;
 }
 
 .mainMenuBar .data .frameData .version {
   font-weight: 500;
   font-size: 2.5vh;
+  white-space: nowrap;
 }
 
 .mainMenuBar .frameActionGroup {

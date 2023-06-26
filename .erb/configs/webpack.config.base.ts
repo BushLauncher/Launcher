@@ -52,20 +52,7 @@ const configuration: webpack.Configuration = {
   plugins: [
     new webpack.EnvironmentPlugin({
       NODE_ENV: 'production'
-    }),
-    new webpack.ExternalsPlugin('commonjs', [
-      'desktop-capturer',
-      'electron',
-      'ipc',
-      'ipc-renderer',
-      'native-image',
-      'remote',
-      'web-frame',
-      'clipboard',
-      'crash-reporter',
-      'screen',
-      'shell'
-    ])
+    })
   ]
 };
 

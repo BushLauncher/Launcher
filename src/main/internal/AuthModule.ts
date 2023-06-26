@@ -1,4 +1,4 @@
-import { mainWindow, userDataStorage } from '../main';
+import { currentWindow, userDataStorage } from '../main';
 import { Auth, Minecraft, Xbox } from 'msmc';
 import { AuthProviderType, MinecraftAccount } from '../../public/AuthPublic';
 import { MSAuthToken } from 'msmc/types/auth/auth';
@@ -55,7 +55,7 @@ export function SelectAccount(account: number | MinecraftAccount) {
   const id = resolveUserId(account);
   if (updateStorage('selectedAccount', id)) {
     console.log(prefix + 'Selected account: ' + id + ', sent verify process');
-    mainWindow?.webContents.send('Auth:CheckAccountProcess', { user: account, id: id });
+    currentWindow?.webContents.send('Auth:CheckAccountProcess', { user: account, id: id });
     return true;
   } else throw new Error('Cannot select Account, local update error');
 }

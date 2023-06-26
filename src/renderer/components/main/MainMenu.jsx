@@ -56,15 +56,15 @@ export default function MainMenuBar() {
           }
         );
       } else {
-        if(toast.isActive(ConnexionToast)){
-          ConnexionToast.close()
+        if (toast.isActive(ConnexionToast)) {
+          ConnexionToast.close();
         }
       }
     };
     updateNetworkState();
     setInterval(updateNetworkState, 10000);
   };
-
+  launchNetworkCheck();
   return (
     <div id='mainMenu' className={styles.mainMenuBar} role={'menu'}>
       <div className={styles.data}>
@@ -77,11 +77,13 @@ export default function MainMenuBar() {
         />
         <div className={styles.frameData}>
           <p className={styles.title}>Bush Launcher</p>
-          <p className={styles.version}>
-            <DataTextComponent data='app-version' />
-          </p>
+          <DataTextComponent data='app-version' style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }} className={styles.version} />
           {!isOnline && <p className={styles.version}>[Offline Mode]</p>}
-          {launchNetworkCheck()}
         </div>
       </div>
       <div className={styles.frameActionGroup}>

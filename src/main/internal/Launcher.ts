@@ -100,7 +100,7 @@ export function Launch(version: GameVersion, callback: (callback: StartedCallbac
     };
     parseJava((c) => console.log(prefix + 'Internal Launch re-parse Java: ', c))
       .then(async (javaPath: string) => {
-        console.log(prefix + 'Launching minecraft ' + version.id + ' :' + '\nFor: ', account.profile, '\n from: ' + getLocationRoot() + '\n java: ' + javaPath + '\n...');
+        console.log(prefix + 'Launching minecraft ' + version.id + ' :' + '\nFor: ', account.profile, '\n from: ' + getLocationRoot() + '\n java: ' + javaPath );
         //TODO: Store returns of preLaunchOperations
         launch({
           gamePath: getLocationRoot(),
@@ -126,7 +126,7 @@ export function Launch(version: GameVersion, callback: (callback: StartedCallbac
         }).catch(err => console.error(prefix + err));
       })
       .catch(err => {
-        console.error(prefix + err.additionalError[0].segmentErrors[0]);
+        console.error(prefix, err);
         reject({ type: CallbackType.Error, return: err });
       });
   });

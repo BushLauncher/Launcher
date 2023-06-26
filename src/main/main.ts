@@ -1,10 +1,5 @@
 /* eslint global-require: off, no-console: off, promise/always-return: off */
-import path from 'path';
-import { app, BrowserWindow, ipcMain, net, shell } from 'electron';
-import MenuBuilder from './menu';
-import { resolveHtmlPath } from './util';
-import PreLoad from './load/load';
-import { Update } from './downloader';
+import { app, BrowserWindow, ipcMain, net } from 'electron';
 import * as versionManager from './internal/VersionManager';
 import { getAllVersionList, getSelectedVersion, getVersionMethode } from './internal/VersionManager';
 import * as userData from './internal/UserData';
@@ -29,9 +24,11 @@ import { getLaunchInternal } from './internal/PreLaunchProcessPatern';
 import { InstallGameFiles, UninstallGameFiles, VerifyGameFiles } from './internal/GameFileManager';
 import { KnownAuthErrorType } from '../public/ErrorPublic';
 import { installExtensions } from './extension-installer';
+import PreloadWindow from './PreloadWindow';
+import MainWindow from './MainWindow';
 
 const prefix = '[Main Process]: ';
-export let mainWindow: BrowserWindow | null = null;
+export let currentWindow: BrowserWindow | null = null;
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
   sourceMapSupport.install();
@@ -42,127 +39,6 @@ const isDebug =
 if (isDebug) {
   require('electron-debug')();
 }
-const createWindow = async () => {
-  return new Promise(async (resolve, reject) => {
-    const RESOURCES_PATH = app.isPackaged
-      ? path.join(process.resourcesPath, 'assets')
-      : path.join(__dirname, '../../assets');
-
-    const getAssetPath = (...dataPaths: string[]): string => {
-      return path.join(RESOURCES_PATH, ...dataPaths);
-    };
-
-    console.log('Creating win');
-
-    // noinspection SpellCheckingInspection
-    mainWindow = new BrowserWindow({
-      show: false,
-      width: 1080,
-      height: 670,
-      minWidth: 1080,
-      minHeight: 670,
-      center: true,
-      webPreferences: {
-        disableHtmlFullscreenWindowResize: true,
-        preload: app.isPackaged
-          ? path.join(__dirname, 'preload.js')
-          : path.join(__dirname, '../../.erb/dll/preload.js')
-      },
-      fullscreenable: false,
-      titleBarStyle: 'hidden',
-      transparent: true,
-      frame: false,
-      movable: true,
-      minimizable: true,
-      maximizable: false,
-      closable: true,
-      title: 'Bush Launcher',
-      darkTheme: true,
-      icon: getAssetPath('icon.png')
-    });
-    mainWindow.setResizable(false);
-    mainWindow.webContents.openDevTools();
-    const resolvedHtmlPath = resolveHtmlPath('index.html')
-    const loadingOperation = (process.env.NODE_ENV === 'development')
-      ? mainWindow.webContents.loadURL(resolvedHtmlPath)
-      : mainWindow.loadFile( resolvedHtmlPath);
-    loadingOperation.then(() => {
-      console.log('executing js...');
-      const tempPath = app.getPath('temp').replaceAll('\\', '/');
-      const modifyMainText = (text: string) => {
-        if (mainWindow !== null) {
-          mainWindow.webContents.executeJavaScript(
-            `try{document.querySelector('#state').innerText = "${text}";}catch(err) {console.error("we couldn't set the text from the main process";console.error(err)})`
-          );
-        }
-      };
-      new PreLoad(modifyMainText, tempPath)
-        .run()
-        .then(async (response) => {
-          const installUpdate = async (toDownload: any) => {
-            Update(toDownload, (text: string) => modifyMainText(text)).then(
-              (update: any) => {
-                if (update.updated) {
-                  modifyMainText('Restarting...');
-                  resolve({ mustRestart: true });
-                  //must restart
-                } else {
-                  console.error(prefix + update);
-                }
-              }
-            );
-          };
-          if (response.skipped == true) {
-            //offline mode
-            modifyMainText('Starting Offline mode...');
-            console.log(prefix + 'Starting offline mode');
-            resolve({ mustRestart: false });
-          } else {
-            if (response.exist) {
-              await installUpdate(response);
-            } else {
-              console.log(prefix + 'No update available !, starting...');
-              modifyMainText('Starting...');
-              //continue loading this version
-              resolve({ mustRestart: false });
-            }
-          }
-        })
-        .catch((err) => console.error(err));
-    });
-
-    mainWindow.on('ready-to-show', () => {
-      if (!mainWindow) throw new Error('"mainWindow" is not defined');
-      //prevent next/previous mouse button
-      mainWindow.webContents.executeJavaScript(
-        `window.addEventListener("mouseup", (e) => {
-                if (e.button === 3 || e.button === 4) e.preventDefault();
-              });`
-      );
-      console.log('showing');
-      mainWindow.webContents.executeJavaScript('console.log(\'showing\')');
-      if (process.env.START_MINIMIZED) {
-        mainWindow.minimize();
-      } else {
-        mainWindow.show();
-      }
-    });
-
-    mainWindow.on('closed', () => {
-      mainWindow = null;
-    });
-
-    const menuBuilder = new MenuBuilder(mainWindow);
-    menuBuilder.buildMenu();
-
-    // Open urls in the user's browser
-    mainWindow.webContents.setWindowOpenHandler((edata) => {
-      shell.openExternal(edata.url);
-      return { action: 'deny' };
-    });
-
-  });
-};
 
 
 ///////////////////////////////////
@@ -172,6 +48,7 @@ ipcMain.on('App:Relaunch', (event, args) => {
   app.relaunch();
   app.quit();
 });
+ipcMain.handle('App:getVersion', (event, args)=> app.getVersion())
 
 ipcMain.handle('Version:getList', (event, { gameType, type }: {
   gameType: GameType | undefined,
@@ -293,17 +170,30 @@ app
   .whenReady()
   .then(async () => {
     if (isDebug) await installExtensions();
-    createWindow()
-      .then((res: any) => {
-        if (res.mustRestart) app.quit();
-        userData.loadData();
-        if (mainWindow !== null)
-          mainWindow.loadURL(resolveHtmlPath('index.html'));
+    let preloadWindow: PreloadWindow | null = new PreloadWindow();
+    preloadWindow?.window.on('closed', () => preloadWindow = null);
+    currentWindow = preloadWindow?.window;
+    preloadWindow?.window.on('ready-to-show', () => {
+      preloadWindow?.show();
+      preloadWindow?.Run()
+        .then((mustRestart) => {
+          if (mustRestart) app.quit();
+          else {
+            preloadWindow?.modifyMainText('Loading data...');
+            userData.loadData();
+            preloadWindow?.modifyMainText('Starting...');
+            const mainWindow = new MainWindow();
+            mainWindow.window.on('ready-to-show', () => {
+              setTimeout(() => {
+                mainWindow.show();
+                preloadWindow?.close();
+              }, isDebug ? 0 : 5000);
+            });
+
+          }
+        }).catch(err => {
+        console.error(err);
       });
-    app.on('activate', () => {
-      // On macOS it's common to re-create a window in the app when the
-      // dock icon is clicked and there are no other windows open.
-      if (mainWindow === null) createWindow();
     });
   })
   .catch(console.log);

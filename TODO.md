@@ -1,5 +1,5 @@
 - [ ] Rework app starting
-- [ ] Build
+- [x] Build
 - [ ] Ts apply
 - [ ] TabView persistence
 - [ ] Progress Bar on Launching

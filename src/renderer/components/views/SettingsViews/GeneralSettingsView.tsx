@@ -1,6 +1,6 @@
 import InputGroup from '../../public/Input/InputGroup';
 import Loader from '../../public/Loader';
-import { getAllTheme, getCurrentTheme, SetTheme } from '../../../scripts/ThemeManager';
+import { getAllTheme, getCurrentTheme, SetTheme } from '../../../../public/ThemeManager';
 import { Theme } from '../../../../public/ThemePublic';
 import React from 'react';
 import defaultStyle from './css/DefaultSettingsView.module.css';

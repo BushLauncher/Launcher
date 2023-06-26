@@ -1,4 +1,4 @@
-import {Theme} from '../../public/ThemePublic';
+import {Theme} from './ThemePublic';
 
 export function SetTheme(theme: Theme) {
   window.electron.ipcRenderer.sendMessage('updateData', ({ dataPath: 'interface.theme', value: theme }));

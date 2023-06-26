@@ -2,7 +2,7 @@ import { createRoot } from 'react-dom/client';
 import App from './App';
 import React from 'react';
 import MainMenuBar from './components/main/MainMenu';
-import { getCurrentTheme } from './scripts/ThemeManager';
+import { getCurrentTheme } from '../public/ThemeManager';
 import themeStyle from './Theme.module.css';
 import Loader from './components/public/Loader';
 import { Theme } from '../public/ThemePublic';
