@@ -44,7 +44,6 @@ export default class Window {
     this.window = new BrowserWindow(params);
     this.window.setResizable(false);
     const resolvedHtmlPath = contentPath;
-    console.log(resolvedHtmlPath);
     const loadingOperation = (contentPath.startsWith('http'))
       ? this.window.webContents.loadURL(resolvedHtmlPath)
       : this.window.loadFile(resolvedHtmlPath);

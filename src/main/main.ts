@@ -162,10 +162,11 @@ ipcMain.on('updateData', (event, arg: { value: any; dataPath: any }) => {
 ipcMain.handle('removeData', (event, arg: { dataPath: string }) => {
   return userDataStorage.remove(arg.dataPath);
 });
-ipcMain.handle('deleteAll', (event) => {
+ipcMain.handle('Storage:DeleteAll', (event) => {
   return userDataStorage.DeleteFile();
 });
 ////////////////////////////////////////////////////////
+app.disableHardwareAcceleration()
 app
   .whenReady()
   .then(async () => {
@@ -183,6 +184,7 @@ app
             userData.loadData();
             preloadWindow?.modifyMainText('Starting...');
             const mainWindow = new MainWindow();
+            currentWindow = mainWindow.window;
             mainWindow.window.on('ready-to-show', () => {
               setTimeout(() => {
                 mainWindow.show();

@@ -8,8 +8,10 @@ import { toast, ToastContainer } from 'react-toastify';
 import SettingsView from './components/views/SettingsView';
 import AuthModule, { addAccount, getLogin } from './components/main/Auth/AuthModule';
 import AuthModuleStyle from './components/main/Auth/css/AuthModuleStyle.module.css';
-
 import { KnownAuthErrorType } from '../public/ErrorPublic';
+import React from 'react';
+import { globalStateContext } from './index';
+
 
 export const NotificationParam = {
   info: {
@@ -27,50 +29,79 @@ export const NotificationParam = {
     autoClose: false,
     hideProgressBar: true
   }
+
 };
 
 
-async function validateUser(user, id, reloadFunc) {
-  return new Promise(async (resolve, reject) => {
-    const account = user !== undefined ? user : await window.electron.ipcRenderer.invoke('Auth:getSelectedAccount', {});
-    const accountId = id !== undefined ? id : await window.electron.ipcRenderer.invoke('Auth:getSelectedId', {});
-    console.log('Verifying user ' + account?.profile?.name + ' at ' + accountId);
+export default function App() {
+  const { isOnline } = React.useContext(globalStateContext);
 
-    if (account === undefined) {
-      //Auth new
-      const notificationId = toast.info('Hi, please log-in a Minecraft account', {
-        autoClose: false,
-        hideProgressBar: true,
-        closeButton: false
-      });
-      await addAccount(await getLogin({ closable: false }));
-      toast.dismiss(notificationId);
-      resolve();
-    } else {
-      const notificationId = toast.loading('Checking your account ' + account.profile.name + '...');
-      if (await window.electron.ipcRenderer.invoke('Auth:checkAccount', { user: account }) === false) {
-        console.log('account is not valid');
-        const res = await window.electron.ipcRenderer.invoke('Auth:refreshUser', { userId: accountId });
-        console.log(res);
-        if (res === KnownAuthErrorType.CannotRefreshAccount) {
-          console.log('Cannot re-auth account');
-          toast.update(notificationId, {
-            render: `We couldn't refresh data from your account ${account.profile.name}, please re-login as new`,
-            autoClose: false,
-            hideProgressBar: true,
-            closeButton: true,
-            isLoading: false,
-            type: 'warning'
-          });
-          await window.electron.ipcRenderer.invoke('Auth:LogOut', { accountIndex: accountId });
-          reloadFunc()
-          resolve();
+  async function validateUser(user, id, reloadFunc) {
+    return new Promise(async (resolve, reject) => {
+      const account = user !== undefined ? user : await window.electron.ipcRenderer.invoke('Auth:getSelectedAccount', {});
+      const accountId = id !== undefined ? id : await window.electron.ipcRenderer.invoke('Auth:getSelectedId', {});
+      console.log('Verifying user ' + account?.profile?.name + ' at ' + accountId);
+      if (account === undefined || account === null) {
+        //Auth new
+        const notificationId = toast.info('Hi, please log-in a Minecraft account', {
+          autoClose: false,
+          hideProgressBar: true,
+          closeButton: false
+        });
+        await addAccount(await getLogin({ closable: false }));
+        toast.dismiss(notificationId);
+        resolve();
+      } else {
+        const notificationId = toast.loading('Checking your account ' + account.profile.name + '...');
+        if (await window.electron.ipcRenderer.invoke('Auth:checkAccount', { user: account }) === false) {
+          console.log('account is not valid');
+          const res = await window.electron.ipcRenderer.invoke('Auth:refreshUser', { userId: accountId });
+          console.log(res);
+          if (res === KnownAuthErrorType.CannotRefreshAccount) {
+            console.log('Cannot re-auth account');
+            if (!isOnline) {
+              //if we know the user will not be able to re-auth new user
+              toast.update(notificationId, {
+                render: `We couldn't refresh your account ${account.profile.name} because you are offline, some functionalities may not work correctly !`,
+                autoClose: false,
+                hideProgressBar: true,
+                closeButton: true,
+                isLoading: false,
+                type: 'warning'
+              });
+            } else {
+              toast.update(notificationId, {
+                render: `We couldn't refresh data from your account ${account.profile.name}, please re-login as new`,
+                autoClose: false,
+                hideProgressBar: true,
+                closeButton: true,
+                isLoading: false,
+                type: 'warning'
+              });
+              await window.electron.ipcRenderer.invoke('Auth:LogOut', { accountIndex: accountId });
+              reloadFunc();
+            }
+            resolve();
+          } else {
+            console.log('Re authed account');
+            toast.update(notificationId, {
+              render() {
+                resolve();
+                return 'Hi ' + account.profile.name;
+              },
+              autoClose: 1500,
+              closeButton: false,
+              pauseOnHover: false,
+              isLoading: false,
+              type: 'success'
+            });
+          }
         } else {
-          console.log('Re authed account');
+          console.log('account is valid');
           toast.update(notificationId, {
             render() {
               resolve();
-              return 'Hi ' + account.profile.name;
+              return 'Switched to ' + account.profile.name;
             },
             autoClose: 1500,
             closeButton: false,
@@ -79,25 +110,10 @@ async function validateUser(user, id, reloadFunc) {
             type: 'success'
           });
         }
-      } else {
-        console.log('account is valid');
-        toast.update(notificationId, {
-          render() {
-            resolve();
-            return 'Switched to ' + account.profile.name;
-          },
-          autoClose: 1500,
-          closeButton: false,
-          pauseOnHover: false,
-          isLoading: false,
-          type: 'success'
-        });
       }
-    }
-  });
-}
+    });
+  }
 
-export default function App() {
   return (
     <Loader
       content={() => {

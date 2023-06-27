@@ -1,4 +1,4 @@
-- [ ] Rework app starting
+- [x] Rework app starting
 - [x] Build
 - [ ] Ts apply
 - [ ] TabView persistence

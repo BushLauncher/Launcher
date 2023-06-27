@@ -3,7 +3,6 @@ window.electron.ipcRenderer.on('PreLoad:setText', (val) => {
 });
 
 window.version.app().then(res => {
-  console.log(res);
   const elements = [document.querySelector('.toReplace[data-type="app-version"]')];
   for (const e of elements) {
     if (e) e.innerText = res;

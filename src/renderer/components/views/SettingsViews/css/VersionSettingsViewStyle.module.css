@@ -1,5 +1,6 @@
 .View {
   max-height: 75vh;
+  margin-top: 9vh;
 }
 .pathSelector {
   width: 30vw;

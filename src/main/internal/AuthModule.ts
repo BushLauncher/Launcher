@@ -22,12 +22,13 @@ export function AddAccount(user: MinecraftAccount) {
 
 export async function RefreshAccount(refreshToken: string | MinecraftAccount): Promise<MinecraftAccount | KnownAuthErrorType.CannotRefreshAccount> {
   const refresh_token = (typeof refreshToken === 'string' ? refreshToken : refreshToken.msToken.refresh_token);
-  return auth.refresh(refresh_token).then(async res => {
-    return await xboxToUser(res);
-  }).catch(err => {
-    console.log('We couldn\'t refresh account, ', err);
-    return KnownAuthErrorType.CannotRefreshAccount;
-  });
+  return auth.refresh(refresh_token)
+    .then(async res => {
+      return await xboxToUser(res);
+    }).catch(err => {
+      console.log('We couldn\'t refresh account, ', err);
+      return KnownAuthErrorType.CannotRefreshAccount;
+    });
 }
 
 export async function Login(providerType: AuthProviderType): Promise<MinecraftAccount> {

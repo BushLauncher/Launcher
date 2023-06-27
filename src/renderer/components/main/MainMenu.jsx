@@ -31,7 +31,7 @@ export default function MainMenuBar() {
         ConnexionToast = toast.promise(
           getNetworkState,
           {
-            pending: `Connecting to the internet... [currently: ${navigator.onLine}, context: ${isOnline}]`,
+            pending: `Connecting to the internet...`/*[currently: ${navigator.onLine}, context: ${isOnline}]`*/,
             success: {
               render() {
                 setTimeout(() => {

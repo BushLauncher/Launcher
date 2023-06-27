@@ -188,7 +188,6 @@
 .TabView[data-orientation="Horizontal"] .Viewer {
   height: 100%;
   flex-direction: column;
-  justify-content: flex-end;
 }
 
 .TabView[data-orientation="Vertical"] .Viewer {
