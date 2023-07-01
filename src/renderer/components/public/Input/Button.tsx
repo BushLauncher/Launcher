@@ -11,7 +11,7 @@ export interface ButtonProps extends ComponentsPublic {
   content: string | ReactElement;
   type: ButtonType;
 }
-
+//TODO: review with ant buttons
 export default class Button extends React.Component<ButtonProps, {}> {
   constructor(props: ButtonProps) {
     super(props);

@@ -5,7 +5,7 @@ export interface InputProps extends ComponentsPublic{
   label?: string | React.ReactNode;
   input: React.ReactNode;
 }
-export default function InputGroup(props: InputProps) {
+export default function LabeledInput(props: InputProps) {
   return <div className={styles.input}>
     {typeof props.label === 'string' ?
       <p className={styles.label}>{props.label + ":"}</p>

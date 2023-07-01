@@ -18,30 +18,25 @@ export interface loginInterface {
 export default function LoginPanel({ functions, closable }: {
   functions: loginInterface, closable?: boolean
 }) {
+  const { isOnline } = React.useContext(globalStateContext);
   const close = () => {
     if (closable === undefined || closable) functions.reject(KnownAuthErrorType.ClosedByUser);
   };
-  const { isOnline } = React.useContext(globalStateContext);
-  const content = () => {
-    return new Promise((resolve, reject) => {
-      resolve(
-        <div className={styles.LoginPanel}>
-          <div className={styles.content}>
-            {closable === undefined || closable &&
-              <Button action={close} className={styles.closeButton}
-                      content={<Icon icon={closeIcon} className={styles.closeIcon} />}
-                      type={ButtonType.Square} />}
-            <p className={styles.title}>
-              {isOnline ? 'Login to your account:' : 'You are offline'}
-            </p>
-            <div className={styles.authProviderList}>
-              {isOnline
-                ? Object.keys(AuthProviderType).map(
-                  (name: any, index: number) => {
-                    const type: AuthProviderType = name;
+  const content = async () => {
+    return (
+      <div className={styles.LoginPanel}>
+        <div className={styles.content}>
+          {closable === undefined || closable &&
+            <Button action={close} className={styles.closeButton}
+                    content={<Icon icon={closeIcon} className={styles.closeIcon} />}
+                    type={ButtonType.Square} />}
+          <p className={styles.title}>{isOnline ? 'Login :' : 'You are offline'}</p>
+          <div className={styles.authProviderList}>
+            {isOnline ? Object.values(AuthProviderType).map((name, index: number) => {
+                  if (name !== AuthProviderType.Unknown) {
                     return (
                       <AuthProviderCard
-                        type={type}
+                        type={name}
                         key={index}
                         reject={(err: errorCode) =>
                           toast.error(err.toString())
@@ -52,15 +47,15 @@ export default function LoginPanel({ functions, closable }: {
                       />
                     );
                   }
-                )
-                : null}
-            </div>
+                }
+              )
+              : undefined}
           </div>
         </div>
-      );
-    });
+      </div>
+    );
+
   };
 
-  // @ts-ignore
-  return <Loader content={content} className={undefined} style={undefined} />;
+  return <Loader content={content} />;
 };

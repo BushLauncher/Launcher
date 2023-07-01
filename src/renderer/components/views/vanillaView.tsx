@@ -1,8 +1,8 @@
-import styles from './css/defaultViewStyle.module.css'
+import styles from './css/defaultViewStyle.module.css';
 
-import GameIcon from '../public/Icons/GameIcon'
-import background from '../../../assets/graphics/backgrounds/java.png'
-import LaunchButton from '../main/LaunchButton'
+import GameIcon from '../public/Icons/GameIcon';
+import background from '../../../assets/graphics/backgrounds/java.png';
+import LaunchButton from '../main/LaunchButton';
 
 export default function VanillaView() {
   //background
@@ -13,7 +13,7 @@ export default function VanillaView() {
     <div className={styles.Main}>
       <GameIcon
         type={'vanilla'}
-        customStyle={{ width: '30vw', height: '30vh' }}
+        style={{ width: '30vw', height: '30vh' }}
       />
       <LaunchButton
         versionSelector={true}
@@ -29,5 +29,5 @@ export default function VanillaView() {
         className={styles.BackgroundImage}
       />
     </div>
-  )
+  );
 }

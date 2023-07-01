@@ -1,23 +1,11 @@
 @import 'react-toastify/dist/ReactToastify.css';
-
-@font-face {
-  font-family: SquareFont;
-  src: url(./../assets/fonts/Square.ttf);
-}
-
-@font-face {
-  font-family: Zelta-Six;
-  src: url(./../assets/fonts/Zelta-Six.otf);
-}
-@font-face {
-  font-family: Octosquares;
-  src: url(./../assets/fonts/Octosquares-Trial-Compressed-Regular.ttf);
-}
+@import './fonts.css';
 
 body {
   margin: 0;
   padding: 0;
-  background-color: var(--background-color);
+  background-color: var(--bush-background-color);
+  overflow: hidden;
 }
 
 * {
@@ -110,6 +98,7 @@ p, h1, h2, h3, h4, h5, h6 {
   font-size: var(--normal-size);
   font-family: SquareFont, serif;
   margin: 0;
+  padding: 0;
 }
 
 a {

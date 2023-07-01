@@ -30,7 +30,7 @@ export default class Window {
       transparent: false,
       hasShadow: false,
       titleBarStyle: 'hidden',
-      backgroundColor: '#232323',
+      backgroundColor: '#252d27',
       backgroundMaterial: "acrylic",
       frame: false,
       movable: true,

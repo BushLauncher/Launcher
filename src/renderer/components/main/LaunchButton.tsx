@@ -4,33 +4,31 @@ import LaunchIcon from '../../../assets/graphics/icons/caret-right.svg';
 import LoadingIcon from '../../../assets/graphics/icons/loading.svg';
 import ErrorIcon from '../../../assets/graphics/icons/close.svg';
 import downArrowIcon from '../../../assets/graphics/icons/arrow_down.svg';
-import Line from '../public/Line';
-import React, { useContext, useState } from 'react';
+import React, { useState } from 'react';
 import {
-  Callback, CallbackType,
+  Callback,
+  CallbackType,
   ErrorCallback,
   ExitedCallback,
   GameType,
+  GameVersion,
   getDefaultGameType,
   getDefaultVersion,
   LaunchedCallback,
   LaunchTaskState,
   PreLaunchProcess,
   PreLaunchTasks,
-  ProgressCallback,
-  GameVersion
+  ProgressCallback
 } from '../../../public/GameDataPublic';
 import Loader from '../public/Loader';
 import { globalStateContext } from '../../index';
 import { toast } from 'react-toastify';
 import CallbackMessage from '../public/CallbackMessage';
 import ProgressBar from '@ramonak/react-progress-bar';
-import Version from '../public/Version';
 import { ComponentsPublic } from '../ComponentsPublic';
+import { Divider } from 'antd';
+import VersionCard from '../public/VersionCard';
 
-async function getSelected() {
-  return await window.electron.ipcRenderer.invoke('Version:get', {});
-}
 
 export enum LaunchButtonState {
   Normal = 'Normal',
@@ -39,9 +37,6 @@ export enum LaunchButtonState {
   Launched = 'Launched'
 }
 
-function isOnline(): boolean {
-  return useContext(globalStateContext).isOnline;
-}
 
 export type LoadingProgress = {
   currentStep: number,
@@ -59,27 +54,21 @@ export interface LaunchButtonProps extends ComponentsPublic {
   onLaunched?: () => any
 }
 
-export default function LaunchButton({
-                                       style,
-                                       versionSelector,
-                                       type,
-                                       onRun,
-                                       onExited,
-                                       onProgressCallback,
-                                       onLaunched,
-                                       onError
-                                     }: LaunchButtonProps) {
-  type = type === undefined ? 'default' : type;
+export default function LaunchButton(props: LaunchButtonProps) {
+  const type = (props.type === undefined) ? 'default' : props.type;
+  const { isOnline } = React.useContext(globalStateContext);
+
   const [isVersionSelectorOpened, setVersionSelector] = useState(false);
   const [state, setCurrentState] = useState(LaunchButtonState.Normal);
   const [text, setDisplayText] = useState('Launch');
-  const [progress, setProgress] = useState<LoadingProgress>({
-    currentStep: -1,
-    stepCount: 0,
-    progressVal: 0
-  });
+  const [progress, setProgress] = useState<LoadingProgress>({ currentStep: -1, stepCount: 0, progressVal: 0 });
   let localStepPercentage: number = 0;
-  const getIcon = () => {
+
+  async function getSelected() {
+    return await window.electron.ipcRenderer.invoke('Version:get', {});
+  }
+
+  function getIcon() {
     switch (state) {
       case LaunchButtonState.Error:
         return ErrorIcon;
@@ -89,8 +78,9 @@ export default function LaunchButton({
       case LaunchButtonState.Loading:
         return LoadingIcon;
     }
-  };
-  const requestLaunch = (version: GameVersion) => {
+  }
+
+  function requestLaunch(version: GameVersion) {
     const process: PreLaunchProcess = {
       actions: [
         { id: PreLaunchTasks.VerifyAccount },
@@ -112,14 +102,14 @@ export default function LaunchButton({
       .then((exitedCallback: ExitedCallback) => {
         decodeLaunchCallback(exitedCallback);
       });
-  };
+  }
 
 
   function decodeLaunchCallback(_callback: Callback | ProgressCallback | ErrorCallback | LaunchedCallback | ExitedCallback) {
     switch (_callback.type) {
       case CallbackType.Progress: {
         const callback: ProgressCallback = _callback as unknown as ProgressCallback;
-        if (onProgressCallback) onProgressCallback(callback);
+        if (props.onProgressCallback) props.onProgressCallback(callback);
         if (state !== LaunchButtonState.Loading) setCurrentState(LaunchButtonState.Loading);
         if (callback.task.displayText !== undefined) setDisplayText(callback.task.displayText);
         //add or update sub task
@@ -160,7 +150,7 @@ export default function LaunchButton({
       }
       case CallbackType.Error: {
         const callback = _callback as unknown as ErrorCallback;
-        if (onError) onError(callback);
+        if (props.onError) props.onError(callback);
         setCurrentState(LaunchButtonState.Error);
         setDisplayText('Error');
         toast.error(<CallbackMessage callback={callback} />, {
@@ -172,15 +162,15 @@ export default function LaunchButton({
         break;
       }
       case CallbackType.Success: {
-        if(onLaunched) onLaunched()
+        if (props.onLaunched) props.onLaunched();
         setDisplayText('Launched');
         setCurrentState(LaunchButtonState.Launched);
         console.log('Game Launched');
         break;
       }
       case CallbackType.Closed: {
-        const callback = _callback as unknown as ExitedCallback
-        if(onExited) onExited(callback)
+        const callback = _callback as unknown as ExitedCallback;
+        if (props.onExited) props.onExited(callback);
         setDisplayText('Launch');
         setCurrentState(LaunchButtonState.Normal);
         setProgress({
@@ -194,8 +184,8 @@ export default function LaunchButton({
     }
   }
 
-  const versionSelectorInit = async (reload: () => void): Promise<JSX.Element> => {
-    if (versionSelector) {
+  async function versionSelectorInit(): Promise<JSX.Element> {
+    if (props.versionSelector) {
       let selectedVersion = await getSelected();
       const versionList = await window.electron.ipcRenderer.invoke('Version:getList', { gameType: GameType.VANILLA })
         .catch(async err => {
@@ -228,13 +218,18 @@ export default function LaunchButton({
           </div>
           <div className={styles.versionListDropdown}>
 
-            {versionList.map((version: GameVersion, index: any) => {
-              return <Version version={{ id: version.id, gameType: GameType.VANILLA }}
-                              key={index}
-                              className={[styles.version, version.id === selectedVersion.id ? styles.versionSelected : ''].join(' ')}
-                              isInstalled={version.installed} selected={version.id === selectedVersion.id}
-                              tools={false}
-                              canSelect={true}
+            {versionList.map((version: GameVersion, index: number) => {
+              return <VersionCard version={version}
+                                  key={index}
+                                  className={[styles.version, (version.id === selectedVersion.id) ? styles.versionSelected : ''].join(' ')}
+                                  settings={{ iconType: 'Installed' }}
+                                  toolBox={{
+                                    select: {
+                                      active: true,
+                                      callback: () => window.electron.ipcRenderer.sendMessage('Version:set', { version: version })
+                                    }
+                                  }
+                                  }
               />;
 
             })
@@ -245,28 +240,28 @@ export default function LaunchButton({
       );
     } else return <div></div>;
 
-  };
+  }
+
   return (
 
     <div
-      className={[styles.LaunchButton, (!isOnline() ? styles.offlineStyle : undefined), (type === 'square' ? styles.Square : undefined), styles[state]]
-        .join(' ')}
-      style={style}
-      data-version-selector={versionSelector.toString()}
+      className={[styles.LaunchButton, (!isOnline ? styles.offlineStyle : undefined), (type === 'square' ? styles.Square : undefined), styles[state]].join(' ')}
+      style={props.style}
+      data-version-selector={props.versionSelector.toString()}
       data-version-selector-opened={isVersionSelectorOpened}
     >
       <div className={styles.Content}>
-        {/*to preserve HTML structure for css selector, the content is reorganized in css*/}
+        {/*to preserve HTML structure for css selector, the content is reorganized after in css*/}
         <div className={styles.runContent}
              onClick={async () => {
                if (state === LaunchButtonState.Normal) {
                  let version = await getSelected();
                  if (version === undefined) {
                    const defaultVersion = getDefaultVersion(getDefaultGameType);
-                   window.electron.ipcRenderer.sendMessage('Version:set', defaultVersion);
+                   window.electron.ipcRenderer.sendMessage('Version:set', { version: defaultVersion });
                    version = defaultVersion;
                  }
-                 if (onRun) onRun(version);
+                 if (props.onRun) props.onRun(version);
                  requestLaunch(version);
                } else {
                  return null;
@@ -279,16 +274,15 @@ export default function LaunchButton({
           />
           {type === 'default' && <p className={styles.text}>{text}</p>}
         </div>
-        {versionSelector && <Loader
-          content={versionSelectorInit}
-          className={styles.versionSelectorLoader} style={undefined} />}
+        {props.versionSelector &&
+          <Loader content={versionSelectorInit} className={styles.versionSelectorLoader} style={undefined} />}
 
-        {versionSelector ? (
-          <Line className={styles.line} direction={'vertical'} customStyle={undefined} />
-        ) : null}
+        {props.versionSelector &&
+          <Divider className={styles.line} type={'vertical'} />}
       </div>
       {type === 'default' && <div className={styles.LoadingContent}>
         <p>{progress.currentStep + '/' + progress.stepCount}</p>
+        {/*TODO: use ant progress bar*/}
         <ProgressBar completed={Math.ceil(progress.progressVal)}
                      maxCompleted={100}
                      className={styles.ProgressBar}

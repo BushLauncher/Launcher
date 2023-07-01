@@ -17,9 +17,7 @@ export default function Loader({ content, className, style }: LoaderProps) {
         setCurrentContent(data);
         setIsLoading(false);
       })
-      .catch((error) => {
-        console.error(error);
-      });
+      .catch(console.error);
   }, [content]);
 
   const reload = () => {

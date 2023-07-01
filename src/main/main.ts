@@ -49,7 +49,7 @@ ipcMain.on('App:Relaunch', (event, args) => {
   app.relaunch();
   app.quit();
 });
-ipcMain.handle('App:getVersion', (event, args)=> app.getVersion())
+ipcMain.handle('App:getVersion', (event, args) => app.getVersion());
 
 ipcMain.handle('Version:getList', (event, { gameType, type }: {
   gameType: GameType | undefined,
@@ -74,8 +74,8 @@ ipcMain.handle('Version:getTypeList', (event, args) => {
 ipcMain.handle('Version:get', (event, args) => {
   return getSelectedVersion();
 });
-ipcMain.on('Version:set', (event, version: GameVersion) => {
-  return userData.SelectVersion(version);
+ipcMain.on('Version:set', (event, args: { version: GameVersion }) => {
+  return userData.SelectVersion(args.version);
 });
 
 ipcMain.handle('VersionManager:Uninstall', async (event, args: { version: GameVersion, path?: string }) => {
@@ -168,7 +168,7 @@ ipcMain.handle('Storage:DeleteAll', (event) => {
   return userDataStorage.DeleteFile();
 });
 ////////////////////////////////////////////////////////
-app.disableHardwareAcceleration()
+app.disableHardwareAcceleration();
 app
   .whenReady()
   .then(async () => {

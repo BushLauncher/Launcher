@@ -18,10 +18,9 @@
   flex: none;
 }
 
-.TabView .NavBar[data-visible="false"]{
+.TabView .NavBar[data-visible="false"] {
   background-color: transparent;
 }
-
 
 
 .TabView[data-orientation='Horizontal'] .NavBar[data-collapsed='true'] {
@@ -41,6 +40,7 @@
 .TabView[data-orientation='Horizontal'] .NavBar[data-align="Center"] {
   justify-content: center;
 }
+
 .TabView[data-orientation='Horizontal'] .NavBar[data-align="Bottom"] {
   justify-content: flex-end;
 }
@@ -107,13 +107,15 @@
 .TabView .NavBar .Tab.selected {
   background-color: var(--hover-background-color);
 }
+
 /*unless if the style is "underline"*/
 .TabView .NavBar[data-onselected="Underline"] .Tab:hover,
 .TabView .NavBar[data-onselected="Underline"] .Tab.selected {
   background-color: transparent;
 }
+
 .TabView .NavBar[data-onselected="Underline"] .Tab:hover .label::before,
-.TabView .NavBar[data-onselected="Underline"] .Tab.selected .label::before{
+.TabView .NavBar[data-onselected="Underline"] .Tab.selected .label::before {
   width: 100%;
 }
 
@@ -121,6 +123,7 @@
   width: 90%;
   height: 10vh;
 }
+
 .TabView[data-orientation='Vertical'] .NavBar .Tab {
   width: fit-content;
   height: 8vh;
@@ -158,7 +161,7 @@
   margin-left: var(--ml);
 }
 
-.TabView .NavBar[data-onselected="Underline"] .Tab .label::before{
+.TabView .NavBar[data-onselected="Underline"] .Tab .label::before {
   content: '';
   display: block;
   height: 0.3vh;
@@ -182,7 +185,6 @@
   padding: 10px;
   display: flex;
 }
-
 
 
 .TabView[data-orientation="Horizontal"] .Viewer {

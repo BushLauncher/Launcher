@@ -7,12 +7,14 @@ export interface DataTextComponentProps extends ComponentsPublic {
 
 export default function DataTextComponent({ data, className, style }: DataTextComponentProps) {
   return <Loader content={async () => {
-    switch (data) {
-      case 'app-version':
-        // @ts-ignore
-        return <p>{await window.version.app()}</p>;
-      default:
-        return <p>{'wrong "data" value'}</p>;
-    }
+    const getData = async () => {
+      switch (data) {
+        case 'app-version':
+          return await window.version.app();
+        default:
+          return 'wrong "data" value';
+      }
+    };
+    return <p className={className} style={style}>{await getData()}</p>;
   }} className={className} style={style} />;
 };

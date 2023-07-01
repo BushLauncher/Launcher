@@ -37,7 +37,7 @@ export default function SettingsView() {
              className={styles.tabview}
              params={{
                collapsable: false,
-               style: {
+               styleSettings: {
                  orientation: 'Horizontal',
                  tabAlign: 'Center',
                  navBarBackgroundVisibility: false,

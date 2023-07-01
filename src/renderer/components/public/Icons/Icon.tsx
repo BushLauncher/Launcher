@@ -3,19 +3,17 @@ import React from 'react';
 import styles from '../css/publicStyle.module.css';
 
 export interface IconProps extends ComponentsPublic {
-  icon: string | null | undefined;
+  icon: string | undefined;
   alt?: string;
 }
 
-export default function Icon(props: IconProps) {
-  if (props.icon !== null)
-    return (
-      <img
-        src={props.icon}
-        alt={props.alt}
-        style={props.style}
-        className={[styles.IconDefault, props.className].join(' ')}
-      />
-    );
-  else return <></>;
+export default function Icon({ icon, alt, style, className }: IconProps) {
+  return icon !== undefined ? (
+    <img
+      src={icon}
+      alt={alt}
+      style={style}
+      className={[styles.IconDefault, className].join(' ')}
+    />
+  ) : <></>;
 }

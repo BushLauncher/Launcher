@@ -15,11 +15,10 @@ export default function InstallReportCallbackMessage({ issus }: { issus: Minecra
       case 'corrupted':
         return corruptedIcon;
       default:
-        return;
+        return '';
     }
   }
 
-  console.log(issus);
   return (
     <Collapse items={[
       {

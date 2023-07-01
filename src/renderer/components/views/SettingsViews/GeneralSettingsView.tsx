@@ -1,4 +1,4 @@
-import InputGroup from '../../public/Input/InputGroup';
+import LabeledInput from '../../public/Input/LabeledInput';
 import Loader from '../../public/Loader';
 import { getAllTheme, getCurrentTheme, SetTheme } from '../../../../public/ThemeManager';
 import { Theme } from '../../../../public/ThemePublic';
@@ -21,7 +21,7 @@ function requestDeleteAll() {
 
 export default function GeneralSettingView() {
   return <div className={defaultStyle.View}>
-    <InputGroup input={
+    <LabeledInput input={
       <Loader content={() => new Promise((resolve, reject) => {
         getCurrentTheme().then(currentTheme => resolve(
           <Select defaultValue={currentTheme} onChange={val => SetTheme(val)} style={{ fontSize: '3vw' }}
@@ -30,7 +30,7 @@ export default function GeneralSettingView() {
           </Select>
         ));
       })} className={undefined} style={undefined} />} label={'Theme'} />
-    <InputGroup
+    <LabeledInput
       //TODO: Add popover
       input={<Button type={'primary'} content={'Delete all local Data'} onInput={(e) => requestDeleteAll()} danger
                      size={'large'}>Delete all local Data</Button>}

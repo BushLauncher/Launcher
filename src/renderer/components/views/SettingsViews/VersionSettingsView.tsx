@@ -1,4 +1,4 @@
-import InputGroup from '../../public/Input/InputGroup';
+import LabeledInput from '../../public/Input/LabeledInput';
 import Loader from '../../public/Loader';
 import { useState } from 'react';
 import styles from './css/VersionSettingsViewStyle.module.css';
@@ -13,6 +13,7 @@ import loadIcon from '../../../../assets/graphics/icons/loading.svg';
 import vanillaIcon from '../../../../assets/graphics/images/grass_block.png';
 import VersionCard from '../../public/VersionCard';
 import EmptyView from '../emptyView';
+import toDownloadIcon from '../../../../assets/graphics/icons/download.svg';
 
 const { Option } = AutoComplete;
 
@@ -22,7 +23,9 @@ const enum states {
   valid,
   error
 }
-
+export function getInstalledIcon(installed: boolean | undefined) {
+  return installed ? doneIcon : toDownloadIcon
+}
 export function getGameTypeIcon(gameType: GameType) {
   switch (gameType) {
     case GameType.VANILLA:
@@ -75,7 +78,7 @@ export default function VersionSettingsView() {
               resolve(<TabView contentList={tabList} params={{
                 collapsable: false,
                 collapsed: true,
-                style: { orientation: 'Vertical', navBarBackgroundVisibility: false }
+                styleSettings: { orientation: 'Vertical', navBarBackgroundVisibility: false }
               }} className={styles.VersionTool} />);
             });
           }).catch(err => console.error(err));
@@ -122,7 +125,7 @@ function PathInput({ callback }: { callback: () => any }): JSX.Element {
       case states.loading:
         return loadIcon;
       default:
-        return null;
+        return undefined;
     }
 
   };
@@ -131,7 +134,7 @@ function PathInput({ callback }: { callback: () => any }): JSX.Element {
       const saved: string = await window.electron.ipcRenderer.invoke('GameEngine:getRootPath', {});
       const defaultPath: string = await window.electron.ipcRenderer.invoke('GameEngine:getDefaultRootPath', {});
       return (
-        <InputGroup label={'minecraft folder path'} input={
+        <LabeledInput label={'minecraft folder path'} input={
           <div className={styles.pathSelector}>
             {state !== states.normal && <Icon icon={getIcon()} className={styles.icon} />}
             <AutoComplete status={state === states.error ? 'error' : undefined}

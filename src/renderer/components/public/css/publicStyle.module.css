@@ -109,7 +109,7 @@
 
 /************************************/
 .MinecraftSkin {
-  background-color: orange;
+  background-color: var(--hover-background-color);
   width: 10vw;
   height: 10vw;
 }
@@ -138,7 +138,6 @@
 
 .CallbackMessage .resolutions {
   font-size: 3.5vh;
-  color: var(--valid);
   font-family: Octosquares;
 }
 
@@ -161,13 +160,19 @@
   padding: 0.5vh 2vw;
   border-radius: 10px;
 }
+
 .VersionCard .loadIcon {
   height: 2vw;
   width: 2vw;
 }
+
 .VersionCard .icon {
   height: 7vh;
   width: 7vh;
+}
+.VersionCard .iconMin {
+  height: 3vh;
+  width: 3vh;
 }
 
 .VersionCard .buttonContainer {

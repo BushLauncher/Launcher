@@ -105,7 +105,7 @@ export function RemoveAccount(indexToDelete: number) {
 }
 
 export function isAccountValid(account: MinecraftAccount): boolean {
-  console.log(account.createdDate + ' + ' + (account.msToken.expires_in * 1000) + ' = ' + (account.createdDate + (account.msToken.expires_in * 1000)) + '\n' + Date.now());
+  //console.log(account.createdDate + ' + ' + (account.msToken.expires_in * 1000) + ' = ' + (account.createdDate + (account.msToken.expires_in * 1000)) + '\n' + Date.now());
   //validate account               +                  msToken
   return account.exp > Date.now() && (account.createdDate + (account.msToken.expires_in * 1000)) > Date.now();
 

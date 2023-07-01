@@ -11,6 +11,7 @@ export interface MinecraftAccount {
   readonly profile: MCProfile;
   readonly xuid: string;
   readonly exp: number;
+  readonly createdDate: number;
   readonly authType: AuthProviderType;
   readonly msToken: MSAuthToken;
   readonly true: true;

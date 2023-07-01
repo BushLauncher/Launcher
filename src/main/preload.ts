@@ -27,7 +27,7 @@ const electronHandler = {
   }
 
 };
-const versionHandler = {
+export const versionHandler = {
   node: () => process.versions.node,
   chrome: () => process.versions.chrome,
   electron: () => process.versions.electron,

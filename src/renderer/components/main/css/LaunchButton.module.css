@@ -26,6 +26,7 @@
   height: 5vw;
   min-width: 5vw;
 }
+
 .LaunchButton.Square::before {
   width: 5vw;
   height: 5vw;
@@ -159,9 +160,9 @@
 }
 
 .LaunchButton[data-version-selector='true'] .line {
-  border-radius: 0;
+  border-inline-start-width: 2px;
   height: 12vh;
-  width: 4px !important
+
 }
 
 .LaunchButton[data-version-selector='true'] .runContent {
@@ -237,17 +238,13 @@
 }
 
 .LaunchButton[data-version-selector='true'] .versionSelector .versionListDropdown {
-  align-items: center;
   background: var(--background-color);
   border-radius: 15px;
   display: flex;
-  flex: none;
+  align-items: center;
   flex-direction: column;
-  flex-grow: 0;
-  height: auto;
   left: 0;
   max-height: 30vh;
-  order: 1;
   overflow-x: hidden;
   overflow-y: scroll;
   padding: 0 10px;
@@ -255,7 +252,8 @@
   top: calc(100% + 3px);
   transition: all .3s ease-in-out;
   width: 40%;
-  z-index: 1
+  flex: 1 1 auto;
+  min-height: 0px;
 }
 
 .LaunchButton[data-version-selector='true'] .versionSelector .versionListDropdown .loaderContentVersion {
