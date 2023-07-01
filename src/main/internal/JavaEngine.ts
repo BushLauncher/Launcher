@@ -70,7 +70,10 @@ export async function InstallJava(callback: (c: ProgressSubTaskCallback) => void
         userDataStorage.set('saved.javaPath', finalPath);
         resolve(finalPath);
       })
-      .catch(err => console.error(err));
+      .catch(err => {
+        console.error(err);
+        reject()
+      });
 
   });
 }

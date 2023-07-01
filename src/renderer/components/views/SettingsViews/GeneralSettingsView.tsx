@@ -5,7 +5,7 @@ import { Theme } from '../../../../public/ThemePublic';
 import React from 'react';
 import defaultStyle from './css/DefaultSettingsView.module.css';
 import { toast } from 'react-toastify';
-import { Button, Select } from 'antd';
+import { Button, Popover, Select } from 'antd';
 
 const { Option } = Select;
 
@@ -22,7 +22,7 @@ function requestDeleteAll() {
 export default function GeneralSettingView() {
   return <div className={defaultStyle.View}>
     <LabeledInput input={
-      <Loader content={() => new Promise((resolve, reject) => {
+      <Loader content={() => new Promise((resolve) => {
         getCurrentTheme().then(currentTheme => resolve(
           <Select defaultValue={currentTheme} onChange={val => SetTheme(val)} style={{ fontSize: '3vw' }}
                   size={'large'}>
@@ -31,9 +31,10 @@ export default function GeneralSettingView() {
         ));
       })} className={undefined} style={undefined} />} label={'Theme'} />
     <LabeledInput
-      //TODO: Add popover
-      input={<Button type={'primary'} content={'Delete all local Data'} onInput={(e) => requestDeleteAll()} danger
-                     size={'large'}>Delete all local Data</Button>}
-      label={'User Data'} />
+      input={
+      <Popover content={"Delete all local data and restart app"}>
+        <Button type={'primary'} content={'Delete all'} onInput={() => requestDeleteAll()} danger
+                size={'large'}>Delete all</Button></Popover>}
+      label={'Data'} />
   </div>;
 };

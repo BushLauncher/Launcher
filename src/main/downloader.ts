@@ -13,7 +13,7 @@ export function Update(potentialUpdate: toDownloadData, callbackText: (text: str
     Download(potentialUpdate.url, (downloadPercentage: any) => callbackText('Updating... ' + downloadPercentage + '%'))
       .then(appPath => {
         callbackText('Running...');
-        child(appPath, function(err: any, data: any) {
+        child(appPath, function(err: any) {
           if (err) {
             console.error(err);
             return;

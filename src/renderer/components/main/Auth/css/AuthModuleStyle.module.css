@@ -207,28 +207,6 @@
   transition: all 0.3s ease-in-out;
 }
 
-.AuthProviderCard.Microsoft::before {
-  content: '';
-  position: absolute;
-  display: block;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    159deg,
-    rgba(255, 87, 34, 1) 0%,
-    rgba(76, 175, 80, 1) 100%
-  );
-  filter: blur(20px);
-  transition: opacity 0.3s;
-  border-radius: 10px;
-  opacity: 0;
-  z-index: 0;
-}
-
-.AuthProviderCard.Microsoft:hover::before {
-  opacity: 0.6;
-}
-
 .AuthProviderCard .icon {
   height: 5vw;
   width: 5vw;

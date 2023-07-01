@@ -57,7 +57,7 @@ export async function RunPreLaunchProcess(process: PreLaunchProcess | PreLaunchR
     createCallback(<UpdateLaunchTaskCallback>{
       task: { id: 'Launch', params: {} },
       state: LaunchTaskState.processing,
-      displayText: 'Starting...',
+      displayText: 'Launching...',
       data: {
         localProgress: 100
       }
@@ -68,7 +68,7 @@ export async function RunPreLaunchProcess(process: PreLaunchProcess | PreLaunchR
 }
 
 export function RunTask(task: ResolvedPreLaunchTask | LaunchTask, callback: (callback: UpdateLaunchTaskCallback) => void): Promise<UpdateLaunchTaskCallback> {
-  return new Promise(async (resolve, reject) => {
+  return new Promise(async (resolve) => {
     const _task = task instanceof ResolvedPreLaunchTask ? task : ResolvePreLaunchTask(task);
     try {
       resolve(await _task.run(callback));
@@ -140,7 +140,10 @@ export function Launch(version: GameVersion, callback: (callback: StartedCallbac
             console.log(prefix + 'Exited');
             resolve(<ExitedCallback>{ type: CallbackType.Closed });
           });
-        }).catch(err => console.error(prefix + err));
+        }).catch(err => {
+          console.error(prefix + err);
+          reject(err);
+        });
       })
       .catch(err => {
         console.error(prefix, err);

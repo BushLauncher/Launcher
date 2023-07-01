@@ -1,3 +1,5 @@
+// noinspection JSIgnoredPromiseFromCall
+
 import { app, BrowserWindow, Menu, MenuItemConstructorOptions, shell } from 'electron';
 
 interface DarwinMenuItemConstructorOptions extends MenuItemConstructorOptions {

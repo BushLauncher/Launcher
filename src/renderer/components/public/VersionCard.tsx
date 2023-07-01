@@ -156,7 +156,7 @@ export default function VersionCard({ version, toolBox, settings, className, sty
     {isLoading ? <Icon icon={loadIcon} className={styles.loadIcon} /> :
       toolBox && toolBox.launch && version.installed &&
       <LaunchButton versionSelector={false} type={'square'} style={{ width: '3vw', height: '3vw', minWidth: 0 }}
-                    onRun={requestLaunch} onExited={(e) => setRunning(false)} />}
+                    onRun={requestLaunch} onExited={() => setRunning(false)} />}
     <Icon
       icon={settings && settings.iconType === 'Installed' ? getInstalledIcon(version.installed) : getGameTypeIcon(version.gameType)}
       className={[styles.icon, (settings && settings.iconType === 'Installed' ? styles.iconMin : undefined)].join(' ')} />

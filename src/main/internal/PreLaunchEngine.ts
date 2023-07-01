@@ -1,5 +1,13 @@
 import * as AccountManager from './AuthModule';
-import {  GameVersion,  LaunchOperationType,  LaunchTask,  LaunchTaskState,  PreLaunchTasks,  ProgressSubTaskCallback,  UpdateLaunchTaskCallback} from '../../public/GameDataPublic';
+import {
+  GameVersion,
+  LaunchOperationType,
+  LaunchTask,
+  LaunchTaskState,
+  PreLaunchTasks,
+  ProgressSubTaskCallback,
+  UpdateLaunchTaskCallback
+} from '../../public/GameDataPublic';
 import { getVersionList, MinecraftVersion } from '@xmcl/installer';
 import { InstallGameFiles, VerifyGameFiles } from './GameFileManager';
 import { versionExist } from './VersionManager';
@@ -74,7 +82,9 @@ export class ParseGameFile extends ResolvedPreLaunchTask {
 
   public override async run(callback: (callback: UpdateLaunchTaskCallback) => void) {
     callback({ task: this.baseTask, state: LaunchTaskState.starting, displayText: 'Checking Minecraft files...' });
-    await parseGameFile(this.baseTask.params.version, (c: ProgressSubTaskCallback) => callback(this.getCallback(c))).catch(err => console.error(err));
+    await parseGameFile(this.baseTask.params.version, (c: ProgressSubTaskCallback) => callback(this.getCallback(c))).catch(err => {
+      console.error(err);
+    });
     return <UpdateLaunchTaskCallback>{ task: this.baseTask, state: LaunchTaskState.finished };
   }
 }
@@ -127,7 +137,7 @@ export const ResolvePreLaunchTask: (baseTask: LaunchTask | ParseGameFileLaunchTa
 
 export function ResolvePreLaunchTaskList(launchOperation: LaunchTask[]): ResolvedPreLaunchTask[] {
   let taskList: ResolvedPreLaunchTask[] = [];
-  launchOperation.map((task, i) => {
+  launchOperation.map((task) => {
     taskList.push(ResolvePreLaunchTask(task));
   });
   return taskList;
@@ -173,7 +183,7 @@ export function parseAccount(): boolean {
 }
 
 export function parseJava(callback: (c: ProgressSubTaskCallback) => void): Promise<string> {
-  return new Promise<string>(async (resolve, reject) => {
+  return new Promise<string>(async (resolve) => {
     console.log('Parsing java...');
     callback({ state: LaunchTaskState.processing, displayText: 'Parsing Java...' });
     const resolvedJavaPath = await ResolveJavaPath();
@@ -186,7 +196,7 @@ export function parseJava(callback: (c: ProgressSubTaskCallback) => void): Promi
 
 export async function ResolveXmclVersion(version: GameVersion): Promise<MinecraftVersion> {
   const versionList = await getVersionList();
-  const res = versionList.versions.find((MinecraftVersion, i) => {
+  const res = versionList.versions.find((MinecraftVersion) => {
     return MinecraftVersion.id === version.id;
   });
   if (res === undefined) throw new Error('Cannot resolve version from XMCL lib');

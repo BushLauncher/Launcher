@@ -1,24 +1,19 @@
-import {Theme} from './ThemePublic';
+import { Theme } from './ThemePublic';
 
-export function SetTheme(theme: Theme) {
-  window.electron.ipcRenderer.sendMessage('updateData', ({ dataPath: 'interface.theme', value: theme }));
-  window.location.reload()
+export async function SetTheme(theme: Theme) {
+  await window.electron.ipcRenderer.sendMessage('updateData', ({ dataPath: 'interface.theme', value: theme }));
+  window.location.reload();
 }
 
-export function getCurrentTheme(): Promise<Theme> {
-  return new Promise<Theme>((resolve, reject) => {
-    window.electron.ipcRenderer.invoke('getData', ({ dataPath: 'interface.theme' }))
-      .then((res: Theme | undefined) => {
-        if (res != undefined) {
-          resolve(Theme[res as unknown as Theme]);
-        } else {
-          resolve(Theme.Dark);
-          console.warn("We couldn't find " + res + " theme !");
-        }
-      }).catch(err => console.error(err));
-  });
+export async function getCurrentTheme(): Promise<Theme> {
+  const res: Theme | undefined = await window.electron.ipcRenderer.invoke('getData', ({ dataPath: 'interface.theme' }));
+  if (res === undefined) {
+    await SetTheme(Theme.Dark);
+    console.warn('We couldn\'t find ' + res + ' theme !');
+    return (Theme.Dark);
+  } else return (res as Theme);
 }
 
-export function getAllTheme(): string[]{
-  return Object.keys(Theme)
+export function getAllTheme(): string[] {
+  return Object.keys(Theme);
 }

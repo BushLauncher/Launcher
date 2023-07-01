@@ -31,62 +31,6 @@
   background-color: var(--unvalid);
 }
 
-/****************************/
-
-.Dropdown {
-  width: fit-content;
-  height: 10vh;
-  background-color: var(--second-background-color);
-  border-radius: 15px;
-  padding: 0 2vw 0 2vw;
-  position: relative;
-}
-
-.Dropdown .selectedContainer {
-  width: fit-content;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  gap: 5vw;
-}
-
-.Dropdown .selectedContainer .label {
-
-}
-
-
-.Dropdown .selectedContainer .button:hover,
-.Dropdown .selectedContainer .button.selected {
-  background-color: transparent;
-  transform: translateY(5px);
-}
-
-.Dropdown .dropper {
-  position: absolute;
-  left: 0;
-  top: calc(100% + 0.5vh);
-  border-radius: 15px;
-  width: 90%;
-  min-height: 5vh;
-  max-height: 20vh;
-  overflow: auto;
-  background-color: var(--second-background-color);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 1vh 1vw 1vh 1vw;
-}
-
-.Dropdown .dropper .option {
-  text-align: center;
-  cursor: pointer;
-  padding: 1vh 0 1vh 0;
-}
-
-.Dropdown .dropper .option:hover,
-.Dropdown .dropper .option.selected {
-  background-color: var(--hover-background-color);
-}
 
 /*******************/
 .input {

@@ -1,3 +1,5 @@
+// noinspection SpellCheckingInspection
+
 import { app, BrowserWindow } from 'electron';
 import path from 'path';
 import BrowserWindowConstructorOptions = Electron.BrowserWindowConstructorOptions;

@@ -34,6 +34,8 @@ export async function InstallGameFiles(version: GameVersion, callback: (callback
             //use only global task called "install"
             if (task.path === 'install') {
               const downloadPercentage = Math.floor((task.progress * 100) / task.total);
+              //console.log(prefix + "Downloading: " + task.progress + " / " + task.total);
+              //https://github.com/Voxelum/minecraft-launcher-core-node/issues/275
               console.log(prefix + 'Downloading: ' + downloadPercentage + '%');
               callback({ state: LaunchTaskState.processing, localProgress: downloadPercentage });
             }

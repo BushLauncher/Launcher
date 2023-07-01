@@ -11,6 +11,6 @@
 .message {
     font-size: 4vw;
     font-family: system-ui;
-    color: var(--hover-background-color-opacity);
+    color: var(--hover-background-color);
     font-weight: 600;
 }

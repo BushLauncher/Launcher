@@ -1,5 +1,4 @@
-// @ts-ignore
-window.electron.ipcRenderer.on('PreLoad:setText', (val: { text: string }) => {
+window.electron.ipcRenderer.on('PreLoad:setText', (val) => {
   const text = document.querySelector('#state');
   if (text === null) console.error('Cannot find #state text html element');
   else text.innerHTML = val.text;

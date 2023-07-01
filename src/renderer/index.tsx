@@ -19,29 +19,18 @@ declare global {
   // eslint-disable-next-line no-unused-vars
   interface Window {
     electron: ElectronHandler;
-    version: typeof versionHandler
+    version: typeof versionHandler;
   }
 }
 export const globalStateContext = React.createContext(globalState);
 root.render(<ConfigProvider theme={{ algorithm: theme.darkAlgorithm }}>
   <globalStateContext.Provider value={globalState}>
-    <Loader content={() => new Promise((resolve, reject) => {
-      globalState.theme.then((theme: Theme) => {
-        console.log(theme);
-        resolve(<div id={'Theme-container'} className={themeStyle['Theme-' + theme]}>
-          <MainMenuBar />
-          <App />
-
-        </div>);
-      });
-
-    })} className={'Theme-container'} style={undefined} />
+    <Loader content={async () => {
+      const theme: Theme = await globalState.theme;
+      return (<div id={'Theme-container'} className={themeStyle['Theme-' + theme]}>
+        <MainMenuBar />
+        <App />
+      </div>);
+    }} />
   </globalStateContext.Provider>
 </ConfigProvider>);
-
-// calling IPC exposed from preload script
-/*window.electron.ipcRenderer.once('ipc-example', (arg) => {
-  // eslint-disable-next-line no-console
-  console.log("response: " + arg);
-});
-window.electron.ipcRenderer.sendMessage('ipc-example', ['ping']);*/

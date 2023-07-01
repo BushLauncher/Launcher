@@ -1,4 +1,6 @@
 /* eslint global-require: off, no-console: off, promise/always-return: off */
+// noinspection JSUnusedLocalSymbols
+
 import { app, BrowserWindow, ipcMain, net } from 'electron';
 import * as versionManager from './internal/VersionManager';
 import { getAllVersionList, getSelectedVersion, getVersionMethode } from './internal/VersionManager';
@@ -184,7 +186,7 @@ app
           else {
             preloadWindow?.modifyMainText('Loading data...');
             userData.loadData();
-            preloadWindow?.modifyMainText('Starting...');
+            preloadWindow?.modifyMainText('Launching...');
             const mainWindow = new MainWindow();
             currentWindow = mainWindow.window;
             mainWindow.window.on('ready-to-show', () => {

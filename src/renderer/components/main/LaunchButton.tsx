@@ -26,22 +26,17 @@ import { toast } from 'react-toastify';
 import CallbackMessage from '../public/CallbackMessage';
 import ProgressBar from '@ramonak/react-progress-bar';
 import { ComponentsPublic } from '../ComponentsPublic';
-import { Divider } from 'antd';
+import { Divider, Popover, Progress } from 'antd';
 import VersionCard from '../public/VersionCard';
 
 
 export enum LaunchButtonState {
-  Normal = 'Normal',
-  Loading = 'Loading',
-  Error = 'Error',
-  Launched = 'Launched'
+  Normal = 'Normal', Loading = 'Loading', Error = 'Error', Launched = 'Launched'
 }
 
 
 export type LoadingProgress = {
-  currentStep: number,
-  stepCount: number,
-  progressVal: number
+  currentStep: number, stepCount: number, progressVal: number
 }
 
 export interface LaunchButtonProps extends ComponentsPublic {
@@ -82,14 +77,10 @@ export default function LaunchButton(props: LaunchButtonProps) {
 
   function requestLaunch(version: GameVersion) {
     const process: PreLaunchProcess = {
-      actions: [
-        { id: PreLaunchTasks.VerifyAccount },
-        { id: PreLaunchTasks.ParseJava },
-        { id: PreLaunchTasks.ParseGameFile, params: { version: version } }
-      ], launch: true,
-      version: version,
-      internal: false,
-      resolved: false
+      actions: [{ id: PreLaunchTasks.VerifyAccount }, { id: PreLaunchTasks.ParseJava }, {
+        id: PreLaunchTasks.ParseGameFile,
+        params: { version: version }
+      }], launch: true, version: version, internal: false, resolved: false
     };
     setVersionSelector(false);
     setDisplayText('Initializing...');
@@ -139,13 +130,11 @@ export default function LaunchButton(props: LaunchButtonProps) {
     = (${100 * callback.stepId} - ${lp})/ ${callback.stepCount})
     = (${(100 * callback.stepId) - lp})/ ${callback.stepCount})
     = ${calculatedProgress}`);*/
+        //console.log(callback.stepId + ' + ' + lp + ' | ' + localStepPercentage + '  : ' + calculatedProgress + '\n', callback);
         if (containLP) localStepPercentage = lp;
         setProgress({
-          progressVal: calculatedProgress,
-          stepCount: callback.stepCount,
-          currentStep: callback.stepId
+          progressVal: calculatedProgress, stepCount: callback.stepCount, currentStep: callback.stepId
         });
-        //console.log(callback.stepId + ' + ' + lp + ' | ' + localStepPercentage + '  : ' + calculatedProgress + '\n', callback);
         break;
       }
       case CallbackType.Error: {
@@ -154,9 +143,7 @@ export default function LaunchButton(props: LaunchButtonProps) {
         setCurrentState(LaunchButtonState.Error);
         setDisplayText('Error');
         toast.error(<CallbackMessage callback={callback} />, {
-          autoClose: false,
-          hideProgressBar: true,
-          style: { width: 'auto' }
+          autoClose: false, hideProgressBar: true, style: { width: 'auto' }
         });
         //console.log(callback);
         break;
@@ -190,54 +177,46 @@ export default function LaunchButton(props: LaunchButtonProps) {
       const versionList = await window.electron.ipcRenderer.invoke('Version:getList', { gameType: GameType.VANILLA })
         .catch(async err => {
           const callback: ErrorCallback = {
-            stepId: -1,
-            stepCount: -1,
-            type: CallbackType.Error,
-            return: {
-              message: 'Error occurred',
-              desc: 'Cannot get versions from network',
-              resolution: err.message
+            stepId: -1, stepCount: -1, type: CallbackType.Error, return: {
+              message: 'Error occurred', desc: 'Cannot get versions from network', resolution: err.message
             }
           };
           toast.error(<CallbackMessage callback={callback} />, { toastId: 'Version:getListError' });
           const localRes = await window.electron.ipcRenderer.invoke('Version:getList', {
-            gameType: GameType.VANILLA,
-            type: 'local'
+            gameType: GameType.VANILLA, type: 'local'
           });
           selectedVersion = localRes[0];
           return localRes;
         });
       Object.freeze(selectedVersion);
-      return (
-        <div className={styles.versionSelector} onClick={() => {
-          setVersionSelector(state === LaunchButtonState.Normal && !isVersionSelectorOpened);
-        }}>
-          <div className={styles.dataContainer}>
-            <Icon className={styles.dropdownIcon} icon={downArrowIcon} alt={'open the dropdown'} />
-            <p className={styles.versionText}>{selectedVersion.id.toString()}</p>
-          </div>
-          <div className={styles.versionListDropdown}>
-
-            {versionList.map((version: GameVersion, index: number) => {
-              return <VersionCard version={version}
-                                  key={index}
-                                  className={[styles.version, (version.id === selectedVersion.id) ? styles.versionSelected : ''].join(' ')}
-                                  settings={{ iconType: 'Installed' }}
-                                  toolBox={{
-                                    select: {
-                                      active: true,
-                                      callback: () => window.electron.ipcRenderer.sendMessage('Version:set', { version: version })
-                                    }
-                                  }
-                                  }
-              />;
-
-            })
-            }
-
-          </div>
+      return (<div className={styles.versionSelector} onClick={() => {
+        setVersionSelector(state === LaunchButtonState.Normal && !isVersionSelectorOpened);
+      }}>
+        <div className={styles.dataContainer}>
+          <Icon className={styles.dropdownIcon} icon={downArrowIcon} alt={'open the dropdown'} />
+          <p className={styles.versionText}>{selectedVersion.id.toString()}</p>
         </div>
-      );
+        <div className={styles.versionListDropdown}>
+
+          {versionList.map((version: GameVersion, index: number) => {
+            return <Popover key={index}
+                            content={'Minecraft ' + version.gameType + ' ' + version.id + (!version.installed ? ' Will be installed' : '')} placement={'left'}>
+              <VersionCard version={version}
+
+                           className={[styles.version, ((version.id === selectedVersion.id) ? styles.versionSelected : '')].join(' ')}
+                           settings={{ iconType: 'Installed' }}
+                           toolBox={{
+                             select: {
+                               active: true,
+                               callback: () => window.electron.ipcRenderer.sendMessage('Version:set', { version: version })
+                             }
+                           }}
+              /> </Popover>;
+
+          })}
+
+        </div>
+      </div>);
     } else return <div></div>;
 
   }
@@ -277,22 +256,13 @@ export default function LaunchButton(props: LaunchButtonProps) {
         {props.versionSelector &&
           <Loader content={versionSelectorInit} className={styles.versionSelectorLoader} style={undefined} />}
 
-        {props.versionSelector &&
-          <Divider className={styles.line} type={'vertical'} />}
+        {props.versionSelector && <Divider className={styles.line} type={'vertical'} />}
       </div>
       {type === 'default' && <div className={styles.LoadingContent}>
         <p>{progress.currentStep + '/' + progress.stepCount}</p>
-        {/*TODO: use ant progress bar*/}
-        <ProgressBar completed={Math.ceil(progress.progressVal)}
-                     maxCompleted={100}
-                     className={styles.ProgressBar}
-                     bgColor={'#39c457'}
-                     baseBgColor={'#4b4949'}
-                     labelColor={'#fff'}
-        />
+        <Progress percent={Math.floor(progress.progressVal)} type={'line'} status={'active'} strokeColor={"#39c457"} />
       </div>}
-    </div>
-  );
+    </div>);
 }
 
 

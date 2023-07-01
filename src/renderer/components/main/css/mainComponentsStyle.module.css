@@ -35,7 +35,7 @@
   font-weight: 300;
   font-size: 4vh;
   white-space: nowrap;
-  font-family: Terabite;
+  font-family: Terabite, system-ui;
 }
 
 .mainMenuBar .data .frameData .version {
