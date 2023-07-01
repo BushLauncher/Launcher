@@ -16,6 +16,7 @@ import {
   LogOutAllAccount,
   RefreshAccount,
   ReplaceAccount,
+  resolveUserId,
   SelectAccount
 } from './internal/AuthModule';
 import { AuthProviderType, MinecraftAccount } from '../public/AuthPublic';
@@ -93,11 +94,12 @@ ipcMain.handle('Auth:Add', (event, args: { user: MinecraftAccount }) => {
 ipcMain.handle('Auth:checkAccount', (event, args: { user: MinecraftAccount }) => {
   return isAccountValid(args.user);
 });
-ipcMain.handle('Auth:refreshUser', async (event, args: { userId: number }) => {
-  const resolvedUser = getAccountList()[args.userId];
-  const newAccount = await RefreshAccount(resolvedUser);
-  if (newAccount === KnownAuthErrorType.CannotRefreshAccount) return newAccount;
-  return ReplaceAccount(args.userId, newAccount);
+ipcMain.handle('Auth:refreshUser', async (event, args: { userId: number | MinecraftAccount }) => {
+  const response = await RefreshAccount(args.userId);
+  const id = (typeof args.userId === 'number') ? args.userId : resolveUserId(args.userId);
+  if (response !== KnownAuthErrorType.CannotRefreshAccount) ReplaceAccount(id, response);
+  //return response (can contain the Error)
+  return response;
 });
 ipcMain.handle('Auth:LogOut', (event, args: { accountIndex: number }) => {
   return LogOutAccount(args.accountIndex);

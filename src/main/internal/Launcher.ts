@@ -1,4 +1,17 @@
-import {  Callback,  CallbackType,  ErrorCallback,  ExitedCallback,  GameVersion,  LaunchTask,  LaunchTaskState,  PreLaunchProcess,  PreLaunchRunnableProcess,  ProgressCallback,  StartedCallback,  UpdateLaunchTaskCallback} from '../../public/GameDataPublic';
+import {
+  Callback,
+  CallbackType,
+  ErrorCallback,
+  ExitedCallback,
+  GameVersion,
+  LaunchTask,
+  LaunchTaskState,
+  PreLaunchProcess,
+  PreLaunchRunnableProcess,
+  ProgressCallback,
+  StartedCallback,
+  UpdateLaunchTaskCallback
+} from '../../public/GameDataPublic';
 import { parseJava, ResolvedPreLaunchTask, ResolvePreLaunchTask, ResolvePreLaunchTaskList } from './PreLaunchEngine';
 import { createMinecraftProcessWatcher, launch } from '@xmcl/core';
 import { ChildProcess } from 'child_process';
@@ -92,7 +105,11 @@ function setLocalLocationRoot(path: string) {
 export function Launch(version: GameVersion, callback: (callback: StartedCallback) => void): Promise<ExitedCallback> {
   return new Promise(async (resolve, reject) => {
     const account = getSelectedAccount();
-    if (account === null || !isAccountValid(account)) throw new Error('Cannot launch the game without valid logged account');
+    if (account === null || !isAccountValid(account)) {
+      console.error('Cannot launch the game without a valid logged account');
+      reject();
+      return;
+    }
     const getAccessToken = async () => {
       const authenticator = new MicrosoftAuthenticator();
       const { xstsResponse, xboxGameProfile } = await authenticator.acquireXBoxToken(account.msToken.access_token);
@@ -100,7 +117,7 @@ export function Launch(version: GameVersion, callback: (callback: StartedCallbac
     };
     parseJava((c) => console.log(prefix + 'Internal Launch re-parse Java: ', c))
       .then(async (javaPath: string) => {
-        console.log(prefix + 'Launching minecraft ' + version.id + ' :' + '\nFor: ', account.profile, '\n from: ' + getLocationRoot() + '\n java: ' + javaPath );
+        console.log(prefix + 'Launching minecraft ' + version.id + ' :' + '\nFor: ', account.profile, '\n from: ' + getLocationRoot() + '\n java: ' + javaPath);
         //TODO: Store returns of preLaunchOperations
         launch({
           gamePath: getLocationRoot(),
@@ -111,7 +128,7 @@ export function Launch(version: GameVersion, callback: (callback: StartedCallbac
           launcherName: `BushLauncher`,
           launcherBrand: `BushLauncher`,
           gameName: `BushLauncher Minecraft [${version.id}]`
-          //TODO: set game icon name and Discord RTC
+          //TODO: set game icon, name and Discord RTC
           //TODO: Server, to launch directly on server
         }).then((process: ChildProcess) => {
           const watcher = createMinecraftProcessWatcher(process);

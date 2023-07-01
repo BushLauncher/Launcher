@@ -20,8 +20,9 @@ export function AddAccount(user: MinecraftAccount) {
   } else throw new Error('The new Account is not valid !');
 }
 
-export async function RefreshAccount(refreshToken: string | MinecraftAccount): Promise<MinecraftAccount | KnownAuthErrorType.CannotRefreshAccount> {
-  const refresh_token = (typeof refreshToken === 'string' ? refreshToken : refreshToken.msToken.refresh_token);
+export async function RefreshAccount(id: number | MinecraftAccount): Promise<MinecraftAccount | KnownAuthErrorType.CannotRefreshAccount> {
+  const account = (typeof id === 'number') ? getAccount(id) : id;
+  const refresh_token = account.msToken.refresh_token;
   return auth.refresh(refresh_token)
     .then(async res => {
       return await xboxToUser(res);
@@ -85,6 +86,7 @@ export function getAccount(id: number): MinecraftAccount {
 }
 
 export function ReplaceAccount(id: number, account: MinecraftAccount) {
+  console.log('replacing account ');
   const list = getAccountList();
   list[id] = account;
   updateStorage('accountList', list);
@@ -103,7 +105,10 @@ export function RemoveAccount(indexToDelete: number) {
 }
 
 export function isAccountValid(account: MinecraftAccount): boolean {
-  return account.exp > Date.now();
+  console.log(account.createdDate + ' + ' + (account.msToken.expires_in * 1000) + ' = ' + (account.createdDate + (account.msToken.expires_in * 1000)) + '\n' + Date.now());
+  //validate account               +                  msToken
+  return account.exp > Date.now() && (account.createdDate + (account.msToken.expires_in * 1000)) > Date.now();
+
 }
 
 export function LogOutAccount(indexToLogOut: number) {
@@ -156,7 +161,8 @@ function constructMinecraftUser(Minecraft: Minecraft, authType: AuthProviderType
     xuid: Minecraft.xuid,
     exp: Minecraft.exp,
     authType: authType,
-    true: true
+    true: true,
+    createdDate: new Date().getTime()
   };
 }
 
@@ -181,7 +187,7 @@ function xboxToUser(xbox: Xbox): Promise<MinecraftAccount> {
   });
 }
 
-function resolveUserId(user: MinecraftAccount) {
+export function resolveUserId(user: MinecraftAccount) {
   const list: MinecraftAccount[] = getAccountList();
   if (!list.includes(user)) throw new Error('Account list don\'t contain account: ' + user);
   return list.indexOf(user);
