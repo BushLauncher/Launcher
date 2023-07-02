@@ -1,7 +1,7 @@
 {
   "name": "bush-launcher",
   "productName": "Bush Launcher",
-  "version": "0.4.6",
+  "version": "0.4.7",
   "private": true,
   "description": "The Minecraft Bush launcher",
   "author": {

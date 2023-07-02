@@ -12,8 +12,8 @@ export default class PreloadWindow extends Window {
 
   constructor() {
     super({
-      additionalParams: { title: 'Loading', transparent: true, backgroundColor: undefined },
-      contentPath: process.env.NODE_ENV === 'development' ? path.join(__dirname, '../renderer/preLoad.html') : path.join(__dirname, "../renderer/preLoad.html")
+      additionalParams: { title: 'Loading', transparent: true, backgroundColor: undefined, width: 670, maxWidth: 670 },
+      contentPath: process.env.NODE_ENV === 'development' ? path.join(__dirname, '../renderer/preLoad.html') : path.join(__dirname, '../renderer/preLoad.html')
     });
   }
 
@@ -51,40 +51,6 @@ export default class PreloadWindow extends Window {
       return false;
     }
 
-
-    /*new PreLoad(modifyMainText, tempPath)
-      .run()
-      .then(async (response) => {
-        const installUpdate = async (toDownload: any) => {
-          Update(toDownload, (text: string) => modifyMainText(text)).then(
-            (update: any) => {
-              if (update.updated) {
-                modifyMainText('Restarting...');
-                resolve({ mustRestart: true });
-                //must restart
-              } else {
-                console.error(prefix + update);
-              }
-            }
-          );
-        };
-        if (response.skipped == true) {
-          //offline mode
-          modifyMainText('Starting Offline mode...');
-          console.log(prefix + 'Starting offline mode');
-          resolve({ mustRestart: false });
-        } else {
-          if (response.exist) {
-            await installUpdate(response);
-          } else {
-            console.log(prefix + 'No update available !, starting...');
-            modifyMainText('Starting...');
-            //continue loading this version
-            resolve({ mustRestart: false });
-          }
-        }
-      })
-      .catch((err) => console.error(err));*/
   }
 
 

@@ -1,8 +1,7 @@
-import { app } from 'electron';
+import { app, shell } from 'electron';
 import path from 'path';
 import axios from 'axios';
 import { createWriteStream } from 'fs';
-import { execFile as child } from 'child_process';
 import { toDownloadData } from './PreloadWindow';
 
 const prefix = '[Downloader, MainProcess]: ';
@@ -13,13 +12,12 @@ export function Update(potentialUpdate: toDownloadData, callbackText: (text: str
     Download(potentialUpdate.url, (downloadPercentage: any) => callbackText('Updating... ' + downloadPercentage + '%'))
       .then(appPath => {
         callbackText('Running...');
-        child(appPath, function(err: any) {
-          if (err) {
+        shell.openExternal(appPath)
+          .then(() => resolve(true))
+          .catch(err => {
             console.error(err);
             return;
-          }
-          resolve(true);
-        });
+          });
       })
       .catch(error => {
         console.error('Cannot update: ');
