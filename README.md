@@ -34,7 +34,7 @@ BushLauncher uses a configuration system, you can create as many as you like and
 - [x] ❎ Offline mode
 - [x] 📂 File Manager (manage, install and diagnose your minecraft versions)
 
-[^0] This projet is still under development so some features may not be available
+[^0]: This projet is still under development so some features may not be available
 
 ## Built With
 
