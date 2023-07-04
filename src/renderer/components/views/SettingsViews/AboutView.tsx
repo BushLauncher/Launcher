@@ -1,11 +1,9 @@
 import defaultStyle from './css/DefaultSettingsView.module.css';
 import styles from './css/AboutSettingViewStyle.module.css';
-import { PublicViewAdditionalProps, ViewProps } from '../../public/View';
 
 
-export default function AboutView(props?: PublicViewAdditionalProps): ViewProps {
-  return Object.assign( {
-    content: (<div className={defaultStyle.view}>
+export default function AboutView() {
+  return <div className={defaultStyle.view}>
       <div className={styles.content}>
         <h1>BushLauncher</h1>
         <div>
@@ -16,6 +14,5 @@ export default function AboutView(props?: PublicViewAdditionalProps): ViewProps 
           </p>
         </div>
       </div>
-    </div>)
-  }, props);
+    </div>
 }

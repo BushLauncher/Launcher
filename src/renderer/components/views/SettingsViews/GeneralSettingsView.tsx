@@ -6,7 +6,6 @@ import React from 'react';
 import defaultStyle from './css/DefaultSettingsView.module.css';
 import { toast } from 'react-toastify';
 import { Button, Popover, Select } from 'antd';
-import { PublicViewAdditionalProps, ViewProps } from '../../public/View';
 
 const { Option } = Select;
 
@@ -20,9 +19,8 @@ function requestDeleteAll() {
     });
 }
 
-export default function GeneralSettingsView(props?: PublicViewAdditionalProps): ViewProps {
-  return Object.assign({
-    content: (<div className={defaultStyle.View}>
+export default function GeneralSettingsView() {
+  return <div className={defaultStyle.View}>
       <LabeledInput input={
         <Loader content={() => new Promise((resolve) => {
           getCurrentTheme().then(currentTheme => resolve(
@@ -38,6 +36,5 @@ export default function GeneralSettingsView(props?: PublicViewAdditionalProps): 
             <Button type={'primary'} content={'Delete all'} onInput={() => requestDeleteAll()} danger
                     size={'large'}>Delete all</Button></Popover>}
         label={'Data'} />
-    </div>)
-  }, props);
+    </div>
 }

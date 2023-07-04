@@ -1,18 +1,22 @@
-import TabView from './components/main/TabView/TabView';
 import './defaultStyle.css';
-import grassBlockImg from '../assets/graphics/images/grass_block.png';
-import settingIcon from '../assets/graphics/icons/settings.svg';
-import VanillaView from './components/views/vanillaView';
 import Loader from './components/public/Loader';
 import { toast, ToastContainer } from 'react-toastify';
-import SettingsView from './components/views/SettingsView';
 import AuthModule from './components/main/Auth/AuthModule';
 import AuthModuleStyle from './components/main/Auth/css/AuthModuleStyle.module.css';
 import { KnownAuthErrorType } from '../public/ErrorPublic';
 import React from 'react';
 import { globalStateContext } from './index';
 import { MinecraftAccount } from '../public/AuthPublic';
-import { TabParam } from './components/main/TabView/Tab';
+import { Layout } from 'antd';
+import ViewSwitcher from './components/main/TabView/ViewSwitcher';
+import Icon from './components/public/Icons/Icon';
+
+import dirtBlockIcon from '../assets/graphics/images/grass_block.png';
+import settingsIcon from '../assets/graphics/icons/settings.svg';
+import VanillaView from './components/views/vanillaView';
+import SettingsView from './components/views/SettingsView';
+
+const Sider = Layout.Sider;
 
 const prefix = '[App]: ';
 
@@ -100,12 +104,12 @@ export default function App() {
   const content = (<Loader
     content={async () => {
       const interfaceData = await window.electron.ipcRenderer.invoke('getData', { dataPath: 'interface' });
-
+      //setCollapsed(interfaceData.isMenuCollapsed !== undefined ? interfaceData.isMenuCollapsed : true);
       const selectedTab: string = interfaceData.selectedTab !== undefined ? interfaceData.selectedTab : 'vanilla';
-      const collapsed = interfaceData.isMenuCollapsed !== undefined ? interfaceData.isMenuCollapsed : true;
+
       console.log(prefix + 'Selected Tab: ' + interfaceData.selectedTab);
 
-      const content: TabParam[] = [
+      /*const content: TabParam[] = [
         { id: 'vanilla', iconPath: grassBlockImg, content: VanillaView(), onSelect: () => saveSelectedView('vanilla') },
         {
           id: 'settings',
@@ -114,7 +118,7 @@ export default function App() {
           content: SettingsView(),
           onSelect: () => saveSelectedView('settings')
         }
-      ];
+      ];*/
 
       return (<div id={'MAIN'}>
         <Loader content={async (reload) => {
@@ -123,17 +127,10 @@ export default function App() {
           await validateUser(undefined, undefined, reload);
           return <AuthModule />;
         }} className={AuthModuleStyle.AuthModule} />
-        <TabView
-          tabList={content}
-          defaultSelectedTabId={selectedTab}
-          params={{
-            collapsable: true, collapsed: collapsed, onCollapseMenu: (collapseState) => {
-              window.electron.ipcRenderer.sendMessage('updateData', {
-                value: collapseState, dataPath: 'interface.isMenuCollapsed'
-              });
-            }, styleSettings: { orientation: 'Horizontal' }
-          }}
-        />
+        <ViewSwitcher content={[{
+          key: 'vanilla', label: 'Vanilla', icon: <Icon icon={dirtBlockIcon} />, content: VanillaView()
+        }, { key: 'settings', label: 'Settings', icon: <Icon icon={settingsIcon} />, content: SettingsView() }]}
+                      selectedTabName={selectedTab} />
         <ToastContainer
           position='bottom-center'
           autoClose={5000}
@@ -153,3 +150,5 @@ export default function App() {
   toast.info('Loaded successfully', Object.assign(NotificationParam.info, { autoClose: 1000 }));
   return content;
 }
+
+

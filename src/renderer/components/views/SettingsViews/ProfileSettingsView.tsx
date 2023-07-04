@@ -3,12 +3,11 @@ import Loader from '../../public/Loader';
 import defaultStyle from './css/DefaultSettingsView.module.css';
 import UserCard from '../../main/Auth/UserCard';
 import { Button } from 'antd';
-import { PublicViewAdditionalProps, ViewProps } from '../../public/View';
 
 
-export default function ProfileSettingsView(props?: PublicViewAdditionalProps): ViewProps {
-  return Object.assign( {
-    content: (<div className={defaultStyle.View}>
+
+export default function ProfileSettingsView() {
+  return <div className={defaultStyle.View}>
       <div className={styles.ProfileList}>
         <p className={styles.title}>Profiles connectées:</p>
         <Button danger /*loading={isLoading[0]}*/ onClick={
@@ -41,6 +40,5 @@ export default function ProfileSettingsView(props?: PublicViewAdditionalProps): 
             })} className={styles.list} style={undefined} />
         </div>
       </div>
-    </div>)
-  }, props);
+    </div>
 }

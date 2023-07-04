@@ -4,7 +4,6 @@ import { useState } from 'react';
 import styles from './css/VersionSettingsViewStyle.module.css';
 import defaultStyle from './css/DefaultSettingsView.module.css';
 import { GameType, GameVersion } from '../../../../public/GameDataPublic';
-import TabView from '../../main/TabView/TabView';
 import { AutoComplete } from 'antd';
 import Icon from '../../public/Icons/Icon';
 import crossIcon from '../../../../assets/graphics/icons/close.svg';
@@ -13,8 +12,7 @@ import loadIcon from '../../../../assets/graphics/icons/loading.svg';
 import vanillaIcon from '../../../../assets/graphics/images/grass_block.png';
 import VersionCard from '../../public/VersionCard';
 import toDownloadIcon from '../../../../assets/graphics/icons/download.svg';
-import View, { PublicViewAdditionalProps, ViewProps } from '../../public/View';
-import { TabParam } from '../../main/TabView/Tab';
+
 
 const { Option } = AutoComplete;
 
@@ -39,12 +37,11 @@ export function getGameTypeIcon(gameType: GameType) {
 }
 
 
-export default function VersionSettingsView(props?: PublicViewAdditionalProps): ViewProps {
-  return Object.assign({
-    content: (<Loader content={async (reload: () => any) => {
+export default function VersionSettingsView() {
+  return <Loader content={async (reload: () => any) => {
       // @ts-ignore
       const VersionTool = (): Promise<JSX.Element> => new Promise((resolve) => {
-        const tabList: TabParam[] = [];
+        const tabList: any[] = [];
         window.electron.ipcRenderer.invoke('Version:getTypeList', {})
           .then((gameTypeList: string[]) => {
             const construct = gameTypeList.map(async (gameType) => {
@@ -59,7 +56,7 @@ export default function VersionSettingsView(props?: PublicViewAdditionalProps): 
                   content:
                     <Loader content={async (reload) => {
                       const versionList: GameVersion[] = await window.electron.ipcRenderer.invoke('Version:getList', { gameType: gameType/*, type: 'local'*/ }).catch(err => console.log(err));
-                      return versionList.length === 0 ? new View({ content: undefined }).render() :
+                      return versionList.length === 0 ? undefined :
                         <div className={styles.scrollable}>
                           {versionList.map((version, i) =>
                             <VersionCard version={version} key={i} toolBox={{
@@ -90,8 +87,7 @@ export default function VersionSettingsView(props?: PublicViewAdditionalProps): 
           <PathInput callback={() => reload()} />
         </div>
       );
-    }} className={[defaultStyle.View, styles.View].join(' ')} style={undefined} />)
-  }, props);
+    }} className={[defaultStyle.View, styles.View].join(' ')} style={undefined} />
 }
 
 function PathInput({ callback }: { callback: () => any }): JSX.Element {
