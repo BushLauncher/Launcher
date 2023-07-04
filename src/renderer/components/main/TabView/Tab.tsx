@@ -1,26 +1,76 @@
 import styles from './TabViewStyle.module.css';
-import { TabParams } from './TabView';
+import React from 'react';
+import { ComponentsPublic } from '../../ComponentsPublic';
+import View, { ViewProps } from '../../public/View';
+import Icon from '../../public/Icons/Icon';
+import loadingIcon from '../../../../assets/graphics/icons/loading.svg';
 
-export default function Tab({ data, isSelected, onSelect }: {
-  data: TabParams,
-  isSelected: boolean,
-  onSelect: (action?: () => any) => any
-}) {
-  function getDisplayName() {
-    return data.id ? data.id : data.id.charAt(0).toUpperCase() + data.id.slice(1);
+export interface TabParam extends ComponentsPublic {
+  id: string,
+  content?: ViewProps;
+  displayName?: string,
+  iconPath?: string,
+  onDeselect?: () => any
+  onSelect?: () => any;
+}
+
+interface ResolvedTabParam extends TabParam {
+  _handleChangeView: (action?: () => any) => any;
+  _isSelected: boolean;
+}
+
+
+export default class Tab extends React.Component<ResolvedTabParam, { isSelected: boolean, isLoading: boolean }> {
+
+  constructor(props: ResolvedTabParam) {
+    super(props);
+    this.state = ({
+      isSelected: props._isSelected,
+      isLoading: false
+    });
   }
 
-  return (<div
-    className={[styles.Tab, isSelected ? styles.selected : ''].join(' ')}
-    onClick={() => {
-      if (!isSelected) onSelect(data.onClickAction);
-    }}
-    style={data.style}
-  >
-    {data.iconPath && <div
-      className={styles.icon}
-      style={{ backgroundImage: `url(${data.iconPath})` }}
-    />}
-    <p className={styles.label}>{getDisplayName()}</p>
-  </div>);
+
+  public generateView() {
+    return <View {...this.props.content} _tab={this} />;
+  }
+
+  render() {
+    return (
+      <div
+        className={[styles.Tab, this.state.isSelected ? styles.selected : ''].join(' ')}
+        onClick={() => this.Select()}
+        style={this.props.style}
+      >
+        {this.props.iconPath && <div
+          className={styles.icon}
+          style={{ backgroundImage: `url(${this.props.iconPath})` }}
+        />}
+        <p className={styles.label}>{this.getDisplayName()}</p>
+        {this.state.isLoading && <Icon icon={loadingIcon} />}
+      </div>);
+  }
+
+  public setLoading(isLoading: boolean) {
+    this.setState({ isLoading: isLoading });
+  }
+
+  public Select() {
+    this.setState({ isSelected: true });
+    this.props._handleChangeView(this.props.onSelect);
+  }
+
+  public Deselect() {
+    this.setState({ isSelected: false });
+    if (this.props.onDeselect) this.props.onDeselect();
+  }
+
+  getDisplayName() {
+    const id = this.props.id;
+    return id.charAt(0).toUpperCase() + id.slice(1);
+  }
+
+
 }
+
+

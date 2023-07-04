@@ -1,4 +1,4 @@
-import TabView, { TabParams } from './components/main/TabView/TabView';
+import TabView from './components/main/TabView/TabView';
 import './defaultStyle.css';
 import grassBlockImg from '../assets/graphics/images/grass_block.png';
 import settingIcon from '../assets/graphics/icons/settings.svg';
@@ -6,12 +6,13 @@ import VanillaView from './components/views/vanillaView';
 import Loader from './components/public/Loader';
 import { toast, ToastContainer } from 'react-toastify';
 import SettingsView from './components/views/SettingsView';
-import AuthModule, { addAccount, getLogin } from './components/main/Auth/AuthModule';
+import AuthModule from './components/main/Auth/AuthModule';
 import AuthModuleStyle from './components/main/Auth/css/AuthModuleStyle.module.css';
 import { KnownAuthErrorType } from '../public/ErrorPublic';
 import React from 'react';
 import { globalStateContext } from './index';
 import { MinecraftAccount } from '../public/AuthPublic';
+import { TabParam } from './components/main/TabView/Tab';
 
 const prefix = '[App]: ';
 
@@ -28,6 +29,15 @@ export const NotificationParam = {
 
 export default function App() {
   const { isOnline } = React.useContext(globalStateContext);
+
+
+  function saveSelectedView(id: string) {
+    window.electron.ipcRenderer.sendMessage('updateData', {
+      dataPath: 'interface.selectedTab',
+      value: id
+    });
+  }
+
 
   async function validateUser(user?: MinecraftAccount, id?: number, reloadFunc?: () => any) {
     return new Promise<void>(async (resolve) => {
@@ -91,16 +101,20 @@ export default function App() {
     content={async () => {
       const interfaceData = await window.electron.ipcRenderer.invoke('getData', { dataPath: 'interface' });
 
-      const selectedTab = interfaceData.selectedTab !== undefined ? interfaceData.selectedTab : 'vanilla';
+      const selectedTab: string = interfaceData.selectedTab !== undefined ? interfaceData.selectedTab : 'vanilla';
       const collapsed = interfaceData.isMenuCollapsed !== undefined ? interfaceData.isMenuCollapsed : true;
       console.log(prefix + 'Selected Tab: ' + interfaceData.selectedTab);
 
-      const content: TabParams[] = [{
-        id: 'vanilla', iconPath: grassBlockImg, content: VanillaView
-      }, {
-        id: 'settings', iconPath: settingIcon, style: { position: 'absolute', bottom: '10px' }, content: SettingsView
-      }];
-
+      const content: TabParam[] = [
+        { id: 'vanilla', iconPath: grassBlockImg, content: VanillaView(), onSelect: () => saveSelectedView('vanilla') },
+        {
+          id: 'settings',
+          iconPath: settingIcon,
+          style: { position: 'absolute', bottom: '10px' },
+          content: SettingsView(),
+          onSelect: () => saveSelectedView('settings')
+        }
+      ];
 
       return (<div id={'MAIN'}>
         <Loader content={async (reload) => {
@@ -110,8 +124,8 @@ export default function App() {
           return <AuthModule />;
         }} className={AuthModuleStyle.AuthModule} />
         <TabView
-          contentList={content}
-          selectedTabIndex={content.findIndex((e) => e.id === selectedTab)}
+          tabList={content}
+          defaultSelectedTabId={selectedTab}
           params={{
             collapsable: true, collapsed: collapsed, onCollapseMenu: (collapseState) => {
               window.electron.ipcRenderer.sendMessage('updateData', {

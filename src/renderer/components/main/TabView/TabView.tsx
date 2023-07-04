@@ -1,18 +1,18 @@
-import TabViewer from './Viewer';
 import styles from './TabViewStyle.module.css';
-import { useState } from 'react';
 import TabNavBar from './NavBar';
 import { ComponentsPublic } from '../../ComponentsPublic';
-import EmptyView from '../../views/emptyView';
+import { TabParam } from './Tab';
+import React, { useState } from 'react';
+import View from '../../public/View';
 
 //TODO: add loading icon
-export interface TabParams extends ComponentsPublic {
-  id: string,
-  displayName?: string,
-  iconPath?: string,
-  content?: JSX.Element | (() => JSX.Element),
-  onClickAction?: () => any,
-  selected?: boolean
+//TODO: add view persistance
+
+export interface TabViewStyle {
+  orientation?: 'Vertical' | 'Horizontal';
+  tabAlign?: 'Top' | 'Center' | 'Bottom';
+  navBarBackgroundVisibility?: boolean,
+  tabSelectionEffect?: 'Background' | 'Underline'
 }
 
 export interface TabViewParameters {
@@ -22,62 +22,39 @@ export interface TabViewParameters {
   styleSettings?: TabViewStyle;
 }
 
-export interface TabViewStyle {
-  orientation?: 'Vertical' | 'Horizontal';
-  tabAlign?: 'Top' | 'Center' | 'Bottom';
-  navBarBackgroundVisibility?: boolean,
-  tabSelectionEffect?: 'Background' | 'Underline'
-}
-
 export interface TabViewProps extends ComponentsPublic {
-  contentList: TabParams[],
-  selectedTabIndex?: number,
+  tabList: TabParam[],
+  defaultSelectedTabId?: number | string,
   params?: TabViewParameters
 }
 
-export default function TabView({ className, contentList, params, selectedTabIndex }: TabViewProps) {
-  if (contentList.length == 0) console.warn('the TabView is empty ! (content == null)');
-  const selectedTab: number = (selectedTabIndex && selectedTabIndex > 0 && selectedTabIndex <= contentList.length) ? selectedTabIndex : 0;
-  const [whichIsSelected, select] = useState(contentList[selectedTab]);
+export default function TabView({ className, tabList, params, defaultSelectedTabId }: TabViewProps) {
+  if (tabList.length == 0) console.warn('the TabView is empty ! (content == null)');
+  const [currentView, setCurrentView] = useState(<View content={undefined} />);
 
-  function saveSelectedView(viewName: string) {
-    window.electron.ipcRenderer.sendMessage('updateData', {
-      dataPath: 'interface.selectedTab',
-      value: viewName
-    });
-  }
-
-  function changeView(tabIndex: number, action?: () => {}) {
-    const tabData = contentList[tabIndex];
-    if (tabData) {
-      select(tabData);
-      saveSelectedView(tabData.id);
-      //execute afterAction
-      if (action) action();
-    } else console.error(tabIndex + '\'s tab don\'t exist');
-
+  function applyChange(id: string, view: JSX.Element) {
+      setCurrentView(view );
   }
 
   function getCollapsable() {
     if (params?.styleSettings?.orientation === 'Horizontal') {
       return params.collapsable != undefined ? params.collapsable : true;
-    }else return false/* cannot collapse horizontal nav bar on a **Vertical** view*/
+    } else return false;/* cannot collapse horizontal nav bar on a **Vertical** view*/
   }
 
   return (
     <div className={[styles.TabView, className].join(' ')}
          data-orientation={params?.styleSettings?.orientation ? params?.styleSettings.orientation : 'Horizontal'}>
       <TabNavBar
-        whichIsSelected={whichIsSelected}
-        select={changeView}
-        tabList={contentList}
+        onSelect={applyChange}
+        tabList={tabList}
         collapsable={getCollapsable()}
         collapsed={params?.collapsed ? params?.collapsed : false}
         onCollapseMenu={params?.onCollapseMenu}
         styleSettings={params?.styleSettings}
+        defaultSelected={defaultSelectedTabId !== undefined ? defaultSelectedTabId : 0}
       />
-      <TabViewer View={whichIsSelected.content ? whichIsSelected.content : EmptyView}
-                 navBarVisibility={params?.styleSettings?.navBarBackgroundVisibility} />
+      {currentView}
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import styles from './css/VersionSettingsViewStyle.module.css';
 import defaultStyle from './css/DefaultSettingsView.module.css';
 import { GameType, GameVersion } from '../../../../public/GameDataPublic';
-import TabView, { TabParams } from '../../main/TabView/TabView';
+import TabView from '../../main/TabView/TabView';
 import { AutoComplete } from 'antd';
 import Icon from '../../public/Icons/Icon';
 import crossIcon from '../../../../assets/graphics/icons/close.svg';
@@ -12,8 +12,9 @@ import doneIcon from '../../../../assets/graphics/icons/done.svg';
 import loadIcon from '../../../../assets/graphics/icons/loading.svg';
 import vanillaIcon from '../../../../assets/graphics/images/grass_block.png';
 import VersionCard from '../../public/VersionCard';
-import EmptyView from '../emptyView';
 import toDownloadIcon from '../../../../assets/graphics/icons/download.svg';
+import View, { PublicViewAdditionalProps, ViewProps } from '../../public/View';
+import { TabParam } from '../../main/TabView/Tab';
 
 const { Option } = AutoComplete;
 
@@ -23,9 +24,11 @@ const enum states {
   valid,
   error
 }
+
 export function getInstalledIcon(installed: boolean | undefined) {
-  return installed ? doneIcon : toDownloadIcon
+  return installed ? doneIcon : toDownloadIcon;
 }
+
 export function getGameTypeIcon(gameType: GameType) {
   switch (gameType) {
     case GameType.VANILLA:
@@ -35,12 +38,13 @@ export function getGameTypeIcon(gameType: GameType) {
   }
 }
 
-export default function VersionSettingsView() {
-  return (
-    <Loader content={async (reload: () => any) => {
+
+export default function VersionSettingsView(props?: PublicViewAdditionalProps): ViewProps {
+  return Object.assign({
+    content: (<Loader content={async (reload: () => any) => {
       // @ts-ignore
       const VersionTool = (): Promise<JSX.Element> => new Promise((resolve) => {
-        const tabList: TabParams[] = [];
+        const tabList: TabParam[] = [];
         window.electron.ipcRenderer.invoke('Version:getTypeList', {})
           .then((gameTypeList: string[]) => {
             const construct = gameTypeList.map(async (gameType) => {
@@ -51,31 +55,27 @@ export default function VersionSettingsView() {
                 iconPath: getGameTypeIcon(gameType as unknown as GameType),
                 displayName: gameType,
                 /*@ts-ignore */
-                content: <Loader content={async (reload) => {
-                  const versionList: GameVersion[] = await window.electron.ipcRenderer.invoke('Version:getList', { gameType: gameType/*, type: 'local'*/ }).catch(err => console.log(err));
-                  return versionList.length === 0 ? EmptyView :
-                    <div className={styles.scrollable}> {versionList.map((version, i) =>
-                      <VersionCard version={version} key={i}
-                                   toolBox={{
-                                     diagnose: { active: true },
-                                     uninstall: {
-                                       active: true,
-                                       callback: reload
-                                     },
-                                     install: {
-                                       active: true,
-                                       callback: reload
-                                     }
-                                   }} className={styles.card} />)}</div>;
-
-
-                }} className={styles.scrollable} />
+                content: {
+                  content:
+                    <Loader content={async (reload) => {
+                      const versionList: GameVersion[] = await window.electron.ipcRenderer.invoke('Version:getList', { gameType: gameType/*, type: 'local'*/ }).catch(err => console.log(err));
+                      return versionList.length === 0 ? new View({ content: undefined }).render() :
+                        <div className={styles.scrollable}>
+                          {versionList.map((version, i) =>
+                            <VersionCard version={version} key={i} toolBox={{
+                              diagnose: { active: true },
+                              uninstall: { active: true, callback: reload },
+                              install: { active: true, callback: reload }
+                            }} className={styles.card} />)}
+                        </div>;
+                    }} className={styles.scrollable} />
+                }
 
               });
 
             });
             Promise.all(construct).then(() => {
-              resolve(<TabView contentList={tabList} params={{
+              resolve(<TabView tabList={tabList} params={{
                 collapsable: false,
                 collapsed: true,
                 styleSettings: { orientation: 'Vertical', navBarBackgroundVisibility: false }
@@ -90,7 +90,8 @@ export default function VersionSettingsView() {
           <PathInput callback={() => reload()} />
         </div>
       );
-    }} className={[defaultStyle.View, styles.View].join(' ')} style={undefined} />);
+    }} className={[defaultStyle.View, styles.View].join(' ')} style={undefined} />)
+  }, props);
 }
 
 function PathInput({ callback }: { callback: () => any }): JSX.Element {
