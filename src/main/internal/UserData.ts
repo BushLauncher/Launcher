@@ -3,7 +3,7 @@ import { app } from 'electron';
 import fs, { readFileSync, writeFileSync } from 'fs';
 import { userDataStorage } from '../main';
 import { Xbox } from 'msmc';
-import { Theme } from '../../public/ThemePublic';
+import { Themes } from '../../public/ThemePublic';
 
 const path = require('path');
 const prefix: string = '[UserData]: ';
@@ -27,7 +27,7 @@ export function SetRootPath(path: string): boolean {
 
 interface InterfaceData {
   selectedTab: string;
-  theme: Theme;
+  theme: Themes;
   isMenuCollapsed: boolean;
 }
 
@@ -63,7 +63,7 @@ export function createDefaultData(): defaultData {
     version: { selected: getDefaultVersion(getDefaultGameType) },
     interface: {
       selectedTab: 'vanilla',
-      theme: Theme.Dark,
+      theme: Themes.Dark,
       isMenuCollapsed: true
     }
   };

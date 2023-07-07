@@ -1,10 +1,10 @@
 import LabeledInput from '../../public/Input/LabeledInput';
 import Loader from '../../public/Loader';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import styles from './css/VersionSettingsViewStyle.module.css';
 import defaultStyle from './css/DefaultSettingsView.module.css';
 import { GameType, GameVersion } from '../../../../public/GameDataPublic';
-import { AutoComplete } from 'antd';
+import { AutoComplete, Tabs } from 'antd';
 import Icon from '../../public/Icons/Icon';
 import crossIcon from '../../../../assets/graphics/icons/close.svg';
 import doneIcon from '../../../../assets/graphics/icons/done.svg';
@@ -12,6 +12,8 @@ import loadIcon from '../../../../assets/graphics/icons/loading.svg';
 import vanillaIcon from '../../../../assets/graphics/images/grass_block.png';
 import VersionCard from '../../public/VersionCard';
 import toDownloadIcon from '../../../../assets/graphics/icons/download.svg';
+import { Tab } from 'rc-tabs/lib/interface';
+import { JSX } from 'react/jsx-runtime';
 
 
 const { Option } = AutoComplete;
@@ -39,55 +41,46 @@ export function getGameTypeIcon(gameType: GameType) {
 
 export default function VersionSettingsView() {
   return <Loader content={async (reload: () => any) => {
-      // @ts-ignore
-      const VersionTool = (): Promise<JSX.Element> => new Promise((resolve) => {
-        const tabList: any[] = [];
-        window.electron.ipcRenderer.invoke('Version:getTypeList', {})
-          .then((gameTypeList: string[]) => {
-            const construct = gameTypeList.map(async (gameType) => {
-              //get all versions from this gameType
+    // @ts-ignore
+    const VersionTool = (): Promise<JSX.Element> => new Promise((resolve) => {
+      const tabList: Tab[] = [];
+      window.electron.ipcRenderer.invoke('Version:getTypeList', {})
+        .then((gameTypeList: string[]) => {
+          const construct = gameTypeList.map(async (gameType) => {
+            //get all versions from this gameType
+            tabList.push({
+              key: gameType,
+              label: <span style={{ display: 'flex', alignItems: 'center', gap: '2vw' }}> <Icon
+                icon={getGameTypeIcon(gameType as unknown as GameType)} /><p>{gameType.toString()}</p></span>,
+              children: <Loader content={async (reload) => {
+                const versionList: GameVersion[] = await window.electron.ipcRenderer.invoke('Version:getList', { gameType: gameType/*, type: 'local'*/ }).catch(err => console.log(err));
+                return <div className={styles.scrollable}>
+                  {versionList.map((version, i) =>
+                    <VersionCard version={version} key={i} toolBox={{
+                      diagnose: { active: true },
+                      uninstall: { active: true, callback: reload },
+                      install: { active: true, callback: reload }
+                    }} className={styles.card} />)}
+                </div>;
+              }} className={styles.scrollable} />
 
-              tabList.push({
-                id: gameType,
-                iconPath: getGameTypeIcon(gameType as unknown as GameType),
-                displayName: gameType,
-                /*@ts-ignore */
-                content: {
-                  content:
-                    <Loader content={async (reload) => {
-                      const versionList: GameVersion[] = await window.electron.ipcRenderer.invoke('Version:getList', { gameType: gameType/*, type: 'local'*/ }).catch(err => console.log(err));
-                      return versionList.length === 0 ? undefined :
-                        <div className={styles.scrollable}>
-                          {versionList.map((version, i) =>
-                            <VersionCard version={version} key={i} toolBox={{
-                              diagnose: { active: true },
-                              uninstall: { active: true, callback: reload },
-                              install: { active: true, callback: reload }
-                            }} className={styles.card} />)}
-                        </div>;
-                    }} className={styles.scrollable} />
-                }
-
-              });
 
             });
-            Promise.all(construct).then(() => {
-              resolve(<TabView tabList={tabList} params={{
-                collapsable: false,
-                collapsed: true,
-                styleSettings: { orientation: 'Vertical', navBarBackgroundVisibility: false }
-              }} className={styles.VersionTool} />);
-            });
-          }).catch(err => console.error(err));
-      });
-      const versionTool = await VersionTool();
-      return (
-        <div className={defaultStyle.View}>
-          {versionTool}
-          <PathInput callback={() => reload()} />
-        </div>
-      );
-    }} className={[defaultStyle.View, styles.View].join(' ')} style={undefined} />
+
+          });
+          Promise.all(construct).then(() => {
+            resolve(<Tabs items={tabList} className={[styles.VersionTool,styles.scrollable, 'scrollable transparent'].join(' ')}
+                          type={'card'} centered />);
+          });
+        }).catch(err => console.error(err));
+    });
+    return (
+      <div className={defaultStyle.View}>
+        {await VersionTool()}
+        <PathInput callback={() => reload()} />
+      </div>
+    );
+  }} className={[defaultStyle.View, styles.View].join(' ')} style={undefined} />;
 }
 
 function PathInput({ callback }: { callback: () => any }): JSX.Element {

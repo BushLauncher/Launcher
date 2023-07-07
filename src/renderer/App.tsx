@@ -8,13 +8,13 @@ import React from 'react';
 import { globalStateContext } from './index';
 import { MinecraftAccount } from '../public/AuthPublic';
 import { Layout } from 'antd';
-import ViewSwitcher from './components/main/TabView/ViewSwitcher';
 import Icon from './components/public/Icons/Icon';
 
 import dirtBlockIcon from '../assets/graphics/images/grass_block.png';
 import settingsIcon from '../assets/graphics/icons/settings.svg';
 import VanillaView from './components/views/vanillaView';
 import SettingsView from './components/views/SettingsView';
+import ViewSwitcher from './components/main/TabView/ViewSwitcher';
 
 const Sider = Layout.Sider;
 
@@ -127,10 +127,23 @@ export default function App() {
           await validateUser(undefined, undefined, reload);
           return <AuthModule />;
         }} className={AuthModuleStyle.AuthModule} />
-        <ViewSwitcher content={[{
-          key: 'vanilla', label: 'Vanilla', icon: <Icon icon={dirtBlockIcon} />, content: VanillaView()
-        }, { key: 'settings', label: 'Settings', icon: <Icon icon={settingsIcon} />, content: SettingsView() }]}
-                      selectedTabName={selectedTab} />
+        <ViewSwitcher items={[
+          { key: 'vanilla', icon: dirtBlockIcon, content: VanillaView() },
+          { key: 'settings', icon: settingsIcon, content: SettingsView() }
+        ].map(tab => {
+          return {
+            key: tab.key,
+            label: <span style={{ display: 'flex', alignItems: 'center', gap: '2vw' }}> <Icon
+              icon={tab.icon} /><p>{tab.key}</p></span>,
+            children: tab.content,
+            type: "card",
+            closable: false
+          };
+        })}
+                      tabPosition={'left'} size={'large'}
+                      type={"editable-card"} tabBarGutter={5}
+                      defaultActiveKey={selectedTab} hideAdd/>
+        {/*TODO: remove the 'hideAdd' to add the + button */}
         <ToastContainer
           position='bottom-center'
           autoClose={5000}

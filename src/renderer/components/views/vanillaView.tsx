@@ -6,8 +6,9 @@ import LaunchButton from '../main/LaunchButton';
 
 
 export default function VanillaView() {
-  console.log("rerended Vanilla view");
-  return <div className={styles.Main}>
+  return (<div className={styles.Main} style={{
+    backgroundImage: `url(${background})`
+  }}>
     <GameIcon
       type={'vanilla'}
       style={{ width: '30vw', height: '30vh' }}
@@ -17,14 +18,9 @@ export default function VanillaView() {
       versionSelector={true}
       style={{
         position: 'absolute',
-        top: '35%'
+        top: '35%',
+        boxSizing: "content-box"
       }}
     />
-    <div
-      style={{
-        backgroundImage: `url(${background})`
-      }}
-      className={styles.BackgroundImage}
-    />
-  </div>;
+  </div>);
 }

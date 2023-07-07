@@ -28,6 +28,7 @@ import ProgressBar from '@ramonak/react-progress-bar';
 import { ComponentsPublic } from '../ComponentsPublic';
 import { Divider, Popover, Progress } from 'antd';
 import VersionCard from '../public/VersionCard';
+import OutsideAlerter from '../public/OutsideAlerter';
 
 
 export enum LaunchButtonState {
@@ -123,8 +124,8 @@ export default function LaunchButton(props: LaunchButtonProps) {
         };
         lp = setLp();
         // @ts-ignore
-        let calculatedProgress: number = (100 * (callback.stepId + 1));
-        calculatedProgress += (lp - 100);
+        let calculatedProgress: number = 100 * (callback.stepId + 1);
+        calculatedProgress += lp - 100;
         calculatedProgress /= (callback.stepCount + 1);
         /*console.log(`((100 * ${callback.stepId}) - ${lp})/ ${callback.stepCount}
     = (${100 * callback.stepId} - ${lp})/ ${callback.stepCount})
@@ -222,47 +223,47 @@ export default function LaunchButton(props: LaunchButtonProps) {
   }
 
   return (
+<div
+  className={[styles.LaunchButton, (!isOnline ? styles.offlineStyle : undefined), (type === 'square' ? styles.Square : undefined), styles[state]].join(' ')}
+  style={props.style}
+  data-version-selector={props.versionSelector.toString()}
+  data-version-selector-opened={isVersionSelectorOpened}
+>
+  <div className={styles.Content}>
+    {/*to preserve HTML structure for css selector, the content is reorganized after in css*/}
+    <div className={styles.runContent}
+         onClick={async () => {
+           if (state === LaunchButtonState.Normal) {
+             let version = await getSelected();
+             if (version === undefined) {
+               const defaultVersion = getDefaultVersion(getDefaultGameType);
+               window.electron.ipcRenderer.sendMessage('Version:set', { version: defaultVersion });
+               version = defaultVersion;
+             }
+             if (props.onRun) props.onRun(version);
+             requestLaunch(version);
+           } else {
+             return null;
+           }
+         }}>
+      <Icon
+        className={styles.icon}
+        icon={getIcon()}
+        alt={'Launch the game Button'}
+      />
+      {type === 'default' && <p className={styles.text}>{text}</p>}
+    </div>
+    {props.versionSelector &&
+      <OutsideAlerter className={styles.versionSelectorLoader} onClickOutside={()=>setVersionSelector(false)} children={<Loader content={versionSelectorInit}  style={undefined} />}/>}
 
-    <div
-      className={[styles.LaunchButton, (!isOnline ? styles.offlineStyle : undefined), (type === 'square' ? styles.Square : undefined), styles[state]].join(' ')}
-      style={props.style}
-      data-version-selector={props.versionSelector.toString()}
-      data-version-selector-opened={isVersionSelectorOpened}
-    >
-      <div className={styles.Content}>
-        {/*to preserve HTML structure for css selector, the content is reorganized after in css*/}
-        <div className={styles.runContent}
-             onClick={async () => {
-               if (state === LaunchButtonState.Normal) {
-                 let version = await getSelected();
-                 if (version === undefined) {
-                   const defaultVersion = getDefaultVersion(getDefaultGameType);
-                   window.electron.ipcRenderer.sendMessage('Version:set', { version: defaultVersion });
-                   version = defaultVersion;
-                 }
-                 if (props.onRun) props.onRun(version);
-                 requestLaunch(version);
-               } else {
-                 return null;
-               }
-             }}>
-          <Icon
-            className={styles.icon}
-            icon={getIcon()}
-            alt={'Launch the game Button'}
-          />
-          {type === 'default' && <p className={styles.text}>{text}</p>}
-        </div>
-        {props.versionSelector &&
-          <Loader content={versionSelectorInit} className={styles.versionSelectorLoader} style={undefined} />}
-
-        {props.versionSelector && <Divider className={styles.line} type={'vertical'} />}
-      </div>
-      {type === 'default' && <div className={styles.LoadingContent}>
-        <p>{progress.currentStep + '/' + progress.stepCount}</p>
-        <Progress percent={Math.floor(progress.progressVal)} type={'line'} status={'active'} strokeColor={"#39c457"} />
-      </div>}
-    </div>);
+    {props.versionSelector && <Divider className={styles.line} type={'vertical'} />}
+  </div>
+  {type === 'default' && <div className={styles.LoadingContent}>
+    <p>{progress.currentStep + '/' + progress.stepCount}</p>
+    <Progress percent={Math.floor(progress.progressVal)} type={'line'} status={'active'} strokeColor={"#39c457"} />
+  </div>}
+</div>
+    );
 }
 
 

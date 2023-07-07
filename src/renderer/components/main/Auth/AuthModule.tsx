@@ -3,7 +3,7 @@ import Button, { ButtonType } from '../../public/Input/Button';
 import Icon from '../../public/Icons/Icon';
 import arrowIcon from '../../../../assets/graphics/icons/arrow_down.svg';
 import addIcon from '../../../../assets/graphics/icons/plus.svg';
-import React from 'react';
+import React, { useState } from 'react';
 import Loader from '../../public/Loader';
 import UserCard from './UserCard';
 import { toast } from 'react-toastify';
@@ -13,21 +13,18 @@ import { globalStateContext } from '../../../index';
 import { KnownAuthErrorType } from '../../../../public/ErrorPublic';
 import { MinecraftAccount } from '../../../../public/AuthPublic';
 import { ComponentsPublic } from '../../ComponentsPublic';
+import OutsideAlerter from '../../public/OutsideAlerter';
 
 
 interface AuthModuleProps extends ComponentsPublic {
 }
 
-export default class AuthModule extends React.Component<AuthModuleProps, { dropdownOpened: boolean }> {
+export default function AuthModule(props: AuthModuleProps) {
+  const [dropdownOpened, setDropdown] = useState(false)
 
-  constructor(props: AuthModuleProps) {
-    super(props);
-    this.state = {
-      dropdownOpened: false
-    };
-  }
-
-  public static async getLogin({ closable }: { closable?: boolean }): Promise<MinecraftAccount | KnownAuthErrorType> {
+  async function getLogin({ closable }: {
+    closable?: boolean
+  }): Promise<MinecraftAccount | KnownAuthErrorType> {
     return new Promise((resolve) => {
       const container = document.createElement('div');
       // noinspection JSCheckFunctionSignatures
@@ -61,7 +58,7 @@ export default class AuthModule extends React.Component<AuthModuleProps, { dropd
     });
   }
 
-  public static addAccount(account: MinecraftAccount) {
+  function addAccount(account: MinecraftAccount) {
     return new Promise<void>((resolve, reject) => {
       window.electron.ipcRenderer.invoke('Auth:Add', { user: account })
         .then(() => resolve())
@@ -72,99 +69,97 @@ export default class AuthModule extends React.Component<AuthModuleProps, { dropd
     });
   }
 
-  public closeDropDown() {
-    this.setState({ dropdownOpened: false });
+  function closeDropDown() {
+    setDropdown(false)
   }
 
-  render() {
-    // @ts-ignore
-    let {isOnline} = this.context
-    return (
-      <Loader content={async (reload) => {
-        return (<div className={styles.loadedContent}>
-          <div className={styles.selectedContent}>
-            <Loader
-              className={styles.selectedContent}
-              content={async () => {
-                const user = await window.electron.ipcRenderer.invoke('Auth:getSelectedAccount', {}).catch(console.error);
-                return (<UserCard className={styles.user} user={user} action={false} />);
-              }}
-            />
-            <Button
-              className={styles.button}
-              content={<Icon icon={arrowIcon} />}
-              type={ButtonType.Square}
-              action={() => this.setState({ dropdownOpened: !this.state.dropdownOpened })}
-            />
-          </div>
-          <div
-            className={[styles.dropdown, !this.state.dropdownOpened ? styles.closed : null].join(' ')}>
-            <Loader content={async () => new Promise((resolve) => {
-              window.electron.ipcRenderer.invoke('Auth:getAccountList', {})
-                .then((accountList) => {
-                  window.electron.ipcRenderer.invoke('Auth:getSelectedId', {})
-                    .then((selectedAccountId) => {
-                      resolve(
-                        <div className={styles.UserListContainer}>
-                          {accountList.map((account: MinecraftAccount, index: number) => {
-                            return (
-                              <UserCard
-                                user={account}
-                                key={index}
-                                action={{
-                                  accountIndex: index,
-                                  reloadFunc: reload,
-                                  action: {
-                                    canLogOut: selectedAccountId !== index,
-                                    canSelect: selectedAccountId !== index
+  let { isOnline } = React.useContext(globalStateContext);
+  return (
+    <Loader content={async (reload) => {
+      return (<OutsideAlerter children={<div className={styles.loadedContent}>
+        <div className={styles.selectedContent}>
+          <Loader
+            className={styles.selectedContent}
+            content={async () => {
+              const user = await window.electron.ipcRenderer.invoke('Auth:getSelectedAccount', {}).catch(console.error);
+              return (<UserCard className={styles.user} user={user} action={false} />);
+            }}
+          />
+          <Button
+            className={styles.button}
+            content={<Icon icon={arrowIcon} />}
+            type={ButtonType.Square}
+            action={() => setDropdown(!dropdownOpened )}
+          />
+        </div>
+        <div
+          className={[styles.dropdown, !dropdownOpened ? styles.closed : null].join(' ')}>
+          <Loader content={async () => new Promise((resolve) => {
+            window.electron.ipcRenderer.invoke('Auth:getAccountList', {})
+              .then((accountList) => {
+                window.electron.ipcRenderer.invoke('Auth:getSelectedId', {})
+                  .then((selectedAccountId) => {
+                    resolve(
+                      <div className={styles.UserListContainer}>
+                        {accountList.map((account: MinecraftAccount, index: number) => {
+                          return (
+                            <UserCard
+                              user={account}
+                              key={index}
+                              action={{
+                                accountIndex: index,
+                                reloadFunc: reload,
+                                action: {
+                                  canLogOut: selectedAccountId !== index,
+                                  canSelect: selectedAccountId !== index
+                                }
+                              }}
+                              className={[
+                                styles.User,
+                                selectedAccountId === index && styles.selected
+                              ].join(' ')}
+                            />
+                          );
+                        })}
+                        {isOnline && <Button
+                          className={styles.addButton}
+                          action={() => {
+                            getLogin({ closable: true })
+                              .then((response) => {
+                                //check if response is not an knownAuthError
+                                if (!Object.keys(KnownAuthErrorType).includes(response.toString())) {
+                                  response = response as MinecraftAccount;
+                                  if (isOnline) {
+                                    const operation = addAccount(response);
+                                    toast.promise(operation, {
+                                      pending:
+                                        'Adding account ' + response.profile.name,
+                                      success:
+                                        'Added Account ' + response.profile.name,
+                                      error: 'We could add account'
+                                    });
+                                    operation.then(() => {
+                                      reload();
+                                    });
+                                    operation.catch((err) => {
+                                      toast.error(err.toString());
+                                    });
                                   }
-                                }}
-                                className={[
-                                  styles.User,
-                                  selectedAccountId === index && styles.selected
-                                ].join(' ')}
-                              />
-                            );
-                          })}
-                          {isOnline && <Button
-                            className={styles.addButton}
-                            action={() => {
-                              AuthModule.getLogin({ closable: true })
-                                .then((response) => {
-                                  //check if response is not an knownAuthError
-                                  if (!Object.keys(KnownAuthErrorType).includes(response.toString())) {
-                                    response = response as MinecraftAccount;
-                                    if (isOnline) {
-                                      const operation = AuthModule.addAccount(response);
-                                      toast.promise(operation, {
-                                        pending:
-                                          'Adding account ' + response.profile.name,
-                                        success:
-                                          'Added Account ' + response.profile.name,
-                                        error: 'We could add account'
-                                      });
-                                      operation.then(() => {
-                                        reload();
-                                      });
-                                      operation.catch((err) => {
-                                        toast.error(err.toString());
-                                      });
-                                    }
-                                  }
-                                });
-                            }
-                            }
-                            content={<Icon icon={addIcon} className={styles.icon} />}
-                            type={ButtonType.Rectangle}
-                          />}
-                        </div>
-                      );
-                    });
-                });
-            })} />
-          </div>
-        </div>);
-      }} className={styles.loadedContent} />
-    );
-  }
+                                }
+                              });
+                          }
+                          }
+                          content={<Icon icon={addIcon} className={styles.icon} />}
+                          type={ButtonType.Rectangle}
+                        />}
+                      </div>
+                    );
+                  });
+              });
+          })} />
+        </div>
+      </div>} onClickOutside={closeDropDown} />);
+    }} className={styles.loadedContent} />
+  );
+
 }

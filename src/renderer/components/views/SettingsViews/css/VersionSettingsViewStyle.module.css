@@ -1,7 +1,9 @@
 .View {
-  max-height: 75vh;
-  margin-top: 9vh;
+  max-height: 80vh;
+  position: absolute;
+  bottom: 0;
 }
+
 .pathSelector {
   width: 30vw;
   height: 10vh;
@@ -18,7 +20,7 @@
   word-wrap: normal;
   word-break: keep-all;
   overflow-wrap: normal;
- /* background-color: var(--hover-background-color);*/
+  /* background-color: var(--hover-background-color);*/
   font-size: 2.5vw;
   color: var(--text-color);
   border-radius: 10px;
@@ -51,6 +53,7 @@
   box-sizing: border-box;
   padding-left: 5vw;
 }
-.VersionTool .scrollable .card {
+
+.VersionTool .card {
   flex: none;
 }

@@ -257,6 +257,9 @@
 .LaunchButton[data-version-selector='true'] .versionSelector .versionListDropdown .version {
   margin: 1vh 0;
   height: 6vh;
+  box-sizing: content-box;
+  padding: 0.5vh 1vw;
+
 }
 
 .LaunchButton[data-version-selector='true'] .versionSelectorLoader {

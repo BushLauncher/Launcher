@@ -45,11 +45,18 @@ if (isDebug) {
 
 
 ///////////////////////////////////
-ipcMain.on('App:Close', (event, args) => app.quit());
+function quitApp(){
+  currentWindow?.webContents.send("clearAll");
+  app.quit()
+}
+ipcMain.on('App:Close', (event, args) => {
+
+  quitApp()
+});
 ipcMain.on('App:Minimize', (event, args) => BrowserWindow.getFocusedWindow()?.minimize());
 ipcMain.on('App:Relaunch', (event, args) => {
   app.relaunch();
-  app.quit();
+  quitApp()
 });
 ipcMain.handle('App:getVersion', (event, args) => app.getVersion());
 

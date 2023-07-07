@@ -1,6 +1,7 @@
 /*noinspection CssUnusedSymbol*/
 .Theme-Dark {
-  --background-color: #232323;
+  --base-background-color: #0a0a0a;
+  --background-color: #1a1919;
   --second-background-color: #302f2f;
   --third-background-color: #4b4949;
   --hover-background-color: #5a5858;

@@ -1,7 +1,7 @@
 import LabeledInput from '../../public/Input/LabeledInput';
 import Loader from '../../public/Loader';
 import { getAllTheme, getCurrentTheme, SetTheme } from '../../../../public/ThemeManager';
-import { Theme } from '../../../../public/ThemePublic';
+import { Themes } from '../../../../public/ThemePublic';
 import React from 'react';
 import defaultStyle from './css/DefaultSettingsView.module.css';
 import { toast } from 'react-toastify';
