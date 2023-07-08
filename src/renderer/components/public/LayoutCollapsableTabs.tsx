@@ -1,37 +1,59 @@
-import React, { useState } from 'react';
-import { Button, Menu, MenuProps } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { Button, Popover, Tabs, TabsProps } from 'antd';
 import Icon from './Icons/Icon';
 import arrowIcon from '../../../assets/graphics/icons/caret-left.svg';
-import Sider from 'antd/es/layout/Sider';
 import { ComponentsPublic } from '../ComponentsPublic';
-import './css/ant-override.css';
+import '../../css/Tabs-ant-override.css';
 import { StyleProvider } from '@ant-design/cssinjs';
+import { Tab } from 'rc-tabs/lib/interface';
 
-
-interface CollapsableMenuProps extends ComponentsPublic {
-  content: MenuProps['items'] & {extra: boolean};
-  selectedName?: string;
-  settings?: MenuProps;
-  onChange?: (e: any) => any;
+interface items extends Omit<Tab, 'label'> {
+  label: { icon: JSX.Element, label: string } & ComponentsPublic;
 }
 
-export default function LayoutCollapsableTabs(props: CollapsableMenuProps) {
-  if (props.content === undefined || props.content === null || props.content.length === 0) {
-    console.warn('Content is empty');
-    return <></>;
-  }
-  const [collapsed, setCollapsed] = useState(true);
-  // @ts-ignore
-  const [selected, Select] = useState<string>(props.selectedName !== undefined ? props.selectedName : props.content[0].key);
+interface CollapsableMenuProps extends ComponentsPublic, Omit<TabsProps, 'items'> {
+  items: items[];
+  defaultCollapsed?: boolean;
+  onCollapse?: (isCollapsed: boolean) => any;
+}
+
+export default function LayoutCollapsableTabs({
+                                                defaultCollapsed,
+                                                onCollapse,
+                                                items,
+                                                ...tabsProps
+                                              }: CollapsableMenuProps) {
+  defaultCollapsed = defaultCollapsed || false;
+  const [collapsed, setCollapsed] = useState(defaultCollapsed);
+  useEffect(() => {
+    if (onCollapse) onCollapse(collapsed);
+  }, [collapsed]);
+  const [selected, Select] = useState<string | undefined>(tabsProps.defaultActiveKey);
   return (
-    <StyleProvider hashPriority={"high"}>
-      <Sider collapsed={collapsed} style={props.style}>
-        <Menu mode={'vertical'} selectedKeys={[selected]} className={props.className}
-              items={props.content} {...(props.settings)} onClick={(e) => {
-          Select(e.key);
-          if (props.onChange) props.onChange(e);
+    <StyleProvider hashPriority={'high'}>
+      <div className={'CollapsableMenu'}>
+        <Tabs {...tabsProps as unknown as TabsProps} items={
+          items.map((item): Tab => {
+            return {
+              ...item,
+              ...{
+                label:
+                  <Popover content={collapsed ? item.key : undefined} placement={'right'}>
+                    <span className={item.label.className}
+                          style={{ ...item.label.style, ...{ maxWidth: collapsed ? '4vw' : item.label.style?.maxWidth } }}>
+                      {item.label.icon}
+                      <p>{item.label.label}</p>
+                    </span>
+                  </Popover>
+              }
+            };
+          })} activeKey={selected} onChange={(activeKey) => {
+          Select(activeKey);
+          if (tabsProps.onChange) tabsProps.onChange(activeKey);
         }} />
-        <Button onClick={() => setCollapsed(!collapsed)} icon={<Icon icon={arrowIcon} className={"icon"} />} className={"collapse"}/>
-      </Sider>
+        <Button onClick={() => setCollapsed(!collapsed)} icon={<Icon icon={arrowIcon} className={'icon'}
+                                                                     style={{ transform: (collapsed ? 'rotateZ(180deg) scale(0.8)' : 'scale(0.8)') }} />}
+                className={'CollapseButton'} style={{ left: (collapsed ? '7vw' : '18vw') }} />
+      </div>
     </StyleProvider>);
 }

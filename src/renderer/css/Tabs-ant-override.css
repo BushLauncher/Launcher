@@ -4,6 +4,7 @@
   display: flex;
   position: relative;
   overflow: hidden;
+
 }
 
 #root .ant-tabs-tabpane-active, #root .ant-tabs-content-left {
@@ -11,10 +12,14 @@
   padding: 0;
 }
 
+
 #root .ant-tabs-tab, #root .ant-tabs-nav-add {
   border-radius: 15px;
-  padding: 10px;
-  border: 0;
+  transition: all 0.3s ease;
+}
+
+#root .ant-tabs-tab.ant-tabs-tab-active {
+  border-right-color: var(--primary-border);
 }
 
 #root .ant-tabs.transparent .ant-tabs-nav::before {
@@ -22,12 +27,20 @@
 }
 
 #root .ant-tabs-nav-add {
+  height: 4vh;
+}
+
+#root .ant-tabs-nav-operations {
+  height: 10vh;
   background-color: var(--second-background-color);
 }
+
 #root .ant-tabs-left .ant-tabs-nav-list {
-  background-color: var(--background-color);
-  padding: 0 0.5vw;
+  background-color: var(--second-background-color);
+  padding: 1vh 0.5vw 1vh 0.5vw;
+  transition: all 0.3s ease;
 }
+
 #root .ant-tabs-left.transparent .ant-tabs-nav-list {
   background-color: transparent;
 }
@@ -40,24 +53,53 @@
 #root .ant-tabs-left[data-center="true"] .ant-tabs-nav .ant-tabs-nav-list {
   justify-content: center;
 }
+
 #root .ant-tabs-content-holder {
   height: 100%;
 }
+
 #root .ant-tabs.scrollable {
   width: 100%;
 }
-#root .ant-tabs.scrollable .ant-tabs-content  {
+
+#root .ant-tabs.scrollable .ant-tabs-content {
   width: 100%;
   height: 56vh;
   overflow-y: scroll;
   box-sizing: border-box;
   padding-left: 5vw;
-
 }
 
+#root .CollapsableMenu {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transition: all 0.3s ease;
+}
 
-/*make the settings tab at the bottom*/
-#root .ant-tabs-tab[data-node-key="settings"]{
-  margin-top: auto !important;
-  margin-bottom: 5px;
+#root .CollapsableMenu .CollapseButton {
+  position: absolute;
+  /*left: 18vw;*/
+  /*in render*/
+  top: 44%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#root .CollapsableMenu .CollapseButton .icon {
+  /*transform: scale(0.8);*/
+  /*in renderer*/
+  transition: all 0.3s ease;
+}
+
+/** Disable "more" button**/
+/*https://stackoverflow.com/q/73649979*/
+#root .HideOperation .ant-tabs-nav-operations {
+  height: calc(7vh - 5px);
+}
+
+#root .HideOperation .ant-tabs-nav-operations * {
+  display: none;
 }

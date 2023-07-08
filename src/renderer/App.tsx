@@ -7,14 +7,15 @@ import { KnownAuthErrorType } from '../public/ErrorPublic';
 import React from 'react';
 import { globalStateContext } from './index';
 import { MinecraftAccount } from '../public/AuthPublic';
-import { Layout, Tabs } from 'antd';
+import { Layout } from 'antd';
 import Icon from './components/public/Icons/Icon';
 
 import dirtBlockIcon from '../assets/graphics/images/grass_block.png';
 import settingsIcon from '../assets/graphics/icons/settings.svg';
 import VanillaView from './components/views/vanillaView';
 import SettingsView from './components/views/SettingsView';
-import "./css/Tabs-ant-override.css"
+import './css/Tabs-ant-override.css';
+import LayoutCollapsableTabs from './components/public/LayoutCollapsableTabs';
 
 const Sider = Layout.Sider;
 
@@ -104,22 +105,7 @@ export default function App() {
   const content = (<Loader
     content={async () => {
       const interfaceData = await window.electron.ipcRenderer.invoke('getData', { dataPath: 'interface' });
-      //setCollapsed(interfaceData.isMenuCollapsed !== undefined ? interfaceData.isMenuCollapsed : true);
       const selectedTab: string = interfaceData.selectedTab !== undefined ? interfaceData.selectedTab : 'vanilla';
-
-      console.log(prefix + 'Selected Tab: ' + interfaceData.selectedTab);
-
-      /*const content: TabParam[] = [
-        { id: 'vanilla', iconPath: grassBlockImg, content: VanillaView(), onSelect: () => saveSelectedView('vanilla') },
-        {
-          id: 'settings',
-          iconPath: settingIcon,
-          style: { position: 'absolute', bottom: '10px' },
-          content: SettingsView(),
-          onSelect: () => saveSelectedView('settings')
-        }
-      ];*/
-
       return (<div id={'MAIN'}>
         <Loader content={async (reload) => {
           window.electron.ipcRenderer.on('Auth:CheckAccountProcess', // @ts-ignore
@@ -127,23 +113,45 @@ export default function App() {
           await validateUser(undefined, undefined, reload);
           return <AuthModule />;
         }} className={AuthModuleStyle.AuthModule} />
-        <Tabs items={[
+        <LayoutCollapsableTabs items={[
           { key: 'vanilla', icon: dirtBlockIcon, content: VanillaView() },
           { key: 'settings', icon: settingsIcon, content: SettingsView() }
         ].map(tab => {
           return {
             key: tab.key,
-            label: <span style={{ display: 'flex', alignItems: 'center', gap: '2vw' }}> <Icon
-              icon={tab.icon} /><p>{tab.key}</p></span>,
+
+            label: {
+              style: {
+                display: 'flex',
+                alignItems: 'center',
+                gap: '2vw',
+                maxWidth: '15vw',
+                height: '5.2vw',
+                textOverflow: 'ellipsis',
+                transition: 'all 0.3s ease',
+                overflow: 'hidden'
+              },
+              icon: <Icon icon={tab.icon} />,
+              label: tab.key
+            },
             children: tab.content,
             type: 'card',
             closable: false
           };
         })}
-              tabPosition={'left'} size={'large'}
-              type={'editable-card'} tabBarGutter={5}
-              defaultActiveKey={selectedTab} hideAdd destroyInactiveTabPane className={'NavBar'} />
-        {/*TODO: remove the 'hideAdd' to add the + button */}
+                               tabPosition={'left'}
+                               type={'card'}
+                               tabBarGutter={5}
+                               defaultActiveKey={selectedTab}
+                               moreIcon={<></>}
+                               className={"HideOperation"}
+                               defaultCollapsed={interfaceData['isMenuCollapsed']}
+                               onCollapse={(isCollapsed) =>
+                                 window.electron.ipcRenderer.sendMessage('updateData', {
+                                   dataPath: 'interface.isMenuCollapsed',
+                                   value: isCollapsed
+                                 })
+                               } onChange={saveSelectedView} />
         <ToastContainer
           position='bottom-center'
           autoClose={5000}
