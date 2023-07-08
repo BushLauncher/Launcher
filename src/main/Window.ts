@@ -1,6 +1,6 @@
 // noinspection SpellCheckingInspection
 
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, shell } from 'electron';
 import path from 'path';
 import BrowserWindowConstructorOptions = Electron.BrowserWindowConstructorOptions;
 
@@ -51,6 +51,12 @@ export default class Window {
       : this.window.loadFile(resolvedHtmlPath);
     loadingOperation.then(() => {
       return;
+    });
+
+    // Open urls in the user's browser
+    this.window.webContents.setWindowOpenHandler((edata) => {
+      shell.openExternal(edata.url);
+      return { action: 'deny' };
     });
   }
 
