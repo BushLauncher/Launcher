@@ -82,7 +82,7 @@ export default class UserCard extends React.Component<UserCardProps, {}> {
                     this.logoutIcon();
                     e.stopPropagation();
                   }}
-                  content={<Icon icon={logoutIcon} />}
+                  content={<Icon icon={logoutIcon} className={styles.logOutButtonIcon} />}
                   type={ButtonType.Square}
                   className={styles.logOutButton}
                 />

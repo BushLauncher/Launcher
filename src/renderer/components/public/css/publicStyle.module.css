@@ -42,7 +42,6 @@
 
 /************************************/
 .CallbackMessage .arrow {
-
   position: absolute;
   top: 0.5vh;
   right: 2vw;
@@ -96,6 +95,7 @@
   height: 7vh;
   width: 7vh;
 }
+
 .VersionCard .iconMin {
   height: 3vh;
   width: 3vh;
@@ -154,6 +154,7 @@
   font-size: 2vh;
   padding: 0 1vw 0 0;
 }
+
 /*****************************/
 .OutsideAlerter {
   width: auto;

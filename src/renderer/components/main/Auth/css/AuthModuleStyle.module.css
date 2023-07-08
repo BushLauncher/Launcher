@@ -39,7 +39,10 @@
 .AuthModule .loadedContent .selectedContent .button:hover {
   background-color: var(--hover-background-color);
 }
-
+.AuthModule .loadedContent .dropdownIcon {
+  width: 2vw;
+  height: 2vw;
+}
 .AuthModule .loadedContent .dropdown {
   width: calc(100% + 2vw);
   min-height: 2vh;
@@ -179,6 +182,11 @@
 
 .UserCard .ActionContainer .logOutButton:hover {
   background-color: var(--unvalid);
+}
+
+.UserCard .ActionContainer .logOutButtonIcon {
+  width: 2vw;
+  height: 2vw;
 }
 
 /****************************/

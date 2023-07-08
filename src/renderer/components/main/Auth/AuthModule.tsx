@@ -87,7 +87,7 @@ export default function AuthModule(props: AuthModuleProps) {
           />
           <Button
             className={styles.button}
-            content={<Icon icon={arrowIcon} />}
+            content={<Icon icon={arrowIcon} className={styles.dropdownIcon} />}
             type={ButtonType.Square}
             action={() => setDropdown(!dropdownOpened )}
           />
