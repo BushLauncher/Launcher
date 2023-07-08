@@ -134,10 +134,9 @@ ipcMain.handle('Auth:Login', async (event, args: { type: AuthProviderType }) => 
 ipcMain.on('Auth:SelectAccount', (event, args: { index: number }) => SelectAccount(args.index));
 
 ipcMain.handle('GameEngine:Launch', async (event, args: {
-  LaunchProcess: PreLaunchProcess | PreLaunchRunnableProcess | undefined
+  LaunchProcess: PreLaunchProcess | PreLaunchRunnableProcess
 }) => {
-  const process = args.LaunchProcess === undefined ? getLaunchInternal() : args.LaunchProcess;
-  return RunPreLaunchProcess(process,
+  return RunPreLaunchProcess(args.LaunchProcess,
     (callback: Callback) => {
       event.sender.send('GameLaunchCallback', callback);
       //console.log(callback);

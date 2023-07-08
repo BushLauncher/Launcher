@@ -1,9 +1,12 @@
 import * as AccountManager from './AuthModule';
+import { getAccessToken } from './AuthModule';
 import {
+  FinishedSubTaskCallback,
   GameVersion,
   LaunchOperationType,
   LaunchTask,
   LaunchTaskState,
+  PreLaunchError,
   PreLaunchTasks,
   ProgressSubTaskCallback,
   UpdateLaunchTaskCallback
@@ -27,7 +30,7 @@ export abstract class ResolvedPreLaunchTask {
     return this.baseTask.id;
   }
 
-  public abstract run(callback: (callback: UpdateLaunchTaskCallback) => void): Promise<UpdateLaunchTaskCallback>;
+  public abstract run(callback: (callback: UpdateLaunchTaskCallback) => void): Promise<FinishedSubTaskCallback>;
 
   public getCallback(processingCallback: ProgressSubTaskCallback): UpdateLaunchTaskCallback {
     return {
@@ -43,15 +46,20 @@ export abstract class ResolvedPreLaunchTask {
 
 }
 
-export class VerifyAccount extends ResolvedPreLaunchTask {
+export class ParseAccount extends ResolvedPreLaunchTask {
   constructor(baseTask: LaunchTask) {
-    super(baseTask, LaunchOperationType.Verify);
+    super(baseTask, LaunchOperationType.Parse);
   }
 
   public override async run(callback: (callback: UpdateLaunchTaskCallback) => void) {
     callback({ task: this.baseTask, state: LaunchTaskState.starting, displayText: 'Checking account...' });
-    const data = parseAccount();
-    return <UpdateLaunchTaskCallback>{ task: this.baseTask, state: LaunchTaskState.finished, data: { return: data } };
+    const data = await parseAccount();
+    return <FinishedSubTaskCallback>{
+      task: this.baseTask,
+      state: LaunchTaskState.finished,
+      data: { return: data },
+      response: { success: typeof data === 'string', data: data }
+    };
   }
 }
 
@@ -62,11 +70,12 @@ export class ParseJava extends ResolvedPreLaunchTask {
 
   public override async run(callback: (callback: UpdateLaunchTaskCallback) => void) {
     callback({ task: this.baseTask, state: LaunchTaskState.starting, displayText: 'Checking Java...' });
-    const data = await parseJava((c: ProgressSubTaskCallback) => callback(this.getCallback(c)));
-    return <UpdateLaunchTaskCallback>{
-      task: this.baseTask, state: LaunchTaskState.finished, data: {
-        return: data
-      }
+    const data = await parseJava((c: ProgressSubTaskCallback) => callback(this.getCallback(c))).catch(err=>{
+      console.error(err)
+      return <FinishedSubTaskCallback>{task: this.baseTask, state: LaunchTaskState.finished, response: { success: false }}
+    })
+    return <FinishedSubTaskCallback>{
+      task: this.baseTask, state: LaunchTaskState.finished, response: { success: true, data: data }
     };
   }
 }
@@ -84,8 +93,17 @@ export class ParseGameFile extends ResolvedPreLaunchTask {
     callback({ task: this.baseTask, state: LaunchTaskState.starting, displayText: 'Checking Minecraft files...' });
     await parseGameFile(this.baseTask.params.version, (c: ProgressSubTaskCallback) => callback(this.getCallback(c))).catch(err => {
       console.error(err);
+      return <FinishedSubTaskCallback>{
+        task: this.baseTask,
+        state: LaunchTaskState.error,
+        response: { success: false }
+      };
     });
-    return <UpdateLaunchTaskCallback>{ task: this.baseTask, state: LaunchTaskState.finished };
+    return <FinishedSubTaskCallback>{
+      task: this.baseTask,
+      state: LaunchTaskState.finished,
+      response: { success: true }
+    };
   }
 }
 
@@ -94,10 +112,10 @@ export class VerifyGameFile extends ResolvedPreLaunchTask {
     super(baseTask, LaunchOperationType.Verify);
   }
 
-  public override async run(callback: (callback: UpdateLaunchTaskCallback) => void): Promise<UpdateLaunchTaskCallback> {
+  public override async run(callback: (callback: UpdateLaunchTaskCallback) => void) {
     callback({ task: this.baseTask, state: LaunchTaskState.starting, displayText: 'Verifying Minecraft Files...' });
-    const report = await VerifyGameFiles(this.baseTask.params.version);
-    return { task: this.baseTask, state: LaunchTaskState.finished, data: { return: report } };
+    const report = await VerifyGameFiles(this.baseTask.params.version).catch(err=>{console.error(err); return <FinishedSubTaskCallback>{ task: this.baseTask, state: LaunchTaskState.error, response: {success: false, data: err} }})
+    return <FinishedSubTaskCallback>{ task: this.baseTask, state: LaunchTaskState.finished, data: { return: report }, response: {success: true, data: report} };
   }
 }
 
@@ -107,20 +125,26 @@ export class InstallBootstrap extends ResolvedPreLaunchTask {
     super(baseTask, LaunchOperationType.Install);
   }
 
-  public override async run(callback: (callback: UpdateLaunchTaskCallback) => void): Promise<UpdateLaunchTaskCallback> {
+  public override async run(callback: (callback: UpdateLaunchTaskCallback) => void) {
     callback({ task: this.baseTask, state: LaunchTaskState.starting, displayText: 'Installing Game Bootstrap...' });
     return sendUnImplementedException(this.baseTask);
   }
 }
 
-export function sendUnImplementedException(task: LaunchTask): UpdateLaunchTaskCallback {
-  return { task: task, displayText: 'Function ' + task.id + ' is not implemented', state: LaunchTaskState.error };
+export function sendUnImplementedException(task: LaunchTask): FinishedSubTaskCallback {
+  const message = `Function ${task.id} is not implemented`;
+  return {
+    task: task,
+    displayText: message,
+    state: LaunchTaskState.error,
+    response: <PreLaunchError>{ error: message, success: false }
+  };
 }
 
 export const ResolvePreLaunchTask: (baseTask: LaunchTask | ParseGameFileLaunchTask) => ResolvedPreLaunchTask = (baseTask) => {
   switch (baseTask.id) {
-    case PreLaunchTasks.VerifyAccount:
-      return new VerifyAccount(baseTask);
+    case PreLaunchTasks.ParseAccount:
+      return new ParseAccount(baseTask);
     case PreLaunchTasks.ParseJava:
       return new ParseJava(baseTask);
     case PreLaunchTasks.ParseGameFile:
@@ -177,11 +201,20 @@ export function parseGameFile(version: GameVersion, callback: (callback: Progres
   );
 }
 
-export function parseAccount(): boolean {
+/**
+ * @return the access_token or *false* if account not valid
+ */
+export async function parseAccount(): Promise<string | false> {
   const account = AccountManager.getSelectedAccount();
-  return (account != null && AccountManager.isAccountValid(account));
+  if (account != null && AccountManager.isAccountValid(account)) {
+    return (await getAccessToken(account)).access_token;
+  } else return false;
 }
 
+/**
+ * @return The (installed | founded) Java executable path
+ * @param callback installation callback
+ */
 export function parseJava(callback: (c: ProgressSubTaskCallback) => void): Promise<string> {
   return new Promise<string>(async (resolve) => {
     console.log('Parsing java...');

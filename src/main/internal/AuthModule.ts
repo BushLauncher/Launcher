@@ -3,6 +3,7 @@ import { Auth, Minecraft, Xbox } from 'msmc';
 import { AuthProviderType, MinecraftAccount } from '../../public/AuthPublic';
 import { MSAuthToken } from 'msmc/types/auth/auth';
 import { KnownAuthErrorType } from '../../public/ErrorPublic';
+import { MicrosoftAuthenticator } from '@xmcl/user';
 
 
 const prefix = '[AuthModule Internal]: ';
@@ -191,4 +192,10 @@ export function resolveUserId(user: MinecraftAccount) {
   const list: MinecraftAccount[] = getAccountList();
   if (!list.includes(user)) throw new Error('Account list don\'t contain account: ' + user);
   return list.indexOf(user);
+}
+
+export async function getAccessToken(account: MinecraftAccount) {
+  const authenticator = new MicrosoftAuthenticator();
+  const { xstsResponse, xboxGameProfile } = await authenticator.acquireXBoxToken(account.msToken.access_token);
+  return await authenticator.loginMinecraftWithXBox(xstsResponse.DisplayClaims.xui[0].uhs, xstsResponse.Token);
 }

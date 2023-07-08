@@ -45,7 +45,7 @@ export enum LaunchOperationType {
 
 
 export enum PreLaunchTasks {
-  VerifyAccount = 'VerifyAccount',
+  ParseAccount = 'ParseAccount',
   ParseJava = 'ParseJava',
   ParseGameFile = 'ParseGameFile',
   VerifyGameFile = 'VerifyGameFile',
@@ -135,6 +135,11 @@ export interface ProgressSubTaskCallback {
   state: LaunchTaskState
 }
 
+export interface FinishedSubTaskCallback extends UpdateLaunchTaskCallback {
+  state: LaunchTaskState.finished | LaunchTaskState.error;
+  response: PreLaunchResponse;
+}
+
 export interface PreLaunchProcess {
   actions: LaunchTask[];
   resolved: false;
@@ -150,3 +155,15 @@ export interface PreLaunchRunnableProcess {
   version: GameVersion;
   launch: boolean;
 }
+
+
+export interface PreLaunchResponse {
+  success: boolean;
+  data: any;
+}
+
+export interface PreLaunchError extends PreLaunchResponse {
+  error: any;
+  success: false;
+}
+

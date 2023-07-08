@@ -3,29 +3,34 @@ import {
   CallbackType,
   ErrorCallback,
   ExitedCallback,
+  FinishedSubTaskCallback,
   GameVersion,
   LaunchTask,
   LaunchTaskState,
   PreLaunchProcess,
+  PreLaunchResponse,
   PreLaunchRunnableProcess,
+  PreLaunchTasks,
   ProgressCallback,
   StartedCallback,
   UpdateLaunchTaskCallback
 } from '../../public/GameDataPublic';
-import { parseJava, ResolvedPreLaunchTask, ResolvePreLaunchTask, ResolvePreLaunchTaskList } from './PreLaunchEngine';
+import { ResolvedPreLaunchTask, ResolvePreLaunchTask, ResolvePreLaunchTaskList } from './PreLaunchEngine';
 import { createMinecraftProcessWatcher, launch } from '@xmcl/core';
 import { ChildProcess } from 'child_process';
 import { getSelectedAccount, isAccountValid } from './AuthModule';
-import { MicrosoftAuthenticator } from '@xmcl/user';
 import { net } from 'electron';
 import getAppDataPath from 'appdata-path';
 import { userDataStorage } from '../main';
+import { getLaunchInternal } from './PreLaunchProcessPatern';
 
 const prefix = '[Launcher]: ';
 
-export async function RunPreLaunchProcess(process: PreLaunchProcess | PreLaunchRunnableProcess, Callback: (callback: Callback) => void) {
+export async function RunPreLaunchProcess(baseProcess: PreLaunchProcess | PreLaunchRunnableProcess, Callback: (callback: Callback) => void) {
   //resolve process list if not
-  const operations: ResolvedPreLaunchTask[] = (process.resolved) ? process.actions : ResolvePreLaunchTaskList(process.actions);
+  const operations: ResolvedPreLaunchTask[] = (baseProcess.resolved) ? baseProcess.actions : ResolvePreLaunchTaskList(baseProcess.actions);
+  //Add internal operations
+  operations.unshift(...getLaunchInternal(baseProcess.version));
   const stepsCount = parseLaunch(operations);
   //Execute each task
   const createCallback = (callback: UpdateLaunchTaskCallback, index: number) => {
@@ -42,18 +47,29 @@ export async function RunPreLaunchProcess(process: PreLaunchProcess | PreLaunchR
     });
   };
 
+  let responseStorage: (PreLaunchResponse & { task: string })[] = [];
+
+
   for (const operation of operations) {
     const i = operations.indexOf(operation);
     console.warn('Executing task ' + (i + 1) + '/' + (stepsCount + 1) + ' : ' + operation.getId());
-    createCallback(<UpdateLaunchTaskCallback>await RunTask(operation, (c) => createCallback(c, i))
-      .catch(err => {
-        console.error(prefix + err);
-        throw new Error(err);
-      }), i);
+    const taskCallback = await RunTask(operation, (c) => createCallback(c, i)).catch(err => {
+      console.error(prefix + err);
+      throw new Error(err);
+    });
+    responseStorage.push({ task: taskCallback.task.id, ...taskCallback.response });
+    createCallback(<UpdateLaunchTaskCallback>taskCallback, i);
+    //verify the response
+    if (taskCallback.state === LaunchTaskState.error || !taskCallback.response.success) break;
   }
+  const version: GameVersion = baseProcess.version;
+  const javaPath: string | undefined = responseStorage.find((response) => response.task === PreLaunchTasks.ParseJava)?.data;
+  if (javaPath === undefined) throw  new Error('We couldn\'t retrieve javaPath !');
+  const access_token: string | null = responseStorage.find((response) => response.task === PreLaunchTasks.ParseAccount)?.data;
+
 
   //Launch
-  if (process.launch) {
+  if (baseProcess.launch) {
     createCallback(<UpdateLaunchTaskCallback>{
       task: { id: 'Launch', params: {} },
       state: LaunchTaskState.processing,
@@ -62,12 +78,12 @@ export async function RunPreLaunchProcess(process: PreLaunchProcess | PreLaunchR
         localProgress: 100
       }
     }, stepsCount);
-    return Launch(process.version, (callback: StartedCallback) => Callback(callback));
+    return Launch(version, javaPath, access_token, (callback: StartedCallback) => Callback(callback));
   } else return;
 
 }
 
-export function RunTask(task: ResolvedPreLaunchTask | LaunchTask, callback: (callback: UpdateLaunchTaskCallback) => void): Promise<UpdateLaunchTaskCallback> {
+export function RunTask(task: ResolvedPreLaunchTask | LaunchTask, callback: (callback: UpdateLaunchTaskCallback) => void): Promise<FinishedSubTaskCallback> {
   return new Promise(async (resolve) => {
     const _task = task instanceof ResolvedPreLaunchTask ? task : ResolvePreLaunchTask(task);
     try {
@@ -102,7 +118,7 @@ function setLocalLocationRoot(path: string) {
   return path;
 }
 
-export function Launch(version: GameVersion, callback: (callback: StartedCallback) => void): Promise<ExitedCallback> {
+export function Launch(version: GameVersion, javaPath: string, access_token: string | null, callback: (callback: StartedCallback) => void): Promise<ExitedCallback> {
   return new Promise(async (resolve, reject) => {
     const account = getSelectedAccount();
     if (account === null || !isAccountValid(account)) {
@@ -110,45 +126,34 @@ export function Launch(version: GameVersion, callback: (callback: StartedCallbac
       reject();
       return;
     }
-    const getAccessToken = async () => {
-      const authenticator = new MicrosoftAuthenticator();
-      const { xstsResponse, xboxGameProfile } = await authenticator.acquireXBoxToken(account.msToken.access_token);
-      return await authenticator.loginMinecraftWithXBox(xstsResponse.DisplayClaims.xui[0].uhs, xstsResponse.Token);
-    };
-    parseJava((c) => console.log(prefix + 'Internal Launch re-parse Java: ', c))
-      .then(async (javaPath: string) => {
-        console.log(prefix + 'Launching minecraft ' + version.id + ' :' + '\nFor: ', account.profile, '\n from: ' + getLocationRoot() + '\n java: ' + javaPath);
-        //TODO: Store returns of preLaunchOperations
-        launch({
-          gamePath: getLocationRoot(),
-          javaPath: javaPath,
-          version: version.id,
-          gameProfile: { id: account.profile.id, name: account.profile.name },
-          accessToken: net.isOnline() ? (await getAccessToken()).access_token : undefined,
-          launcherName: `BushLauncher`,
-          launcherBrand: `BushLauncher`,
-          gameName: `BushLauncher Minecraft [${version.id}]`
-          //TODO: set game icon, name and Discord RTC
-          //TODO: Server, to launch directly on server
-        }).then((process: ChildProcess) => {
-          const watcher = createMinecraftProcessWatcher(process);
-          watcher.on('error', (err) => console.error(prefix + err));
-          watcher.on('minecraft-window-ready', () => {
-            callback(<StartedCallback>{ type: CallbackType.Success, return: undefined });
-          });
-          watcher.on('minecraft-exit', () => {
-            console.log(prefix + 'Exited');
-            resolve(<ExitedCallback>{ type: CallbackType.Closed });
-          });
-        }).catch(err => {
-          console.error(prefix + err);
-          reject(err);
-        });
-      })
-      .catch(err => {
-        console.error(prefix, err);
-        reject({ type: CallbackType.Error, return: err });
+
+    console.log(prefix + 'Launching minecraft ' + version.id + ' :' + '\nFor: ', account.profile, '\n from: ' + getLocationRoot() + '\n java: ' + javaPath);
+    launch({
+      gamePath: getLocationRoot(),
+      javaPath: javaPath,
+      version: version.id,
+      gameProfile: { id: account.profile.id, name: account.profile.name },
+      accessToken: net.isOnline() && access_token ? access_token : undefined,
+      launcherName: `BushLauncher`,
+      launcherBrand: `BushLauncher`,
+      gameName: `BushLauncher Minecraft [${version.id}]`
+      //TODO: set game icon, name and Discord RTC
+      //TODO: Server, to launch directly on server
+    }).then((process: ChildProcess) => {
+      const watcher = createMinecraftProcessWatcher(process);
+      watcher.on('error', (err) => console.error(prefix + err));
+      watcher.on('minecraft-window-ready', () => {
+        callback(<StartedCallback>{ type: CallbackType.Success, return: undefined });
       });
+      watcher.on('minecraft-exit', () => {
+        console.log(prefix + 'Exited');
+        resolve(<ExitedCallback>{ type: CallbackType.Closed });
+      });
+    }).catch(err => {
+      console.error(prefix + err);
+      reject(err);
+    });
+
   });
 
 }

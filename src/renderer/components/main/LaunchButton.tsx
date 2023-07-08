@@ -17,14 +17,12 @@ import {
   LaunchedCallback,
   LaunchTaskState,
   PreLaunchProcess,
-  PreLaunchTasks,
   ProgressCallback
 } from '../../../public/GameDataPublic';
 import Loader from '../public/Loader';
 import { globalStateContext } from '../../index';
 import { toast } from 'react-toastify';
 import CallbackMessage from '../public/CallbackMessage';
-import ProgressBar from '@ramonak/react-progress-bar';
 import { ComponentsPublic } from '../ComponentsPublic';
 import { Divider, Popover, Progress } from 'antd';
 import VersionCard from '../public/VersionCard';
@@ -59,6 +57,7 @@ export default function LaunchButton(props: LaunchButtonProps) {
   const [text, setDisplayText] = useState('Launch');
   const [progress, setProgress] = useState<LoadingProgress>({ currentStep: -1, stepCount: 0, progressVal: 0 });
   let localStepPercentage: number = 0;
+  const [storage, setStorage] = useState<undefined | { selected: GameVersion, list: GameVersion[] }>(undefined);
 
   async function getSelected() {
     return await window.electron.ipcRenderer.invoke('Version:get', {});
@@ -78,10 +77,7 @@ export default function LaunchButton(props: LaunchButtonProps) {
 
   function requestLaunch(version: GameVersion) {
     const process: PreLaunchProcess = {
-      actions: [{ id: PreLaunchTasks.VerifyAccount }, { id: PreLaunchTasks.ParseJava }, {
-        id: PreLaunchTasks.ParseGameFile,
-        params: { version: version }
-      }], launch: true, version: version, internal: false, resolved: false
+      actions: [], launch: true, version: version, internal: false, resolved: false
     };
     setVersionSelector(false);
     setDisplayText('Initializing...');
@@ -174,37 +170,46 @@ export default function LaunchButton(props: LaunchButtonProps) {
 
   async function versionSelectorInit(): Promise<JSX.Element> {
     if (props.versionSelector) {
-      let selectedVersion = await getSelected();
-      const versionList = await window.electron.ipcRenderer.invoke('Version:getList', { gameType: GameType.VANILLA })
-        .catch(async err => {
-          const callback: ErrorCallback = {
-            stepId: -1, stepCount: -1, type: CallbackType.Error, return: {
-              message: 'Error occurred', desc: 'Cannot get versions from network', resolution: err.message
-            }
-          };
-          toast.error(<CallbackMessage callback={callback} />, { toastId: 'Version:getListError' });
-          const localRes = await window.electron.ipcRenderer.invoke('Version:getList', {
-            gameType: GameType.VANILLA, type: 'local'
+      async function generateList() {
+        let selectedVersion: GameVersion = await getSelected();
+        const versionList: GameVersion[] = await window.electron.ipcRenderer.invoke('Version:getList', { gameType: GameType.VANILLA })
+          .catch(async err => {
+            const callback: ErrorCallback = {
+              stepId: -1, stepCount: -1, type: CallbackType.Error, return: {
+                message: 'Error occurred', desc: 'Cannot get versions from network', resolution: err.message
+              }
+            };
+            toast.error(<CallbackMessage callback={callback} />, { toastId: 'Version:getListError' });
+            const localRes = await window.electron.ipcRenderer.invoke('Version:getList', {
+              gameType: GameType.VANILLA, type: 'local'
+            });
+            selectedVersion = localRes[0];
+            return localRes;
           });
-          selectedVersion = localRes[0];
-          return localRes;
-        });
-      Object.freeze(selectedVersion);
+        Object.freeze(selectedVersion);
+        const res = { selected: selectedVersion, list: versionList };
+        setStorage(res);
+        return res;
+      }
+
+      const { selected, list } = state !== LaunchButtonState.Normal && storage || await generateList();
+
       return (<div className={styles.versionSelector} onClick={() => {
         setVersionSelector(state === LaunchButtonState.Normal && !isVersionSelectorOpened);
       }}>
         <div className={styles.dataContainer}>
           <Icon className={styles.dropdownIcon} icon={downArrowIcon} alt={'open the dropdown'} />
-          <p className={styles.versionText}>{selectedVersion.id.toString()}</p>
+          <p className={styles.versionText}>{selected.id.toString()}</p>
         </div>
         <div className={styles.versionListDropdown}>
 
-          {versionList.map((version: GameVersion, index: number) => {
+          {list.map((version: GameVersion, index: number) => {
             return <Popover key={index}
-                            content={'Minecraft ' + version.gameType + ' ' + version.id + (!version.installed ? ' Will be installed' : '')} placement={'left'}>
+                            content={'Minecraft ' + version.gameType + ' ' + version.id + (!version.installed ? ' Will be installed' : '')}
+                            placement={'left'}>
               <VersionCard version={version}
 
-                           className={[styles.version, ((version.id === selectedVersion.id) ? styles.versionSelected : '')].join(' ')}
+                           className={[styles.version, ((version.id === selected.id) ? styles.versionSelected : '')].join(' ')}
                            settings={{ iconType: 'Installed' }}
                            toolBox={{
                              select: {
@@ -222,48 +227,50 @@ export default function LaunchButton(props: LaunchButtonProps) {
 
   }
 
-  return (
-<div
-  className={[styles.LaunchButton, (!isOnline ? styles.offlineStyle : undefined), (type === 'square' ? styles.Square : undefined), styles[state]].join(' ')}
-  style={props.style}
-  data-version-selector={props.versionSelector.toString()}
-  data-version-selector-opened={isVersionSelectorOpened}
->
-  <div className={styles.Content}>
-    {/*to preserve HTML structure for css selector, the content is reorganized after in css*/}
-    <div className={styles.runContent}
-         onClick={async () => {
-           if (state === LaunchButtonState.Normal) {
-             let version = await getSelected();
-             if (version === undefined) {
-               const defaultVersion = getDefaultVersion(getDefaultGameType);
-               window.electron.ipcRenderer.sendMessage('Version:set', { version: defaultVersion });
-               version = defaultVersion;
-             }
-             if (props.onRun) props.onRun(version);
-             requestLaunch(version);
-           } else {
-             return null;
-           }
-         }}>
-      <Icon
-        className={styles.icon}
-        icon={getIcon()}
-        alt={'Launch the game Button'}
-      />
-      {type === 'default' && <p className={styles.text}>{text}</p>}
-    </div>
-    {props.versionSelector &&
-      <OutsideAlerter className={styles.versionSelectorLoader} onClickOutside={()=>setVersionSelector(false)} children={<Loader content={versionSelectorInit}  style={undefined} />}/>}
 
-    {props.versionSelector && <Divider className={styles.line} type={'vertical'} />}
-  </div>
-  {type === 'default' && <div className={styles.LoadingContent}>
-    <p>{progress.currentStep + '/' + progress.stepCount}</p>
-    <Progress percent={Math.floor(progress.progressVal)} type={'line'} status={'active'} strokeColor={"#39c457"} />
-  </div>}
-</div>
-    );
+  return (
+    <div
+      className={[styles.LaunchButton, (!isOnline ? styles.offlineStyle : undefined), (type === 'square' ? styles.Square : undefined), styles[state]].join(' ')}
+      style={props.style}
+      data-version-selector={props.versionSelector.toString()}
+      data-version-selector-opened={isVersionSelectorOpened}
+    >
+      <div className={styles.Content}>
+        {/*to preserve HTML structure for css selector, the content is reorganized after in css*/}
+        <div className={styles.runContent}
+             onClick={async () => {
+               if (state === LaunchButtonState.Normal) {
+                 let version = await getSelected();
+                 if (version === undefined) {
+                   const defaultVersion = getDefaultVersion(getDefaultGameType);
+                   window.electron.ipcRenderer.sendMessage('Version:set', { version: defaultVersion });
+                   version = defaultVersion;
+                 }
+                 if (props.onRun) props.onRun(version);
+                 requestLaunch(version);
+               } else {
+                 return null;
+               }
+             }}>
+          <Icon
+            className={styles.icon}
+            icon={getIcon()}
+            alt={'Launch the game Button'}
+          />
+          {type === 'default' && <p className={styles.text}>{text}</p>}
+        </div>
+        {props.versionSelector &&
+          <OutsideAlerter className={styles.versionSelectorLoader} onClickOutside={() => setVersionSelector(false)}
+                          children={<Loader content={versionSelectorInit} style={undefined} />} />}
+
+        {props.versionSelector && <Divider className={styles.line} type={'vertical'} />}
+      </div>
+      {type === 'default' && <div className={styles.LoadingContent}>
+        <p>{progress.currentStep + '/' + progress.stepCount}</p>
+        <Progress percent={Math.floor(progress.progressVal)} type={'line'} status={'active'} strokeColor={'#39c457'} />
+      </div>}
+    </div>
+  );
 }
 
 
