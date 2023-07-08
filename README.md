@@ -37,7 +37,7 @@ BushLauncher uses a configuration system, you can create as many as you like and
 [^0]: This projet is still under development so some features may not be available
 
 ## Built With
-
+![bootstrap_banner](./.erb/img/bootstrap_banner.png)
 BushLauncher uses the power of [Electron](https://www.electronjs.org) and [React](https://legacy.reactjs.org/) to give you the best performances in any cases
 
 ## Getting Started
