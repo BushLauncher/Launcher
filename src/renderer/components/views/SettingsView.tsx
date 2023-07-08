@@ -6,7 +6,7 @@ import GeneralSettingsView from './SettingsViews/GeneralSettingsView';
 import ProfileSettingsView from './SettingsViews/ProfileSettingsView';
 import VersionSettingsView from './SettingsViews/VersionSettingsView';
 import AboutView from './SettingsViews/AboutView';
-import "../main/TabView/ant-override.css"
+import '../../css/Tabs-ant-override.css';
 
 
 export default function SettingsView() {
@@ -16,7 +16,7 @@ export default function SettingsView() {
   }}>
     <Tabs items={[
       { key: 'General', content: GeneralSettingsView() },
-      { key: 'Profiles', content: ProfileSettingsView(), persistent: true },
+      { key: 'Profiles', content: ProfileSettingsView() },
       { key: 'Versions', content: VersionSettingsView() },
       { key: 'Notes', content: AboutView() }
     ].map(tab => {
@@ -25,9 +25,9 @@ export default function SettingsView() {
         label: <span style={{ display: 'flex', alignItems: 'center', gap: '2vw' }}> <p>{tab.key}</p></span>,
         children: tab.content,
         type: 'card',
-        closable: false,
-        destroyInactiveTabPane: tab.persistent || false
+        closable: false
       };
-    })} tabPosition={'left'} size={'large'} type={"line"} data-center={"true"} className={"transparent"}  />
+    })} tabPosition={'left'} size={'large'} type={'line'} data-center={'true'} className={'transparent'}
+          destroyInactiveTabPane />
   </div>;
 }

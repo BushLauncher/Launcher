@@ -7,14 +7,14 @@ import { KnownAuthErrorType } from '../public/ErrorPublic';
 import React from 'react';
 import { globalStateContext } from './index';
 import { MinecraftAccount } from '../public/AuthPublic';
-import { Layout } from 'antd';
+import { Layout, Tabs } from 'antd';
 import Icon from './components/public/Icons/Icon';
 
 import dirtBlockIcon from '../assets/graphics/images/grass_block.png';
 import settingsIcon from '../assets/graphics/icons/settings.svg';
 import VanillaView from './components/views/vanillaView';
 import SettingsView from './components/views/SettingsView';
-import ViewSwitcher from './components/main/TabView/ViewSwitcher';
+import "./css/Tabs-ant-override.css"
 
 const Sider = Layout.Sider;
 
@@ -127,7 +127,7 @@ export default function App() {
           await validateUser(undefined, undefined, reload);
           return <AuthModule />;
         }} className={AuthModuleStyle.AuthModule} />
-        <ViewSwitcher items={[
+        <Tabs items={[
           { key: 'vanilla', icon: dirtBlockIcon, content: VanillaView() },
           { key: 'settings', icon: settingsIcon, content: SettingsView() }
         ].map(tab => {
@@ -136,13 +136,13 @@ export default function App() {
             label: <span style={{ display: 'flex', alignItems: 'center', gap: '2vw' }}> <Icon
               icon={tab.icon} /><p>{tab.key}</p></span>,
             children: tab.content,
-            type: "card",
+            type: 'card',
             closable: false
           };
         })}
-                      tabPosition={'left'} size={'large'}
-                      type={"editable-card"} tabBarGutter={5}
-                      defaultActiveKey={selectedTab} hideAdd/>
+              tabPosition={'left'} size={'large'}
+              type={'editable-card'} tabBarGutter={5}
+              defaultActiveKey={selectedTab} hideAdd destroyInactiveTabPane className={'NavBar'} />
         {/*TODO: remove the 'hideAdd' to add the + button */}
         <ToastContainer
           position='bottom-center'

@@ -14,7 +14,6 @@ export default function VanillaView() {
       style={{ width: '30vw', height: '30vh' }}
     />
     <LaunchButton
-
       versionSelector={true}
       style={{
         position: 'absolute',
