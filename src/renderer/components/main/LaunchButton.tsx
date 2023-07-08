@@ -81,6 +81,7 @@ export default function LaunchButton(props: LaunchButtonProps) {
     };
     setVersionSelector(false);
     setDisplayText('Initializing...');
+   window.electron.ipcRenderer.sendMessage("App:setWinBar", ({percentage: 0, options: {mode: "indeterminate"}}))
     console.log('Requesting Launch...');
     //@ts-ignore
     window.electron.ipcRenderer.on('GameLaunchCallback', (callback: Callback) => {
@@ -90,6 +91,7 @@ export default function LaunchButton(props: LaunchButtonProps) {
       .then((exitedCallback: ExitedCallback) => {
         decodeLaunchCallback(exitedCallback);
       });
+
   }
 
 
@@ -132,6 +134,7 @@ export default function LaunchButton(props: LaunchButtonProps) {
         setProgress({
           progressVal: calculatedProgress, stepCount: callback.stepCount, currentStep: callback.stepId
         });
+       window.electron.ipcRenderer.sendMessage("App:setWinBar", ({percentage: progress.progressVal, options: {mode: "normal"}}))
         break;
       }
       case CallbackType.Error: {
@@ -142,6 +145,7 @@ export default function LaunchButton(props: LaunchButtonProps) {
         toast.error(<CallbackMessage callback={callback} />, {
           autoClose: false, hideProgressBar: true, style: { width: 'auto' }
         });
+       window.electron.ipcRenderer.sendMessage("App:setWinBar", ({percentage: progress.progressVal, options: {mode: "error"}}))
         //console.log(callback);
         break;
       }
@@ -150,6 +154,7 @@ export default function LaunchButton(props: LaunchButtonProps) {
         setDisplayText('Launched');
         setCurrentState(LaunchButtonState.Launched);
         console.log('Game Launched');
+       window.electron.ipcRenderer.sendMessage("App:setWinBar", ({percentage: 0, options: {mode: "none"}}))
         break;
       }
       case CallbackType.Closed: {

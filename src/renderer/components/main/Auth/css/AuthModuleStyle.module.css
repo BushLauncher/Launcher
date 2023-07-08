@@ -1,5 +1,6 @@
 .AuthModule {
   max-width: 40vw;
+  min-width: 20vw;
   width: fit-content;
   height: 10vh;
   position: absolute;

@@ -16,6 +16,7 @@ import VanillaView from './components/views/vanillaView';
 import SettingsView from './components/views/SettingsView';
 import './css/Tabs-ant-override.css';
 import LayoutCollapsableTabs from './components/public/LayoutCollapsableTabs';
+import {addAccount, getLogin} from "./components/main/Auth/AuthModule"
 
 const Sider = Layout.Sider;
 
@@ -54,7 +55,7 @@ export default function App() {
         // @ts-ignore
         const notificationId = toast.info('Hi, please log-in a Minecraft account', Object.assign(NotificationParam.stuck, { closeButton: false }));
         //closeable is false, so error can't be returned
-        // @ts-ignore
+        //@ts-ignore
         await addAccount(await getLogin({ closable: false }));
         toast.dismiss(notificationId);
         resolve();

@@ -23,12 +23,12 @@ import {
 } from './internal/AuthModule';
 import { AuthProviderType, MinecraftAccount } from '../public/AuthPublic';
 import { getDefaultRootPath, getLocationRoot, RunPreLaunchProcess } from './internal/Launcher';
-import { getLaunchInternal } from './internal/PreLaunchProcessPatern';
 import { InstallGameFiles, UninstallGameFiles, VerifyGameFiles } from './internal/GameFileManager';
 import { KnownAuthErrorType } from '../public/ErrorPublic';
 import { installExtensions } from './extension-installer';
 import PreloadWindow from './PreloadWindow';
 import MainWindow from './MainWindow';
+import ProgressBarOptions = Electron.ProgressBarOptions;
 
 const prefix = '[Main Process]: ';
 export let currentWindow: BrowserWindow | null = null;
@@ -45,18 +45,19 @@ if (isDebug) {
 
 
 ///////////////////////////////////
-function quitApp(){
-  currentWindow?.webContents.send("clearAll");
-  app.quit()
+function quitApp() {
+  currentWindow?.webContents.send('clearAll');
+  app.quit();
 }
+
 ipcMain.on('App:Close', (event, args) => {
 
-  quitApp()
+  quitApp();
 });
 ipcMain.on('App:Minimize', (event, args) => BrowserWindow.getFocusedWindow()?.minimize());
 ipcMain.on('App:Relaunch', (event, args) => {
   app.relaunch();
-  quitApp()
+  quitApp();
 });
 ipcMain.handle('App:getVersion', (event, args) => app.getVersion());
 
@@ -174,6 +175,10 @@ ipcMain.handle('removeData', (event, arg: { dataPath: string }) => {
 });
 ipcMain.handle('Storage:DeleteAll', (event) => {
   return userDataStorage.DeleteFile();
+});
+////////////////////////////////////////////////////////
+ipcMain.on('App:setWinBar', (e, args: { percentage: number, options?: ProgressBarOptions }) => {
+  if (currentWindow !== null) currentWindow.setProgressBar((args.percentage / 100), args.options);
 });
 ////////////////////////////////////////////////////////
 app.disableHardwareAcceleration();

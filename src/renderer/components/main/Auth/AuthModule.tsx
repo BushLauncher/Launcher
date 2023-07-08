@@ -18,56 +18,56 @@ import OutsideAlerter from '../../public/OutsideAlerter';
 
 interface AuthModuleProps extends ComponentsPublic {
 }
+export async function getLogin({ closable }: {
+  closable?: boolean
+}): Promise<MinecraftAccount | KnownAuthErrorType> {
+  return new Promise((resolve) => {
+    const container = document.createElement('div');
+    // noinspection JSCheckFunctionSignatures
+    const root = createRoot(container);
+    root.render(
+      <>
+        <LoginPanel
+          closable={closable}
+          functions={{
+            resolve: (loggedUser) => {
+              resolve(loggedUser);
+              root.unmount();
+            }, reject: (err) => {
+              if (err in KnownAuthErrorType) {
+                switch (err) {
+                  case KnownAuthErrorType.ClosedByUser: {
+                    console.log('Login Panel closed by user');
+                    root.unmount();
+                    resolve(err);
+                    break;
+                  }
+                }
+              } else console.error(err);
+            }
+          }} />
+      </>
+    );
+    const themeContainer = document.querySelector('#Theme-container');
+    if (themeContainer === null) throw new Error('Cannot find \'#Theme-container\'');
+    themeContainer.appendChild(container);
+  });
+}
 
+export function addAccount(account: MinecraftAccount) {
+  return new Promise<void>((resolve, reject) => {
+    window.electron.ipcRenderer.invoke('Auth:Add', { user: account })
+      .then(() => resolve())
+      .catch(() => {
+        console.log('Error occurred');
+        reject();
+      });
+  });
+}
 export default function AuthModule(props: AuthModuleProps) {
   const [dropdownOpened, setDropdown] = useState(false)
 
-  async function getLogin({ closable }: {
-    closable?: boolean
-  }): Promise<MinecraftAccount | KnownAuthErrorType> {
-    return new Promise((resolve) => {
-      const container = document.createElement('div');
-      // noinspection JSCheckFunctionSignatures
-      const root = createRoot(container);
-      root.render(
-        <>
-          <LoginPanel
-            closable={closable}
-            functions={{
-              resolve: (loggedUser) => {
-                resolve(loggedUser);
-                root.unmount();
-              }, reject: (err) => {
-                if (err in KnownAuthErrorType) {
-                  switch (err) {
-                    case KnownAuthErrorType.ClosedByUser: {
-                      console.log('Login Panel closed by user');
-                      root.unmount();
-                      resolve(err);
-                      break;
-                    }
-                  }
-                } else console.error(err);
-              }
-            }} />
-        </>
-      );
-      const themeContainer = document.querySelector('#Theme-container');
-      if (themeContainer === null) throw new Error('Cannot find \'#Theme-container\'');
-      themeContainer.appendChild(container);
-    });
-  }
 
-  function addAccount(account: MinecraftAccount) {
-    return new Promise<void>((resolve, reject) => {
-      window.electron.ipcRenderer.invoke('Auth:Add', { user: account })
-        .then(() => resolve())
-        .catch(() => {
-          console.log('Error occurred');
-          reject();
-        });
-    });
-  }
 
   function closeDropDown() {
     setDropdown(false)

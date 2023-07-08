@@ -4,6 +4,7 @@
 - Replaced main view switcher system by AntDesign `Tabs`
 - Reviewed Launch Task system
 - Changed main color theme
+- Added OS loading windows on Launching
 ### Fix
 - Fixed auto-update child process closing problem
 - Fixed AuthModule render issue with too large pseudos
