@@ -146,7 +146,7 @@ export default function App() {
                                moreIcon={<></>}
                                className={"HideOperation"}
                                defaultCollapsed={interfaceData['isMenuCollapsed']}
-                               onCollapse={(isCollapsed) =>
+                               onCollapse={(isCollapsed: boolean) =>
                                  window.electron.ipcRenderer.sendMessage('updateData', {
                                    dataPath: 'interface.isMenuCollapsed',
                                    value: isCollapsed
