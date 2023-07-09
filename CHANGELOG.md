@@ -1,3 +1,7 @@
+# 0.4.71
+- Assets minimized
+- [GEN-21] Fixed AuthModule dropdown bug
+---
 # 0.4.7
 ### Changes
 - Changed starting window size

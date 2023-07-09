@@ -18,6 +18,7 @@ import OutsideAlerter from '../../public/OutsideAlerter';
 
 interface AuthModuleProps extends ComponentsPublic {
 }
+
 export async function getLogin({ closable }: {
   closable?: boolean
 }): Promise<MinecraftAccount | KnownAuthErrorType> {
@@ -64,16 +65,23 @@ export function addAccount(account: MinecraftAccount) {
       });
   });
 }
-export default function AuthModule(props: AuthModuleProps) {
-  const [dropdownOpened, setDropdown] = useState(false)
 
+export default function AuthModule(props: AuthModuleProps) {
+  const [dropdownOpened, setDropdown] = useState(false);
+  const [accountList, setAccountList] = useState<MinecraftAccount[]>([]);
 
 
   function closeDropDown() {
-    setDropdown(false)
+    setDropdown(false);
   }
 
   let { isOnline } = React.useContext(globalStateContext);
+
+  async function generateAccountList() {
+    const accountList = await window.electron.ipcRenderer.invoke('Auth:getAccountList', {});
+    setAccountList(accountList);
+  }
+
   return (
     <Loader content={async (reload) => {
       return (<OutsideAlerter children={<div className={styles.loadedContent}>
@@ -89,74 +97,73 @@ export default function AuthModule(props: AuthModuleProps) {
             className={styles.button}
             content={<Icon icon={arrowIcon} className={styles.dropdownIcon} />}
             type={ButtonType.Square}
-            action={() => setDropdown(!dropdownOpened )}
+            action={() => setDropdown(!dropdownOpened)}
           />
         </div>
         <div
-          className={[styles.dropdown, !dropdownOpened ? styles.closed : null].join(' ')}>
-          <Loader content={async () => new Promise((resolve) => {
-            window.electron.ipcRenderer.invoke('Auth:getAccountList', {})
-              .then((accountList) => {
-                window.electron.ipcRenderer.invoke('Auth:getSelectedId', {})
-                  .then((selectedAccountId) => {
-                    resolve(
-                      <div className={styles.UserListContainer}>
-                        {accountList.map((account: MinecraftAccount, index: number) => {
-                          return (
-                            <UserCard
-                              user={account}
-                              key={index}
-                              action={{
-                                accountIndex: index,
-                                reloadFunc: reload,
-                                action: {
-                                  canLogOut: selectedAccountId !== index,
-                                  canSelect: selectedAccountId !== index
-                                }
-                              }}
-                              className={[
-                                styles.User,
-                                selectedAccountId === index && styles.selected
-                              ].join(' ')}
-                            />
-                          );
-                        })}
-                        {isOnline && <Button
-                          className={styles.addButton}
-                          action={() => {
-                            getLogin({ closable: true })
-                              .then((response) => {
-                                //check if response is not an knownAuthError
-                                if (!Object.keys(KnownAuthErrorType).includes(response.toString())) {
-                                  response = response as MinecraftAccount;
-                                  if (isOnline) {
-                                    const operation = addAccount(response);
-                                    toast.promise(operation, {
-                                      pending:
-                                        'Adding account ' + response.profile.name,
-                                      success:
-                                        'Added Account ' + response.profile.name,
-                                      error: 'We could add account'
-                                    });
-                                    operation.then(() => {
-                                      reload();
-                                    });
-                                    operation.catch((err) => {
-                                      toast.error(err.toString());
-                                    });
-                                  }
-                                }
-                              });
+          className={[styles.dropdown, !dropdownOpened ? styles.closed : undefined].join(' ')}>
+          <Loader content={async () => {
+            if (accountList.length === 0) await generateAccountList();
+            const selectedAccountId = await window.electron.ipcRenderer.invoke('Auth:getSelectedId', {});
+
+            return (
+              <div className={styles.UserListContainer}>
+                {accountList.map((account: MinecraftAccount, index: number) => {
+                  return (
+                    <UserCard
+                      user={account}
+                      key={index}
+                      action={{
+                        accountIndex: index,
+                        reloadFunc: ()=>setAccountList([]),
+                        action: {
+                          canLogOut: selectedAccountId !== index,
+                          canSelect: selectedAccountId !== index
+                        }
+                      }}
+                      className={[
+                        styles.User,
+                        selectedAccountId === index && styles.selected
+                      ].join(' ')}
+                    />
+                  );
+                })}
+                {isOnline && <Button
+                  className={styles.addButton}
+                  action={() => {
+                    getLogin({ closable: true })
+                      .then((response) => {
+                        //check if response is not an knownAuthError
+                        if (!Object.keys(KnownAuthErrorType).includes(response.toString())) {
+                          response = response as MinecraftAccount;
+                          if (isOnline) {
+                            const operation = addAccount(response);
+                            toast.promise(operation, {
+                              pending:
+                                'Adding account ' + response.profile.name,
+                              success:
+                                'Added Account ' + response.profile.name,
+                              error: 'We could add account'
+                            });
+                            operation.then(() => {
+                              setAccountList([])
+                            });
+                            operation.catch((err) => {
+                              toast.error(err.toString());
+                            });
                           }
-                          }
-                          content={<Icon icon={addIcon} className={styles.icon} />}
-                          type={ButtonType.Rectangle}
-                        />}
-                      </div>
-                    );
-                  });
-              });
-          })} />
+                        }
+                      });
+                  }
+                  }
+                  content={<Icon icon={addIcon} className={styles.icon} />}
+                  type={ButtonType.Rectangle}
+                />}
+              </div>
+            );
+
+
+          }} />
         </div>
       </div>} onClickOutside={closeDropDown} />);
     }} className={styles.loadedContent} />
