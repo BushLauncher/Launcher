@@ -11,7 +11,7 @@ export default function VanillaView() {
   }}>
     <GameIcon
       type={'vanilla'}
-      style={{ width: '30vw', height: '30vh' }}
+      style={{ width: '30vw', marginTop: "16vh" }}
     />
     <LaunchButton
       versionSelector={true}

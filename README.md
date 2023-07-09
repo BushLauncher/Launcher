@@ -1,5 +1,5 @@
 <a href="https://github.com/Gagafeee/BushLauncher">
-  <img src="./assets/icon.png" alt="BushLauncher_Icon" width="256" height="256" align="left">
+  <img src="./assets/icon.svg" alt="BushLauncher_Icon" width="256" height="256" align="left">
 </a>
 
 

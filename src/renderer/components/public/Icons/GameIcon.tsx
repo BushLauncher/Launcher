@@ -1,5 +1,5 @@
 import styles from '../css/publicStyle.module.css';
-import JavaIcon from '../../../../assets/graphics/images/minecraft_java_logo.svg';
+import JavaIcon from '../../../../assets/graphics/images/minecraft_java_logo.png';
 import { ComponentsPublic } from '../../ComponentsPublic';
 
 interface GameIconProps extends ComponentsPublic {
