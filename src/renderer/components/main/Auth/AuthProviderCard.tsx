@@ -84,6 +84,7 @@ function AuthProviderCard(props: authProviderCard): JSX.Element {
 
   };
   const data: ProviderDataPattern = ProviderData[props.type];
+
   return (
     <Button
       className={[styles.AuthProviderCard, data.className].join(' ')}
@@ -96,7 +97,7 @@ function AuthProviderCard(props: authProviderCard): JSX.Element {
         </div>
       }
       type={ButtonType.StyleLess}
-    ></Button>
+    />
   );
 }
 

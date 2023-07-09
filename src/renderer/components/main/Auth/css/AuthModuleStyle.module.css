@@ -40,10 +40,12 @@
 .AuthModule .loadedContent .selectedContent .button:hover {
   background-color: var(--hover-background-color);
 }
+
 .AuthModule .loadedContent .dropdownIcon {
   width: 2vw;
   height: 2vw;
 }
+
 .AuthModule .loadedContent .dropdown {
   width: calc(100% + 2vw);
   min-height: 2vh;
@@ -200,6 +202,24 @@
   padding: 0;
 }
 
+.AuthProviderCard.Microsoft::before {
+  content: '';
+  position: absolute;
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(159deg, rgba(255, 87, 34, 1) 0%, rgba(76, 175, 80, 1) 100%);
+  filter: blur(20px);
+  transition: opacity 0.3s;
+  border-radius: 10px;
+  opacity: 0;
+  z-index: 0;
+}
+
+.AuthProviderCard.Microsoft:hover::before {
+  opacity: 0.6;
+}
+
 .AuthProviderCard .content {
   width: 100%;
   height: 100%;
@@ -227,7 +247,7 @@
 }
 
 .AuthProviderCard .stateIcon {
-  width: 4vw;
-  height: 4vh;
+  width: 2vw;
+  height: 2vw;
 }
 
