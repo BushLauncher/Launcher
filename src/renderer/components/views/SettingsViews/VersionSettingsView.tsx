@@ -62,7 +62,7 @@ export default function VersionSettingsView() {
                       install: { active: true, callback: reload }
                     }} className={styles.card} />)}
                 </div>;
-              }} className={styles.scrollable} />
+              }} className={[styles.scrollable, "tabs"].join(' ')} />
 
 
             });
@@ -80,7 +80,7 @@ export default function VersionSettingsView() {
         <PathInput callback={() => reload()} />
       </div>
     );
-  }} className={[defaultStyle.View, styles.View].join(' ')} style={undefined} />;
+  }} className={[defaultStyle.View, styles.View, "versionSettings"].join(' ')} style={undefined} />;
 }
 
 function PathInput({ callback }: { callback: () => any }): JSX.Element {

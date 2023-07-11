@@ -1,0 +1,38 @@
+@import "../../../../Theme.css";
+
+.ant-modal-root .ant-modal.SettingsModal {
+}
+
+.ant-modal-root .ant-modal.SettingsModal .ant-modal-content {
+  border: 1px solid #414141;
+  background-color: #1a1a1a;
+  height: 92vh;
+}
+
+.ant-modal-root .ant-modal.SettingsModal .ant-modal-content .ant-modal-header {
+  background-color: #1a1a1a;
+}
+
+.ant-modal-root .ant-modal.SettingsModal .ant-modal-content .ant-tabs {
+  height: 100%;
+
+}
+
+.ant-modal-root .ant-modal.SettingsModal .ant-modal-content .ant-tabs .versionSettings .tabs {
+  height: 48vh;
+
+}
+
+.ant-modal-root .ant-modal.SettingsModal .ant-modal-content .ant-tabs .ant-tabs-content-holder {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.ant-modal-root .ant-modal.SettingsModal .ant-modal-content .ant-tabs .ant-tabs-content-holder .ant-tabs-nav {
+  max-height: 70vh;
+}
+
+.ant-modal-root .ant-modal.SettingsModal .ant-modal-content .ant-tabs .ant-tabs-content-holder .ant-tabs-tabpane {
+  max-height: 70vh;
+}

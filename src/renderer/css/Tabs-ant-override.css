@@ -81,7 +81,7 @@
 }
 
 
-#root .ant-tabs-left[data-center="true"] .ant-tabs-nav .ant-tabs-nav-list {
+.ant-tabs-left[data-center="true"] .ant-tabs-nav .ant-tabs-nav-list {
   justify-content: center;
 }
 
