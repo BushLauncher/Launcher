@@ -5,10 +5,12 @@ import AuthModule, { addAccount, getLogin } from './components/main/Auth/AuthMod
 import AuthModuleStyle from './components/main/Auth/css/AuthModuleStyle.module.css';
 import { KnownAuthErrorType } from '../public/ErrorPublic';
 import React, { useState } from 'react';
-import { globalStateContext } from './index';
+import { defaultTheme, globalStateContext } from './index';
 import { MinecraftAccount } from '../public/AuthPublic';
-import { Button, Layout, Modal, Popover, Tabs } from 'antd';
+import { Button, ConfigProvider, Layout, Modal, Popover, Tabs } from 'antd';
 import Icon from './components/public/Icons/Icon';
+import { StyleProvider } from '@ant-design/cssinjs';
+
 
 import dirtBlockIcon from '../assets/graphics/images/grass_block.png';
 import settingsIcon from '../assets/graphics/icons/settings.svg';
@@ -17,9 +19,11 @@ import './css/Tabs-ant-override.css';
 import CollapsableSider from './components/public/CollapsableSider';
 
 import { CapitalizeFirst } from '../public/Utils';
-import SettingsView from './components/views/SettingsView';
+import SettingsView from './components/views/SettingsViews/SettingsView';
+import './components/views/SettingsViews/css/SettingsModal-ant-override.css';
 
 const Sider = Layout.Sider;
+
 
 const prefix = '[App]: ';
 
@@ -203,6 +207,12 @@ function SettingsContext({ saveSelectedView, validateUser }: SettingsContextProp
           onChange={saveSelectedView} />
       </Layout>;
     }} />
+    <ConfigProvider theme={defaultTheme}>
+      <StyleProvider hashPriority={'high'}>
+        <Modal className={'SettingsModal'} zIndex={50} open={open} onCancel={() => setOpen(false)} footer={null} centered title={<p>Settings</p>} width={'100%'}
+               okText={'Save'} cancelText={'Close'} style={{ marginTop: '6vh' }}>{SettingsView()}</Modal>
+      </StyleProvider>
+    </ConfigProvider>
   </>;
 
 
