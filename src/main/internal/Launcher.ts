@@ -23,6 +23,7 @@ import { net } from 'electron';
 import getAppDataPath from 'appdata-path';
 import { userDataStorage } from '../main';
 import { getLaunchInternal } from './PreLaunchProcessPatern';
+import { CleanUpCatch } from './UserData';
 
 const prefix = '[Launcher]: ';
 
@@ -67,6 +68,7 @@ export async function RunPreLaunchProcess(baseProcess: PreLaunchProcess | PreLau
   if (javaPath === undefined) throw  new Error('We couldn\'t retrieve javaPath !');
   const access_token: string | null = responseStorage.find((response) => response.task === PreLaunchTasks.ParseAccount)?.data;
 
+  CleanUpCatch()
 
   //Launch
   if (baseProcess.launch) {
