@@ -1,11 +1,10 @@
 /* eslint global-require: off, no-console: off, promise/always-return: off */
 // noinspection JSUnusedLocalSymbols
 
+import * as userData from './internal/UserData';
 import { app, BrowserWindow, ipcMain, net } from 'electron';
 import * as versionManager from './internal/VersionManager';
 import { getAllVersionList, getSelectedVersion, getVersionMethode } from './internal/VersionManager';
-import * as userData from './internal/UserData';
-import { SetRootPath } from './internal/UserData';
 import { Callback, GameType, GameVersion, PreLaunchProcess, PreLaunchRunnableProcess } from '../public/GameDataPublic';
 import {
   AddAccount,
@@ -29,6 +28,7 @@ import { installExtensions } from './extension-installer';
 import PreloadWindow from './PreloadWindow';
 import MainWindow from './MainWindow';
 import ProgressBarOptions = Electron.ProgressBarOptions;
+import path from 'path';
 
 const prefix = '[Main Process]: ';
 export let currentWindow: BrowserWindow | null = null;
@@ -36,7 +36,7 @@ if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
   sourceMapSupport.install();
 }
-const isDebug =
+ const isDebug =
   process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
 
 if (isDebug) {
@@ -157,7 +157,7 @@ ipcMain.handle('GameEngine:getDefaultRootPath', (event, args) => {
   return getDefaultRootPath();
 });
 ipcMain.handle('Option:setRootPath', (event, args: { path: string }) => {
-  return SetRootPath(args.path);
+  return userData.SetRootPath(args.path);
 });
 ////////////////////////////////////////////////////////
 export const userDataStorage = new userData.Storage('user-preference');
