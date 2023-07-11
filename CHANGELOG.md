@@ -1,3 +1,10 @@
+# 0.5.0
+- [GEN-26] Fixed visual bugs
+- [GEN-32] File management review
+  - [GEN-18] Added Catch cleanup
+  - [GEN-29] Added special catch for development
+- [GEN-33] Make settings as pop Modal 
+---
 # 0.4.71
 - Assets minimized
 - [GEN-21] Fixed AuthModule dropdown bug
