@@ -2,8 +2,7 @@ import { knowErrorFormat } from './ErrorPublic';
 import { ResolvedPreLaunchTask } from '../main/internal/PreLaunchEngine';
 
 export enum GameType {
-  VANILLA = 'VANILLA',
-  TEST = "TEST"
+  VANILLA = 'VANILLA'
 }
 
 export type GameVersion = {
