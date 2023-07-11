@@ -1,7 +1,7 @@
 import './defaultStyle.css';
 import Loader from './components/public/Loader';
 import { toast, ToastContainer } from 'react-toastify';
-import AuthModule from './components/main/Auth/AuthModule';
+import AuthModule, { addAccount, getLogin } from './components/main/Auth/AuthModule';
 import AuthModuleStyle from './components/main/Auth/css/AuthModuleStyle.module.css';
 import { KnownAuthErrorType } from '../public/ErrorPublic';
 import React from 'react';
@@ -16,7 +16,8 @@ import VanillaView from './components/views/vanillaView';
 import SettingsView from './components/views/SettingsView';
 import './css/Tabs-ant-override.css';
 import LayoutCollapsableTabs from './components/public/LayoutCollapsableTabs';
-import {addAccount, getLogin} from "./components/main/Auth/AuthModule"
+
+import { CapitalizeFirst } from '../public/Utils';
 
 const Sider = Layout.Sider;
 
@@ -120,7 +121,6 @@ export default function App() {
         ].map(tab => {
           return {
             key: tab.key,
-
             label: {
               style: {
                 display: 'flex',
@@ -133,7 +133,7 @@ export default function App() {
                 overflow: 'hidden'
               },
               icon: <Icon icon={tab.icon} />,
-              label: tab.key
+              label: CapitalizeFirst(tab.key)
             },
             children: tab.content,
             type: 'card',
@@ -145,7 +145,7 @@ export default function App() {
                                tabBarGutter={5}
                                defaultActiveKey={selectedTab}
                                moreIcon={<></>}
-                               className={"HideOperation"}
+                               className={'HideOperation'}
                                defaultCollapsed={interfaceData['isMenuCollapsed']}
                                onCollapse={(isCollapsed: boolean) =>
                                  window.electron.ipcRenderer.sendMessage('updateData', {

@@ -38,7 +38,7 @@ export default function LayoutCollapsableTabs({
               ...item,
               ...{
                 label:
-                  <Popover content={collapsed ? item.key : undefined} placement={'right'}>
+                  <Popover content={collapsed ? item.label.label : undefined} placement={'right'}>
                     <span className={item.label.className}
                           style={{ ...item.label.style, ...{ maxWidth: collapsed ? '4vw' : item.label.style?.maxWidth } }}>
                       {item.label.icon}
