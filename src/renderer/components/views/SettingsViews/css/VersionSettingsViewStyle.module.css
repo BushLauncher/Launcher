@@ -36,7 +36,7 @@
 
 .VersionTool {
   width: 100%;
-  min-height: 350px;
+  height: 70vh;
   border-radius: 20px;
   overflow: hidden;
   justify-content: flex-start;

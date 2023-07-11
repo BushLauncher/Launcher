@@ -69,8 +69,8 @@ export default function VersionSettingsView() {
 
           });
           Promise.all(construct).then(() => {
-            resolve(<Tabs items={tabList} className={[styles.VersionTool,styles.scrollable, 'scrollable transparent'].join(' ')}
-                          type={'card'} centered />);
+            resolve(<Tabs items={tabList} className={[styles.VersionTool,styles.scrollable, 'scrollable HideOperation'].join(' ')}
+                          type={'card'} centered  />);
           });
         }).catch(err => console.error(err));
     });
