@@ -62,15 +62,15 @@ export default function VersionSettingsView() {
                       install: { active: true, callback: reload }
                     }} className={styles.card} />)}
                 </div>;
-              }} className={styles.scrollable} />
+              }} className={[styles.scrollable, "tabs"].join(' ')} />
 
 
             });
 
           });
           Promise.all(construct).then(() => {
-            resolve(<Tabs items={tabList} className={[styles.VersionTool,styles.scrollable, 'scrollable transparent'].join(' ')}
-                          type={'card'} centered />);
+            resolve(<Tabs items={tabList} className={[styles.VersionTool,styles.scrollable, 'scrollable HideOperation'].join(' ')}
+                          type={'card'} centered  />);
           });
         }).catch(err => console.error(err));
     });
@@ -80,7 +80,7 @@ export default function VersionSettingsView() {
         <PathInput callback={() => reload()} />
       </div>
     );
-  }} className={[defaultStyle.View, styles.View].join(' ')} style={undefined} />;
+  }} className={[defaultStyle.View, styles.View, "versionSettings"].join(' ')} style={undefined} />;
 }
 
 function PathInput({ callback }: { callback: () => any }): JSX.Element {

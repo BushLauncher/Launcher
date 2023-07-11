@@ -1,6 +1,5 @@
 .View {
-  position: absolute;
-  bottom: 0;
+
 }
 
 .pathSelector {
@@ -36,7 +35,7 @@
 
 .VersionTool {
   width: 100%;
-  min-height: 350px;
+  height: 70vh;
   border-radius: 20px;
   overflow: hidden;
   justify-content: flex-start;
@@ -48,9 +47,8 @@
   gap: 1vh;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   box-sizing: border-box;
-  padding-left: 5vw;
 }
 
 .VersionTool .card {
