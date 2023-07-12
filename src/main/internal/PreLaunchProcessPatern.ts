@@ -1,10 +1,10 @@
-import { ParseGameFile, ParseJava, ResolvedPreLaunchTask, ParseAccount } from './PreLaunchEngine';
+import { ParseAccount, ParseGameFile, ParseJava, ResolvedPreLaunchTask } from './PreLaunchEngine';
 import { GameVersion } from '../../public/GameDataPublic';
 
 export const getLaunchInternal: (version: GameVersion) => ResolvedPreLaunchTask[] = (version) => {
   return [
-    new ParseAccount({ id: 'ParseAccount' }),
     new ParseJava({ id: 'ParseJava' }),
-    new ParseGameFile({ id: 'ParseGameFile', params: { version: version } })
+    new ParseGameFile({ id: 'ParseGameFile', params: { version: version } }),
+    new ParseAccount({ id: 'ParseAccount' })
   ];
 };
