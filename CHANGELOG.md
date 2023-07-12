@@ -7,6 +7,7 @@
   - [GEN-29] Added special catch for development
   - [GEN-8] Added Buttons to : Clear catch, Remove local Java and Delete all data
 - [GEN-33] Make settings as popping Modal
+- [GEN-8] Added encrypting system
 ---
 # 0.4.71
 - Assets minimized
