@@ -157,7 +157,7 @@ function SettingsContext({ saveSelectedView, validateUser }: SettingsContextProp
       return <Layout style={{ width: '100%', height: '100%' }}>
         <Tabs
           items={[
-            { key: 'vanilla', icon: dirtBlockIcon, content: VanillaView() }
+            { key: 'vanilla', icon: dirtBlockIcon, content: VanillaView({ key: 'vanilla' }) },
 
           ].map(tab => {
             return {

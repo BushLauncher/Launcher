@@ -22,13 +22,7 @@ import {
   SelectAccount
 } from './internal/AuthModule';
 import { AuthProviderType, MinecraftAccount } from '../public/AuthPublic';
-import {
-  getDefaultRootPath,
-  getLocationRoot,
-  Launch,
-  RunningVersionList,
-  RunPreLaunchProcess
-} from './internal/Launcher';
+import { getDefaultRootPath, getLocationRoot, Launch, RunningVersionList, StopGame } from './internal/Launcher';
 import { InstallGameFiles, UninstallGameFiles, VerifyGameFiles } from './internal/GameFileManager';
 import { KnownAuthErrorType } from '../public/ErrorPublic';
 import { installExtensions } from './extension-installer';
@@ -144,10 +138,10 @@ ipcMain.on('Auth:SelectAccount', (event, args: { index: number }) => SelectAccou
 ipcMain.handle('GameEngine:Launch', async (event, args: {
   LaunchProcess: PreLaunchProcess | PreLaunchRunnableProcess,
 }) => {
-  return Launch(args.LaunchProcess,    (callback: Callback) => {
-      event.sender.send('GameLaunchCallback', callback);
-      //console.log(callback);
-    })
+  return Launch(args.LaunchProcess, (callback: Callback) => {
+    event.sender.send('GameLaunchCallback', callback);
+    //console.log(callback);
+  })
     .catch((err: any) => {
       console.error(err);
       return err;
@@ -163,7 +157,13 @@ ipcMain.handle('GameEngine:getDefaultRootPath', (event, args) => {
   return getDefaultRootPath();
 });
 ipcMain.handle('GameEngine:getRunningList', (event, args) => {
-  return RunningVersionList;
+  //must reencode list because we cant pass process Class
+  return RunningVersionList.map(rv => {
+    return { ...rv, process: null };
+  });
+});
+ipcMain.handle('GameEngine:KillProcess', (event, args: { processId: string }) => {
+  return StopGame(args.processId);
 });
 ipcMain.handle('Option:setRootPath', (event, args: { path: string }) => {
   return userData.SetRootPath(args.path);

@@ -103,8 +103,11 @@ function parseLaunch(LaunchRunnable: PreLaunchRunnableProcess | PreLaunchProcess
   return (Array.isArray(LaunchRunnable) ? LaunchRunnable.length : LaunchRunnable.actions.length) - 1;
 }
 
-export function StopGame() {
-  //Need stored launched version list
+export function StopGame(processId: string) {
+  console.log("Forcing stop process: " + processId)
+  const process = RunningVersionList[resolveIndexInList(processId)].process;
+  if (process === undefined) console.warn('Process of Running version ' + processId + ' is undefined');
+  else process.kill();
 }
 
 
@@ -131,8 +134,7 @@ function LaunchGameProcess(id: string, version: GameVersion, javaPath: string, a
       reject();
       return;
     }
-
-    console.log(prefix +' Launching minecraft [' + id + '] ' + version.id + ' :' + '\nFor: ', account.profile, '\n from: ' + getLocationRoot() + '\n java: ' + javaPath);
+    console.log(prefix + ' Launching minecraft [' + id + '] ' + version.id + ' :' + '\nFor: ', account.profile, '\n from: ' + getLocationRoot() + '\n java: ' + javaPath);
     launch({
       gamePath: getLocationRoot(),
       javaPath: javaPath,
@@ -145,7 +147,10 @@ function LaunchGameProcess(id: string, version: GameVersion, javaPath: string, a
       //TODO: set game icon, name and Discord RTC
       //TODO: Server, to launch directly on server
     }).then((process: ChildProcess) => {
-
+      RunningVersionList[resolveIndexInList(id)] = {
+        ...RunningVersionList[resolveIndexInList(id)],
+        process: process
+      };
       const watcher = createMinecraftProcessWatcher(process);
       watcher.on('error', (err) => console.error(prefix + id + ' ' + err));
       watcher.on('minecraft-window-ready', () => {
