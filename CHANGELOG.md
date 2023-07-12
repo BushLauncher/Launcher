@@ -1,6 +1,7 @@
 # 0.5.0
 ### MainChanges
 - `[GEN-35/GEN-14/GEN-34]` Multiple Game instances
+- `[GEN-40]` Kill Game
 ### Changes
 - `[GEN-32/GEN-31]` File management review
   - `[GEN-18]` Added Catch cleanup
