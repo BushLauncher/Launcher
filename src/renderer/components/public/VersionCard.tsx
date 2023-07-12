@@ -1,4 +1,4 @@
-import { GameVersion, ProgressSubTaskCallback } from '../../../public/GameDataPublic';
+import { GameVersion, ProgressSubTaskCallback, RunningVersion } from '../../../public/GameDataPublic';
 import Icon from './Icons/Icon';
 import { getGameTypeIcon, getInstalledIcon } from '../views/SettingsViews/VersionSettingsView';
 import styles from './css/publicStyle.module.css';
@@ -13,12 +13,13 @@ import { useState } from 'react';
 import loadIcon from '../../../assets/graphics/icons/loading.svg';
 import LaunchButton from '../main/LaunchButton';
 import { NotificationParam } from '../../App';
+import Loader from './Loader';
 
 type activeAndCallback = { active: boolean, callback?: () => any }
 
 interface VersionCardProps extends ComponentsPublic {
   version: GameVersion,
-  toolBox?: {
+  toolBox: {
     uninstall?: activeAndCallback,
     diagnose?: activeAndCallback,
     install?: activeAndCallback,
@@ -34,7 +35,6 @@ export default function VersionCard({ version, toolBox, settings, className, sty
   const [isLoading, setLoading] = useState(false);
   const [isRunning, setRunning] = useState(false);
 
-  //TODO: store all running version, and display it
   async function requestUninstall() {
     const operation = window.electron.ipcRenderer.invoke('VersionManager:Uninstall', {
       version: version,
@@ -55,7 +55,7 @@ export default function VersionCard({ version, toolBox, settings, className, sty
       success: {
         render() {
           setLoading(false);
-          if (toolBox && toolBox.uninstall && toolBox.uninstall.callback) toolBox.uninstall.callback();
+          if (toolBox.uninstall && toolBox.uninstall.callback) toolBox.uninstall.callback();
           return `Uninstalled ${version.id}`;
         }
       },
@@ -77,7 +77,7 @@ export default function VersionCard({ version, toolBox, settings, className, sty
     }).then(res => {
       const hasProblems = (typeof res === 'object');
       setLoading(false);
-      if (toolBox && toolBox.diagnose && toolBox.diagnose.callback) toolBox.diagnose.callback();
+      if (toolBox.diagnose && toolBox.diagnose.callback) toolBox.diagnose.callback();
       toast.update(id, {
         className: styles.toast,
         type: hasProblems ? 'warning' : 'success',
@@ -122,7 +122,7 @@ export default function VersionCard({ version, toolBox, settings, className, sty
     setLoading(true);
     await window.electron.ipcRenderer.invoke('VersionManager:Install', { version: version })
       .then(() => {
-        if (toolBox?.install?.callback) toolBox.install.callback();
+        if (toolBox.install?.callback) toolBox.install.callback();
         setLoading(false);
         // @ts-ignore
         toast.update(id, {
@@ -151,33 +151,42 @@ export default function VersionCard({ version, toolBox, settings, className, sty
   }
 
 
-  return <div className={[styles.VersionCard, className].join(' ')} style={style}
-              onClick={toolBox && toolBox?.select && toolBox.select.active && toolBox.select.callback ? toolBox.select.callback : undefined}>
-    {isLoading ? <Icon icon={loadIcon} className={styles.loadIcon} /> :
-      toolBox && toolBox.launch && version.installed &&
-      <LaunchButton versionSelector={false} type={'square'} style={{ width: '3vw', height: '3vw', minWidth: 0 }}
-                    onRun={requestLaunch} onExited={() => setRunning(false)} />}
-    <Icon
-      icon={settings && settings.iconType === 'Installed' ? getInstalledIcon(version.installed) : getGameTypeIcon(version.gameType)}
-      className={[styles.icon, (settings && settings.iconType === 'Installed' ? styles.iconMin : undefined)].join(' ')} />
-    <p>{version.id}</p>
-    {toolBox !== undefined && <div className={styles.buttonContainer}>
-      {toolBox?.install && !version.installed &&
-        <Popover content={'Install'}> <Button key={'install'} type={'primary'} size={'large'} disabled={isLoading}
-                                              style={{ backgroundColor: 'var(--valid)' }}
-                                              icon={<DownloadOutlined style={{ fontSize: '2.5vw' }} />}
-                                              className={styles.button} onClick={requestInstall} />
-        </Popover>}
-      {toolBox?.diagnose && version.installed && !isRunning &&
-        <Popover content={'Diagnose'}>
-          <Button key={'diagnose'} size={'large'} icon={<Icon icon={hammerIcon} className={styles.icon} />}
-                  className={styles.button} disabled={isLoading}
-                  style={{ borderColor: '#ffb103' }} onClick={() => requestDiagnose()} /> </Popover>}
-      {toolBox?.uninstall && version.installed && !isRunning &&
-        <Popover content={'Uninstall'}> <Button key={'uninstall'} size={'large'} danger icon={<DeleteOutlined />}
-                                                disabled={isLoading}
-                                                className={styles.button} onClick={() => requestUninstall()} />
-        </Popover>}
-    </div>}
-  </div>;
+  return (
+    <div className={[styles.VersionCard, className].join(' ')} style={style}
+         onClick={toolBox.select && toolBox.select.active && toolBox.select.callback ? toolBox.select.callback : undefined}>
+      {isLoading ? <Icon icon={loadIcon} className={styles.loadIcon} />
+        : toolBox.launch && version.installed &&
+        <LaunchButton versionSelector={false} type={'square'} style={{ width: '3vw', height: '3vw', minWidth: 0 }}
+                      onRun={requestLaunch} onExited={() => setRunning(false)} />}
+      <Icon
+        icon={settings && settings.iconType === 'Installed' ? getInstalledIcon(version.installed) : getGameTypeIcon(version.gameType)}
+        className={[styles.icon, (settings && settings.iconType === 'Installed' ? styles.iconMin : undefined)].join(' ')} />
+      <p>{version.id}</p>
+
+      {<Loader className={styles.buttonContainer} content={async () => {
+        const runningList: RunningVersion[] = await window.electron.ipcRenderer.invoke('GameEngine:getRunningList', {});
+        const _isRunning = runningList.find(rv => rv.Version.id === version.id) !== undefined;
+        if (isRunning !== _isRunning) setRunning(_isRunning);
+        return <>{toolBox.install && !version.installed &&
+          <Popover content={'Install'}>
+            <Button key={'install'} type={'primary'} size={'large'} disabled={isLoading}
+                    style={{ backgroundColor: 'var(--valid)' }}
+                    icon={<DownloadOutlined style={{ fontSize: '2.5vw' }} />}
+                    className={styles.button} onClick={requestInstall} />
+          </Popover>}
+          {toolBox.diagnose && version.installed &&
+            <Popover content={!isRunning ? 'Diagnose' : 'Version is running...'}>
+              <Button key={'diagnose'} size={'large'} icon={<Icon icon={hammerIcon} className={styles.icon} />}
+                      className={styles.button} disabled={isLoading || isRunning}
+                      style={{ borderColor: !isRunning ? '#ffb103' : "" }} onClick={() => requestDiagnose()} />
+            </Popover>}
+          {toolBox.uninstall && version.installed &&
+            <Popover content={!isRunning ? 'Uninstall' : 'Version is running...'}>
+              <Button key={'uninstall'} size={'large'} danger icon={<DeleteOutlined />}
+                      disabled={isLoading || isRunning}
+                      className={styles.button} onClick={() => requestUninstall()} />
+            </Popover>}</>;
+      }} />}
+    </div>);
 }
+
