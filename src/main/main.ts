@@ -2,6 +2,7 @@
 // noinspection JSUnusedLocalSymbols
 
 import * as userData from './internal/UserData';
+import { CleanUpCatch } from './internal/UserData';
 import { app, BrowserWindow, ipcMain, net } from 'electron';
 import * as versionManager from './internal/VersionManager';
 import { getAllVersionList, getSelectedVersion, getVersionMethode } from './internal/VersionManager';
@@ -27,8 +28,8 @@ import { KnownAuthErrorType } from '../public/ErrorPublic';
 import { installExtensions } from './extension-installer';
 import PreloadWindow from './PreloadWindow';
 import MainWindow from './MainWindow';
+import { DeleteJava } from './internal/JavaEngine';
 import ProgressBarOptions = Electron.ProgressBarOptions;
-import path from 'path';
 
 const prefix = '[Main Process]: ';
 export let currentWindow: BrowserWindow | null = null;
@@ -36,7 +37,7 @@ if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
   sourceMapSupport.install();
 }
- const isDebug =
+const isDebug =
   process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
 
 if (isDebug) {
@@ -173,9 +174,25 @@ ipcMain.on('updateData', (event, arg: { value: any; dataPath: any }) => {
 ipcMain.handle('removeData', (event, arg: { dataPath: string }) => {
   return userDataStorage.remove(arg.dataPath);
 });
-ipcMain.handle('Storage:DeleteAll', (event) => {
-  return userDataStorage.DeleteFile();
+ipcMain.handle('Storage:DeleteAll', async (event) => {
+  DeleteJava();
+  userDataStorage.DeleteFile();
+  CleanUpCatch();
+  currentWindow?.webContents.session.flushStorageData();
+  currentWindow?.webContents.session.clearStorageData().then(() => {
+    app.exit();
+    app.relaunch();
+  });
 });
+ipcMain.handle('Storage:DeleteJava', (event) => {
+  return DeleteJava();
+});
+
+ipcMain.handle('Storage:CleanCatch', (event) => {
+  return CleanUpCatch();
+});
+
+
 ////////////////////////////////////////////////////////
 ipcMain.on('App:setWinBar', (e, args: { percentage: number, options?: ProgressBarOptions }) => {
   if (currentWindow !== null) currentWindow.setProgressBar((args.percentage / 100), args.options);

@@ -98,16 +98,24 @@ export function findFileRecursively(path: string, targetFileName: string): strin
   return undefined;
 }
 
-function deleteFolderRecursive(path: string) {
+export function deleteFolderRecursive(path: string) {
   if (fs.existsSync(path)) {
     fs.readdirSync(path).forEach(function(file) {
       const curPath = path + '/' + file;
       if (fs.lstatSync(curPath).isDirectory()) { // recurse
         deleteFolderRecursive(curPath);
       } else { // delete file
-        fs.unlinkSync(curPath);
+        try {
+          fs.unlinkSync(curPath);
+        } catch (e) {
+          console.warn('Skipped file: ' + curPath);
+        }
       }
     });
-    fs.rmdirSync(path);
+    try {
+      fs.rmdirSync(path);
+    } catch (e) {
+      console.warn('Skipped folder: ' + path);
+    }
   }
 }

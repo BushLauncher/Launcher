@@ -1,9 +1,12 @@
 # 0.5.0
+### Fix
 - [GEN-26] Fixed visual bugs
+### Changes
 - [GEN-32] File management review
   - [GEN-18] Added Catch cleanup
   - [GEN-29] Added special catch for development
-- [GEN-33] Make settings as pop Modal 
+  - [GEN-8] Added Buttons to : Clear catch, Remove local Java and Delete all data
+- [GEN-33] Make settings as popping Modal
 ---
 # 0.4.71
 - Assets minimized

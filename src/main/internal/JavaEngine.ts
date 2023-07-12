@@ -6,7 +6,7 @@ import axios from 'axios';
 import admZip from 'adm-zip';
 import { knowErrorFormat, knowGameError } from '../../public/ErrorPublic';
 import { userDataStorage } from '../main';
-import { findFileRecursively } from './GameFileManager';
+import { deleteFolderRecursive, findFileRecursively } from './GameFileManager';
 import { javaPath, tempDownloadDir } from './UserData';
 
 const prefix = '[JavaEngine]: ';
@@ -111,6 +111,10 @@ export async function ResolveJavaPath(): Promise<string | undefined> {
   const saved = getSavedJavaPath();
   return saved !== undefined && fs.existsSync(saved) ? saved : undefined;
   //return await findJava();
+}
+
+export function DeleteJava(){
+  deleteFolderRecursive(javaPath)
 }
 
 export function getSavedJavaPath(): string | undefined {

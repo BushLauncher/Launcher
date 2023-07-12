@@ -4,12 +4,12 @@ import fs, { readFileSync, writeFileSync } from 'fs';
 import { userDataStorage } from '../main';
 import { Xbox } from 'msmc';
 import { Themes } from '../../public/ThemePublic';
+import { deleteFolderRecursive } from './GameFileManager';
 
 const path = require('path');
 const prefix: string = '[UserData]: ';
 const isDebug = process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
 if (isDebug) app.setPath('userData', path.resolve(app.getPath('userData'), '../' + app.getName() + '-DevEnv'));
-console.log(isDebug);
 console.log(app.getPath('userData'));
 
 export const tempDownloadDir = path.join(app.getPath('userData'), 'Download Cache\\');
@@ -143,14 +143,9 @@ export class Storage {
 }
 
 export function CleanUpCatch() {
-  fs.readdir(tempDownloadDir, (err, files) => {
-    if (err) throw err;
-    for (const file of files) {
-      fs.unlink(path.join(tempDownloadDir, file), (err) => {
-        if (err) throw err;
-      });
-    }
-  });
+  deleteFolderRecursive(tempDownloadDir)
 }
+
+
 
 //TODO: Add an encryption system
