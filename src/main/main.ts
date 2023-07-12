@@ -22,7 +22,13 @@ import {
   SelectAccount
 } from './internal/AuthModule';
 import { AuthProviderType, MinecraftAccount } from '../public/AuthPublic';
-import { getDefaultRootPath, getLocationRoot, RunPreLaunchProcess } from './internal/Launcher';
+import {
+  getDefaultRootPath,
+  getLocationRoot,
+  Launch,
+  RunningVersionList,
+  RunPreLaunchProcess
+} from './internal/Launcher';
 import { InstallGameFiles, UninstallGameFiles, VerifyGameFiles } from './internal/GameFileManager';
 import { KnownAuthErrorType } from '../public/ErrorPublic';
 import { installExtensions } from './extension-installer';
@@ -136,14 +142,13 @@ ipcMain.handle('Auth:Login', async (event, args: { type: AuthProviderType }) => 
 ipcMain.on('Auth:SelectAccount', (event, args: { index: number }) => SelectAccount(args.index));
 
 ipcMain.handle('GameEngine:Launch', async (event, args: {
-  LaunchProcess: PreLaunchProcess | PreLaunchRunnableProcess
+  LaunchProcess: PreLaunchProcess | PreLaunchRunnableProcess,
 }) => {
-  return RunPreLaunchProcess(args.LaunchProcess,
-    (callback: Callback) => {
+  return Launch(args.LaunchProcess,    (callback: Callback) => {
       event.sender.send('GameLaunchCallback', callback);
       //console.log(callback);
     })
-    .catch(err => {
+    .catch((err: any) => {
       console.error(err);
       return err;
     });
@@ -156,6 +161,9 @@ ipcMain.handle('GameEngine:getRootPath', (event, args) => {
 });
 ipcMain.handle('GameEngine:getDefaultRootPath', (event, args) => {
   return getDefaultRootPath();
+});
+ipcMain.handle('GameEngine:getRunningList', (event, args) => {
+  return RunningVersionList;
 });
 ipcMain.handle('Option:setRootPath', (event, args: { path: string }) => {
   return userData.SetRootPath(args.path);

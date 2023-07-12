@@ -5,7 +5,7 @@ import background from '../../../assets/graphics/backgrounds/java.png';
 import LaunchButton from '../main/LaunchButton';
 
 
-export default function VanillaView() {
+export default function VanillaView({key}:{key: string}) {
   return (<div className={styles.Main} style={{
     backgroundImage: `url(${background})`
   }}>
@@ -14,6 +14,7 @@ export default function VanillaView() {
       style={{ width: '30vw', marginTop: "16vh" }}
     />
     <LaunchButton
+      id={key}
       versionSelector={true}
       style={{
         position: 'absolute',

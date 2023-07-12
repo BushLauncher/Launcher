@@ -27,6 +27,7 @@ import { ComponentsPublic } from '../ComponentsPublic';
 import { Divider, Popover, Progress } from 'antd';
 import VersionCard from '../public/VersionCard';
 import OutsideAlerter from '../public/OutsideAlerter';
+import {v4 as uuidv4} from 'uuid';
 
 
 export enum LaunchButtonState {
@@ -39,6 +40,7 @@ export type LoadingProgress = {
 }
 
 export interface LaunchButtonProps extends ComponentsPublic {
+  id?: string,
   versionSelector: boolean,
   type?: 'square' | 'default',
   onRun?: (version: GameVersion) => any,
@@ -77,7 +79,7 @@ export default function LaunchButton(props: LaunchButtonProps) {
 
   function requestLaunch(version: GameVersion) {
     const process: PreLaunchProcess = {
-      actions: [], launch: true, version: version, internal: false, resolved: false
+      id: props.id || uuidv4() ,actions: [], launch: true, version: version, internal: false, resolved: false
     };
     setVersionSelector(false);
     setDisplayText('Initializing...');

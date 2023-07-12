@@ -12,6 +12,8 @@ import {
   PreLaunchRunnableProcess,
   PreLaunchTasks,
   ProgressCallback,
+  RunningVersion,
+  RunningVersionState,
   StartedCallback,
   UpdateLaunchTaskCallback
 } from '../../public/GameDataPublic';
@@ -21,11 +23,13 @@ import { ChildProcess } from 'child_process';
 import { getSelectedAccount, isAccountValid } from './AuthModule';
 import { net } from 'electron';
 import getAppDataPath from 'appdata-path';
-import { userDataStorage } from '../main';
+import { currentWindow, userDataStorage } from '../main';
 import { getLaunchInternal } from './PreLaunchProcessPatern';
 import { CleanUpCatch } from './UserData';
 
 const prefix = '[Launcher]: ';
+
+export const RunningVersionList: RunningVersion[] = [];
 
 export async function RunPreLaunchProcess(baseProcess: PreLaunchProcess | PreLaunchRunnableProcess, Callback: (callback: Callback) => void) {
   //resolve process list if not
@@ -53,9 +57,9 @@ export async function RunPreLaunchProcess(baseProcess: PreLaunchProcess | PreLau
 
   for (const operation of operations) {
     const i = operations.indexOf(operation);
-    console.warn('Executing task ' + (i + 1) + '/' + (stepsCount + 1) + ' : ' + operation.getId());
+    console.warn('[' + baseProcess.id + '] Executing task ' + (i + 1) + '/' + (stepsCount + 1) + ' : ' + operation.getId());
     const taskCallback = await RunTask(operation, (c) => createCallback(c, i)).catch(err => {
-      console.error(prefix + err);
+      console.error(prefix + baseProcess.id + ' ' + err);
       throw new Error(err);
     });
     responseStorage.push({ task: taskCallback.task.id, ...taskCallback.response });
@@ -67,8 +71,7 @@ export async function RunPreLaunchProcess(baseProcess: PreLaunchProcess | PreLau
   const javaPath: string | undefined = responseStorage.find((response) => response.task === PreLaunchTasks.ParseJava)?.data;
   if (javaPath === undefined) throw  new Error('We couldn\'t retrieve javaPath !');
   const access_token: string | null = responseStorage.find((response) => response.task === PreLaunchTasks.ParseAccount)?.data;
-
-  CleanUpCatch()
+  CleanUpCatch();
 
   //Launch
   if (baseProcess.launch) {
@@ -80,7 +83,7 @@ export async function RunPreLaunchProcess(baseProcess: PreLaunchProcess | PreLau
         localProgress: 100
       }
     }, stepsCount);
-    return Launch(version, javaPath, access_token, (callback: StartedCallback) => Callback(callback));
+    return LaunchGameProcess(baseProcess.id, version, javaPath, access_token, (callback: StartedCallback) => Callback(callback));
   } else return;
 
 }
@@ -120,16 +123,16 @@ function setLocalLocationRoot(path: string) {
   return path;
 }
 
-export function Launch(version: GameVersion, javaPath: string, access_token: string | null, callback: (callback: StartedCallback) => void): Promise<ExitedCallback> {
+function LaunchGameProcess(id: string, version: GameVersion, javaPath: string, access_token: string | null, callback: (callback: StartedCallback) => void): Promise<ExitedCallback> {
   return new Promise(async (resolve, reject) => {
     const account = getSelectedAccount();
     if (account === null || !isAccountValid(account)) {
-      console.error('Cannot launch the game without a valid logged account');
+      console.error(id + ' Cannot launch the game without a valid logged account');
       reject();
       return;
     }
 
-    console.log(prefix + 'Launching minecraft ' + version.id + ' :' + '\nFor: ', account.profile, '\n from: ' + getLocationRoot() + '\n java: ' + javaPath);
+    console.log(prefix +' Launching minecraft [' + id + '] ' + version.id + ' :' + '\nFor: ', account.profile, '\n from: ' + getLocationRoot() + '\n java: ' + javaPath);
     launch({
       gamePath: getLocationRoot(),
       javaPath: javaPath,
@@ -138,21 +141,29 @@ export function Launch(version: GameVersion, javaPath: string, access_token: str
       accessToken: net.isOnline() && access_token ? access_token : undefined,
       launcherName: `BushLauncher`,
       launcherBrand: `BushLauncher`,
-      gameName: `BushLauncher Minecraft [${version.id}]`
+      gameName: `Bush Launcher Minecraft [${version.id}]`
       //TODO: set game icon, name and Discord RTC
       //TODO: Server, to launch directly on server
     }).then((process: ChildProcess) => {
+
       const watcher = createMinecraftProcessWatcher(process);
-      watcher.on('error', (err) => console.error(prefix + err));
+      watcher.on('error', (err) => console.error(prefix + id + ' ' + err));
       watcher.on('minecraft-window-ready', () => {
+        RunningVersionList[resolveIndexInList(id)] = {
+          ...RunningVersionList[resolveIndexInList(id)],
+          State: RunningVersionState.Running
+        };
+        currentWindow?.webContents.send('UpdateMainTabsState');
         callback(<StartedCallback>{ type: CallbackType.Success, return: undefined });
       });
       watcher.on('minecraft-exit', () => {
-        console.log(prefix + 'Exited');
+        console.log(prefix + id + ' Game Exited');
         resolve(<ExitedCallback>{ type: CallbackType.Closed });
+        RunningVersionList.splice(resolveIndexInList(id), 1);
+        currentWindow?.webContents.send('UpdateMainTabsState');
       });
     }).catch(err => {
-      console.error(prefix + err);
+      console.error(prefix + id + ' ' + err);
       reject(err);
     });
 
@@ -161,6 +172,19 @@ export function Launch(version: GameVersion, javaPath: string, access_token: str
 }
 
 
+export function Launch(process: PreLaunchProcess | PreLaunchRunnableProcess, Callback: (callback: Callback) => void) {
+  RunningVersionList.push({
+    id: process.id,
+    Version: process.version,
+    State: RunningVersionState.Launching
+  });
+  currentWindow?.webContents.send('UpdateMainTabsState');
+  return RunPreLaunchProcess(process, (callback: Callback) => Callback(callback));
+}
 
 
-
+function resolveIndexInList(id: string) {
+  const index = RunningVersionList.findIndex((rv) => rv.id === id);
+  if (index === -1) throw new Error('Cannot resolve Running version in list');
+  else return index;
+}

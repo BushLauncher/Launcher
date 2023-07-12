@@ -7,7 +7,7 @@ import { KnownAuthErrorType } from '../public/ErrorPublic';
 import React, { useState } from 'react';
 import { defaultTheme, globalStateContext } from './index';
 import { MinecraftAccount } from '../public/AuthPublic';
-import { Button, ConfigProvider, Layout, Modal, Popover, Tabs } from 'antd';
+import { ConfigProvider, Layout, Modal, Popover, Tabs } from 'antd';
 import Icon from './components/public/Icons/Icon';
 import { StyleProvider } from '@ant-design/cssinjs';
 
@@ -21,6 +21,9 @@ import CollapsableSider from './components/public/CollapsableSider';
 import { CapitalizeFirst } from '../public/Utils';
 import SettingsView from './components/views/SettingsViews/SettingsView';
 import './components/views/SettingsViews/css/SettingsModal-ant-override.css';
+import { RunningVersion, RunningVersionState } from '../public/GameDataPublic';
+import loadingIcon from '../assets/graphics/icons/loading.svg';
+import playIcon from '../assets/graphics/icons/caret-right.svg';
 
 const Sider = Layout.Sider;
 
@@ -164,6 +167,14 @@ function SettingsContext({ saveSelectedView, validateUser }: SettingsContextProp
                     <span>
                       <Icon icon={tab.icon} />
                       <p>{CapitalizeFirst(tab.key)}</p>
+                      <Loader content={async (reload) => {
+                        window.electron.ipcRenderer.once('UpdateMainTabsState', reload);
+                        const list: RunningVersion[] = await window.electron.ipcRenderer.invoke('GameEngine:getRunningList', {});
+                        const version = list.find((rv) => rv.id === tab.key);
+                        if (version === undefined) return <></>;
+                        else return <Icon
+                          icon={version.State === RunningVersionState.Launching ? loadingIcon : playIcon} />;
+                      }} className={'State'} />
                     </span>
                 </Popover>,
               children: tab.content,
@@ -209,7 +220,8 @@ function SettingsContext({ saveSelectedView, validateUser }: SettingsContextProp
     }} />
     <ConfigProvider theme={defaultTheme}>
       <StyleProvider hashPriority={'high'}>
-        <Modal className={'SettingsModal'} zIndex={50} open={open} onCancel={() => setOpen(false)} footer={null} centered title={<p>Settings</p>} width={'100%'}
+        <Modal className={'SettingsModal'} zIndex={50} open={open} onCancel={() => setOpen(false)} footer={null}
+               centered title={<p>Settings</p>} width={'100%'}
                okText={'Save'} cancelText={'Close'} style={{ marginTop: '6vh' }}>{SettingsView()}</Modal>
       </StyleProvider>
     </ConfigProvider>

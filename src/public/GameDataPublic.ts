@@ -1,5 +1,7 @@
 import { knowErrorFormat } from './ErrorPublic';
 import { ResolvedPreLaunchTask } from '../main/internal/PreLaunchEngine';
+import { MinecraftAccount } from './AuthPublic';
+import { ChildProcess } from 'child_process';
 
 export enum GameType {
   VANILLA = 'VANILLA'
@@ -141,6 +143,7 @@ export interface FinishedSubTaskCallback extends UpdateLaunchTaskCallback {
 }
 
 export interface PreLaunchProcess {
+  id: string,
   actions: LaunchTask[];
   resolved: false;
   internal: false;
@@ -149,6 +152,7 @@ export interface PreLaunchProcess {
 }
 
 export interface PreLaunchRunnableProcess {
+  id: string,
   actions: ResolvedPreLaunchTask[];
   resolved: true;
   internal?: boolean;
@@ -166,4 +170,13 @@ export interface PreLaunchError extends PreLaunchResponse {
   error: any;
   success: false;
 }
-
+export enum RunningVersionState {
+  Launching,
+  Running
+}
+export interface RunningVersion {
+  id: string,
+  Version: GameVersion,
+  State: RunningVersionState,
+  process?: ChildProcess
+}

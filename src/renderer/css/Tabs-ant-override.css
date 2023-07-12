@@ -40,10 +40,10 @@
   height: 7vh;
   text-overflow: ellipsis;
   transition: all 0.3s ease;
-  overflow: hidden;
+  position: relative;
 }
 
-#root .ant-tabs-nav.collapsed .ant-tabs-tab span p,  #root .extra.collapsed button p {
+#root .ant-tabs-nav.collapsed .ant-tabs-tab span p, #root .extra.collapsed button p {
   width: 0;
   overflow: hidden;
 }
@@ -116,14 +116,31 @@
 }
 
 /***********/
-#root .ant-tabs-nav.mainNavBar{
+#root .ant-tabs-nav.mainNavBar {
   height: 80vh;
 }
-#root .extra{
+
+#root .ant-tabs-nav.mainNavBar span .State {
+  position: absolute;
+  bottom: -0.5vh;
+  right: 0.3vw;
+  width: 2vw;
+  height: 2vw;
+}
+
+#root .ant-tabs-nav.mainNavBar span .State img,
+#root .ant-tabs-nav.mainNavBar span .State div {
+  width: 110%;
+  height: 110%;
+  margin-left: 0;
+}
+
+#root .extra {
   width: 100%;
   background-color: var(--second-background-color);
   padding: 1.6vh 1vw 2.2vh 1vw;
 }
+
 #root .extra button {
   width: auto;
   cursor: pointer;
