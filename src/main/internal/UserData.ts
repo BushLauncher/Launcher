@@ -4,9 +4,19 @@ import fs, { readFileSync, writeFileSync } from 'fs';
 import { userDataStorage } from '../main';
 import { Xbox } from 'msmc';
 import { Themes } from '../../public/ThemePublic';
+import { deleteFolderRecursive } from './GameFileManager';
 
 const path = require('path');
 const prefix: string = '[UserData]: ';
+const isDebug = process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
+if (isDebug) app.setPath('userData', path.resolve(app.getPath('userData'), '../' + app.getName() + '-DevEnv'));
+console.log(app.getPath('userData'));
+
+export const tempDownloadDir = path.join(app.getPath('userData'), 'Download Cache\\');
+export const javaPath = path.join(app.getPath('userData'), 'Local Java\\');
+if (!fs.existsSync(javaPath)) fs.mkdirSync(javaPath);
+if (!fs.existsSync(tempDownloadDir)) fs.mkdirSync(tempDownloadDir);
+
 export function loadData() {
   const res: GameVersion | undefined = userDataStorage.get('version.selected');
   if (res != undefined) SelectVersion(res);
@@ -19,7 +29,6 @@ export function SelectVersion(version: GameVersion): void {
 
 export function SetRootPath(path: string): boolean {
   if (fs.existsSync(path)) {
-    console.log(prefix + 'Set root Path: ' + path);
     userDataStorage.set('saved.rootPath', path);
     return true;
   } else return false;
@@ -53,18 +62,11 @@ export interface defaultData {
 export function createDefaultData(): defaultData {
   return {
     saved: {
-      javaPath: null,
-      rootPath: null
-    },
-    auth: {
-      accountList: [],
-      selectedAccount: null
-    },
-    version: { selected: getDefaultVersion(getDefaultGameType) },
-    interface: {
-      selectedTab: 'vanilla',
-      theme: Themes.Dark,
-      isMenuCollapsed: true
+      javaPath: null, rootPath: null
+    }, auth: {
+      accountList: [], selectedAccount: null
+    }, version: { selected: getDefaultVersion(getDefaultGameType) }, interface: {
+      selectedTab: 'vanilla', theme: Themes.Dark, isMenuCollapsed: true
     }
   };
 }
@@ -111,9 +113,7 @@ export class Storage {
     this.saveData();
   }
 
-  private findProperty(
-    propertyPath: string
-  ): [string, Record<string, unknown>] {
+  private findProperty(propertyPath: string): [string, Record<string, unknown>] {
     const properties = propertyPath.split('.');
     let propertyObject = this.data;
     for (let i = 0; i < properties.length - 1; i++) {
@@ -141,5 +141,11 @@ export class Storage {
     writeFileSync(this.storageFilePath, JSON.stringify(customData ? customData : this.data));
   }
 }
+
+export function CleanUpCatch() {
+  deleteFolderRecursive(tempDownloadDir)
+}
+
+
 
 //TODO: Add an encryption system

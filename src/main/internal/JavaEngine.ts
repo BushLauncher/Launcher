@@ -6,7 +6,8 @@ import axios from 'axios';
 import admZip from 'adm-zip';
 import { knowErrorFormat, knowGameError } from '../../public/ErrorPublic';
 import { userDataStorage } from '../main';
-import { findFileRecursively } from './GameFileManager';
+import { deleteFolderRecursive, findFileRecursively } from './GameFileManager';
+import { javaPath, tempDownloadDir } from './UserData';
 
 const prefix = '[JavaEngine]: ';
 
@@ -14,15 +15,10 @@ export async function InstallJava(callback: (c: ProgressSubTaskCallback) => void
   console.warn(prefix + 'Installing Java...');
   callback({ state: LaunchTaskState.processing, displayText: 'Installing Java...' });
 
-  const dir = path.join(app.getPath('userData'), 'Local Java\\');
-  const tempDownloadDir = path.join(app.getPath('userData'), 'Download Cache\\');
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir);
-  if (!fs.existsSync(tempDownloadDir)) fs.mkdirSync(tempDownloadDir);
-
   const downloadData = await getJavaDownloadLink();
   const zipPath = path.join(tempDownloadDir, downloadData.name);
   //remove the extension: .zip
-  const destPath = path.join(dir, downloadData.name.replace('\\.([a-z]*$)', ''));
+  const destPath = path.join(javaPath, downloadData.name.replace('\\.([a-z]*$)', ''));
 
 
   return new Promise<string>((resolve, reject) => {
@@ -72,7 +68,7 @@ export async function InstallJava(callback: (c: ProgressSubTaskCallback) => void
       })
       .catch(err => {
         console.error(err);
-        reject()
+        reject();
       });
 
   });
@@ -115,6 +111,10 @@ export async function ResolveJavaPath(): Promise<string | undefined> {
   const saved = getSavedJavaPath();
   return saved !== undefined && fs.existsSync(saved) ? saved : undefined;
   //return await findJava();
+}
+
+export function DeleteJava(){
+  deleteFolderRecursive(javaPath)
 }
 
 export function getSavedJavaPath(): string | undefined {

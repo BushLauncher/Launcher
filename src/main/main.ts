@@ -1,11 +1,11 @@
 /* eslint global-require: off, no-console: off, promise/always-return: off */
 // noinspection JSUnusedLocalSymbols
 
+import * as userData from './internal/UserData';
+import { CleanUpCatch } from './internal/UserData';
 import { app, BrowserWindow, ipcMain, net } from 'electron';
 import * as versionManager from './internal/VersionManager';
 import { getAllVersionList, getSelectedVersion, getVersionMethode } from './internal/VersionManager';
-import * as userData from './internal/UserData';
-import { SetRootPath } from './internal/UserData';
 import { Callback, GameType, GameVersion, PreLaunchProcess, PreLaunchRunnableProcess } from '../public/GameDataPublic';
 import {
   AddAccount,
@@ -28,6 +28,7 @@ import { KnownAuthErrorType } from '../public/ErrorPublic';
 import { installExtensions } from './extension-installer';
 import PreloadWindow from './PreloadWindow';
 import MainWindow from './MainWindow';
+import { DeleteJava } from './internal/JavaEngine';
 import ProgressBarOptions = Electron.ProgressBarOptions;
 
 const prefix = '[Main Process]: ';
@@ -157,7 +158,7 @@ ipcMain.handle('GameEngine:getDefaultRootPath', (event, args) => {
   return getDefaultRootPath();
 });
 ipcMain.handle('Option:setRootPath', (event, args: { path: string }) => {
-  return SetRootPath(args.path);
+  return userData.SetRootPath(args.path);
 });
 ////////////////////////////////////////////////////////
 export const userDataStorage = new userData.Storage('user-preference');
@@ -173,9 +174,25 @@ ipcMain.on('updateData', (event, arg: { value: any; dataPath: any }) => {
 ipcMain.handle('removeData', (event, arg: { dataPath: string }) => {
   return userDataStorage.remove(arg.dataPath);
 });
-ipcMain.handle('Storage:DeleteAll', (event) => {
-  return userDataStorage.DeleteFile();
+ipcMain.handle('Storage:DeleteAll', async (event) => {
+  DeleteJava();
+  userDataStorage.DeleteFile();
+  CleanUpCatch();
+  currentWindow?.webContents.session.flushStorageData();
+  currentWindow?.webContents.session.clearStorageData().then(() => {
+    app.exit();
+    app.relaunch();
+  });
 });
+ipcMain.handle('Storage:DeleteJava', (event) => {
+  return DeleteJava();
+});
+
+ipcMain.handle('Storage:CleanCatch', (event) => {
+  return CleanUpCatch();
+});
+
+
 ////////////////////////////////////////////////////////
 ipcMain.on('App:setWinBar', (e, args: { percentage: number, options?: ProgressBarOptions }) => {
   if (currentWindow !== null) currentWindow.setProgressBar((args.percentage / 100), args.options);

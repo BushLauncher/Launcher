@@ -34,7 +34,7 @@ export const defaultTheme = {
       'colorError': '#de4747',
       'colorInfo': '#0396ff',
       'colorBgBase': '#0a0a0a',
-      'fontSize': 16,
+      'fontSize': 17,
       'sizeStep': 4,
       'borderRadius': 10,
       'colorPrimary': '#7844e6'
