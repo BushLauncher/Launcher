@@ -1,5 +1,5 @@
 import { GameVersion, getDefaultGameType, getDefaultVersion } from '../../public/GameDataPublic';
-import { app } from 'electron';
+import { app, safeStorage } from 'electron';
 import fs, { readFileSync, writeFileSync } from 'fs';
 import { userDataStorage } from '../main';
 import { Xbox } from 'msmc';
@@ -77,8 +77,11 @@ export class Storage {
 
   constructor(private fileName: string) {
     this.storageFilePath = path.join(app.getPath('userData'), fileName + '.json');
-    this.loadData();
+    app.whenReady().then(() => {
+      this.loadData();
+    });
   }
+
 
   public DeleteFile(): boolean {
     try {
@@ -127,25 +130,24 @@ export class Storage {
 
   private loadData(): void {
     try {
-      const data = JSON.parse(readFileSync(this.storageFilePath, 'utf8'));
-      if (typeof data === 'object') {
-        this.data = data;
-      }
+      const encryptedData: Buffer = Buffer.from(readFileSync(this.storageFilePath));
+      this.data = JSON.parse(safeStorage.decryptString(encryptedData));
     } catch {
       console.log(prefix + 'Creating default configuration file...');
       this.saveData(createDefaultData());
     }
   }
 
-  private saveData(customData?: any): void {
-    writeFileSync(this.storageFilePath, JSON.stringify(customData ? customData : this.data));
+  private saveData(customData?: Object): void {
+    writeFileSync(this.storageFilePath, safeStorage.encryptString(JSON.stringify(customData ? customData : this.data)));
   }
+
+
 }
 
 export function CleanUpCatch() {
-  deleteFolderRecursive(tempDownloadDir)
+  deleteFolderRecursive(tempDownloadDir);
 }
-
 
 
 //TODO: Add an encryption system
