@@ -2,6 +2,7 @@
 ### MainChanges
 - `[GEN-35/GEN-14/GEN-34]` Multiple Game instances
 - `[GEN-40]` Kill Game
+- `[GEN-39]` All minecraft versions are now available
 ### Changes
 - `[GEN-32/GEN-31]` File management review
   - `[GEN-18]` Added Catch cleanup
