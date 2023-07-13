@@ -15,6 +15,7 @@ import { getVersionList, MinecraftVersion } from '@xmcl/installer';
 import { InstallGameFiles, VerifyGameFiles } from './GameFileManager';
 import { versionExist } from './VersionManager';
 import { InstallJava, ResolveJavaPath } from './JavaEngine';
+import { net } from 'electron';
 
 export abstract class ResolvedPreLaunchTask {
   public type!: LaunchOperationType;
@@ -204,10 +205,10 @@ export function parseGameFile(version: GameVersion, callback: (callback: Progres
 /**
  * @return the access_token or *false* if account not valid
  */
-export async function parseAccount(): Promise<string | false> {
+export async function parseAccount(): Promise<string | null | false> {
   const account = AccountManager.getSelectedAccount();
   if (account != null && AccountManager.isAccountValid(account)) {
-    return (await getAccessToken(account)).access_token;
+    return net.isOnline() ? (await getAccessToken(account)).access_token : null;
   } else return false;
 }
 
