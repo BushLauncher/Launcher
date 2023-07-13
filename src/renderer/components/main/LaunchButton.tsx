@@ -4,7 +4,7 @@ import LaunchIcon from '../../../assets/graphics/icons/caret-right.svg';
 import LoadingIcon from '../../../assets/graphics/icons/loading.svg';
 import ErrorIcon from '../../../assets/graphics/icons/close.svg';
 import downArrowIcon from '../../../assets/graphics/icons/arrow_down.svg';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Callback,
   CallbackType,
@@ -25,9 +25,10 @@ import { toast } from 'react-toastify';
 import CallbackMessage from '../public/CallbackMessage';
 import { ComponentsPublic } from '../ComponentsPublic';
 import { Button, Divider, Popover, Progress } from 'antd';
-import VersionCard from '../public/VersionCard';
+import VersionCard, { CollapsableVersionCard } from '../public/VersionCard';
 import OutsideAlerter from '../public/OutsideAlerter';
 import { v4 as uuidv4 } from 'uuid';
+import { GroupedGameVersions } from '../../../main/internal/VersionManager';
 
 
 export enum LaunchButtonState {
@@ -59,11 +60,14 @@ export default function LaunchButton(props: LaunchButtonProps) {
   const [text, setDisplayText] = useState('Launch');
   const [progress, setProgress] = useState<LoadingProgress>({ currentStep: -1, stepCount: 0, progressVal: 0 });
   let localStepPercentage: number = 0;
-  const [storage, setStorage] = useState<undefined | { selected: GameVersion, list: GameVersion[] }>(undefined);
+  const [storage, setStorage] = useState<undefined | GameVersion[]>(undefined);
+  const [selectedVersion, Select] = useState<undefined | GameVersion>(undefined);
   const [tryingKill, setTryingKill] = useState(false);
 
   async function getSelected() {
-    return await window.electron.ipcRenderer.invoke('Version:get', {});
+    const s = await window.electron.ipcRenderer.invoke('Version:get', {});
+    Select(s);
+    return s;
   }
 
   function getIcon() {
@@ -185,8 +189,10 @@ export default function LaunchButton(props: LaunchButtonProps) {
   async function versionSelectorInit(): Promise<JSX.Element> {
     if (props.versionSelector) {
       async function generateList() {
-        let selectedVersion: GameVersion = await getSelected();
-        const versionList: GameVersion[] = await window.electron.ipcRenderer.invoke('Version:getList', { gameType: GameType.VANILLA })
+        const versionList: GameVersion[] = await window.electron.ipcRenderer.invoke('Version:getList', {
+          gameType: GameType.VANILLA,
+          grouped: true
+        })
           .catch(async err => {
             const callback: ErrorCallback = {
               stepId: -1, stepCount: -1, type: CallbackType.Error, return: {
@@ -203,50 +209,81 @@ export default function LaunchButton(props: LaunchButtonProps) {
             const localRes = await window.electron.ipcRenderer.invoke('Version:getList', {
               gameType: GameType.VANILLA, type: 'local'
             });
-            selectedVersion = localRes[0];
+            Select(localRes[0]);
             return localRes;
           });
-
-
-        Object.freeze(selectedVersion);
-        const res = { selected: selectedVersion, list: versionList };
-        setStorage(res);
-        return res;
+        setStorage(versionList);
+        return versionList;
       }
 
-      const { selected, list } = state !== LaunchButtonState.Normal && storage || await generateList();
-      setCurrentState(LaunchButtonState.Normal);
-      return (<div className={styles.versionSelector} onClick={() => {
-        setVersionSelector(state === LaunchButtonState.Normal && !isVersionSelectorOpened);
-      }}>
-        <div className={styles.dataContainer}>
-          <Icon className={styles.dropdownIcon} icon={downArrowIcon} alt={'open the dropdown'} />
-          <p className={styles.versionText}>{selected.id.toString()}</p>
-        </div>
-        <div className={styles.versionListDropdown}>
-          {list.map((version: GameVersion, index: number) => {
-            return <Popover key={index}
-                            content={'Minecraft ' + version.gameType + ' ' + version.id + (!version.installed ? ' Will be installed' : '')}
-                            placement={'left'}>
-              <VersionCard version={version}
-                           className={[styles.version, ((version.id === selected.id) ? styles.versionSelected : '')].join(' ')}
-                           settings={{ iconType: 'Installed' }}
-                           toolBox={{
-                             select: {
-                               active: true,
-                               callback: () => window.electron.ipcRenderer.sendMessage('Version:set', { version: version })
-                             }
-                           }}
-              /> </Popover>;
+      const selected = selectedVersion || await getSelected();
+      const list = storage || await generateList();
 
-          })}
 
-        </div>
-      </div>);
+      function handleCallback(version: GameVersion) {
+        Select(version);
+        window.electron.ipcRenderer.sendMessage('Version:set', { version: version });
+      }
+
+      const toolBox = (v: GameVersion) => {
+        return {
+          select: {
+            active: true,
+            callback: () => handleCallback(v)
+          }
+        };
+      };
+      return (
+        <div className={styles.versionSelector}>
+          <div className={styles.dataContainer}>
+            <Icon className={styles.dropdownIcon} icon={downArrowIcon} alt={'open the dropdown'} onClick={() => {
+              setVersionSelector(state === LaunchButtonState.Normal && !isVersionSelectorOpened);
+            }} />
+            <p className={styles.versionText}>{selected.id.toString()}</p>
+          </div>
+          {state === LaunchButtonState.Normal && <OutsideAlerter className={styles.versionListDropdown} onClickOutside={() => {
+            setVersionSelector(false);
+          }} exceptElementClasses={[styles.dropdownIcon]}
+          >
+            <>
+              {list.map((_version: GameVersion | GroupedGameVersions, index: number) => {
+                if ('group' in _version) {
+                  const version = _version as GroupedGameVersions;
+                  return <CollapsableVersionCard
+                    style={{ width: 'fit-content' }} parentVersion={{
+                    version: version.parent, toolBox: toolBox(version.parent), settings: { iconType: 'Installed' },
+                    className: [styles.version, ((version.parent.id === selected.id) ? styles.versionSelected : '')].join(' ')
+                  }} children={version.children.map(childVersion => {
+                    return {
+                      version: childVersion,
+                      toolBox: toolBox(childVersion),
+                      settings: { iconType: 'Installed' },
+                      style: { margin: '0.5vh 0 0.5vh 0' },
+                      className: [styles.version, ((childVersion.id === selected.id) ? styles.versionSelected : '')].join(' ')
+                    };
+                  })} key={index} />;
+                } else {
+                  const version = _version as GameVersion;
+                  return (<Popover key={index}
+                                   content={'Minecraft ' + version.gameType + ' ' + version.id + (!version.installed ? ' Will be installed' : '')}
+                                   placement={'left'}>
+                    <VersionCard version={version}
+                                 style={{ width: 'fit-content' }}
+                                 className={[styles.version, ((version.id === selected.id) ? styles.versionSelected : '')].join(' ')}
+                                 settings={{ iconType: 'Installed' }}
+                                 toolBox={toolBox(version)}
+                    /> </Popover>);
+                }
+
+              })}
+            </>
+          </OutsideAlerter>}
+        </div>);
     } else return <div></div>;
 
   }
 
+  useEffect(()=>setCurrentState(LaunchButtonState.Normal), [])
 
   return (
     <div
@@ -264,6 +301,7 @@ export default function LaunchButton(props: LaunchButtonProps) {
             success: 'Killed process'
           }).then(() => setTryingKill(false));
         }} danger>Force Stop</Button>} placement={'bottom'}>
+
         <div className={styles.Content}>
           {/*to preserve HTML structure for css selector, the content is reorganized after in css*/}
           <Popover content={state === LaunchButtonState.Preparing ? 'Please wait for Loading...' : undefined}>
@@ -290,9 +328,7 @@ export default function LaunchButton(props: LaunchButtonProps) {
               {type === 'default' && <p className={styles.text}>{text}</p>}
             </div>
           </Popover>
-          {props.versionSelector &&
-            <OutsideAlerter className={styles.versionSelectorLoader} onClickOutside={() => setVersionSelector(false)}
-                            children={<Loader content={versionSelectorInit} style={undefined} />} />}
+          {props.versionSelector && <Loader content={versionSelectorInit} className={styles.versionSelectorLoader} />          }
 
           {props.versionSelector && <Divider className={styles.line} type={'vertical'} />}
         </div>

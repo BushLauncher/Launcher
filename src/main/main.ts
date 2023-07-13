@@ -5,7 +5,12 @@ import * as userData from './internal/UserData';
 import { CleanUpCatch } from './internal/UserData';
 import { app, BrowserWindow, ipcMain, net } from 'electron';
 import * as versionManager from './internal/VersionManager';
-import { getAllVersionList, getSelectedVersion, getVersionMethode } from './internal/VersionManager';
+import {
+  getAllVersionList,
+  getSelectedVersion,
+  getVersionMethode,
+  groupMinecraftVersions
+} from './internal/VersionManager';
 import { Callback, GameType, GameVersion, PreLaunchProcess, PreLaunchRunnableProcess } from '../public/GameDataPublic';
 import {
   AddAccount,
@@ -62,21 +67,22 @@ ipcMain.on('App:Relaunch', (event, args) => {
 });
 ipcMain.handle('App:getVersion', (event, args) => app.getVersion());
 
-ipcMain.handle('Version:getList', (event, { gameType, type }: {
+ipcMain.handle('Version:getList', (event, { gameType, type, grouped = false }: {
   gameType: GameType | undefined,
-  type?: getVersionMethode
+  type?: getVersionMethode,
+  grouped?: boolean,
 }) => {
   return new Promise(async (resolve, reject) => {
     type = type || 'auto';
     if (gameType === undefined) {
-      resolve(await getAllVersionList(type));
+      resolve(grouped ? groupMinecraftVersions(await getAllVersionList(type)): await getAllVersionList(type));
       return;
     }
-    if ((type === 'network' || type === 'auto') && net.isOnline()) resolve(await versionManager.getVersionList(gameType).catch((err) => {
+    if ((type === 'network' || type === 'auto') && net.isOnline()) resolve(grouped ? groupMinecraftVersions(await versionManager.getVersionList(gameType)) : await versionManager.getVersionList(gameType).catch((err) => {
       console.error(err);
       reject(err);
     }));
-    else resolve(versionManager.getLocalVersionList(gameType));
+    else resolve(grouped ? groupMinecraftVersions(versionManager.getLocalVersionList(gameType)) : versionManager.getLocalVersionList(gameType));
   });
 });
 ipcMain.handle('Version:getTypeList', (event, args) => {

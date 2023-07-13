@@ -3,7 +3,7 @@ import Icon from './Icons/Icon';
 import { getGameTypeIcon, getInstalledIcon } from '../views/SettingsViews/VersionSettingsView';
 import styles from './css/publicStyle.module.css';
 import { ComponentsPublic } from '../ComponentsPublic';
-import { Button, Popover } from 'antd';
+import { Button, Collapse, CollapseProps, Popover } from 'antd';
 import { DeleteOutlined, DownloadOutlined } from '@ant-design/icons';
 import hammerIcon from '../../../assets/graphics/icons/hammer.svg';
 import { toast } from 'react-toastify';
@@ -14,6 +14,7 @@ import loadIcon from '../../../assets/graphics/icons/loading.svg';
 import LaunchButton from '../main/LaunchButton';
 import { NotificationParam } from '../../App';
 import Loader from './Loader';
+import "./css/publicStyle-ant-override.css"
 
 type activeAndCallback = { active: boolean, callback?: () => any }
 
@@ -178,7 +179,7 @@ export default function VersionCard({ version, toolBox, settings, className, sty
             <Popover content={!isRunning ? 'Diagnose' : 'Version is running...'}>
               <Button key={'diagnose'} size={'large'} icon={<Icon icon={hammerIcon} className={styles.icon} />}
                       className={styles.button} disabled={isLoading || isRunning}
-                      style={{ borderColor: !isRunning ? '#ffb103' : "" }} onClick={() => requestDiagnose()} />
+                      style={{ borderColor: !isRunning ? '#ffb103' : '' }} onClick={() => requestDiagnose()} />
             </Popover>}
           {toolBox.uninstall && version.installed &&
             <Popover content={!isRunning ? 'Uninstall' : 'Version is running...'}>
@@ -188,5 +189,32 @@ export default function VersionCard({ version, toolBox, settings, className, sty
             </Popover>}</>;
       }} />}
     </div>);
+}
+
+interface CollapsableVersionCardProps extends ComponentsPublic {
+  parentVersion: VersionCardProps | JSX.Element,
+  children: VersionCardProps[] | JSX.Element[]
+}
+
+export function CollapsableVersionCard(props: CollapsableVersionCardProps) {
+  const list: CollapseProps['items'] = [
+    {
+      children: (props.children.map((version: VersionCardProps | JSX.Element, index) => {
+        if ('toolBox' in version) {
+          version = version as VersionCardProps;
+          return <VersionCard {...version} key={index} />;
+        } else {
+          version = version as JSX.Element;
+          return <span key={index}>{version}</span>;
+        }
+      })),
+      label: 'toolBox' in props.parentVersion ? <VersionCard {...props.parentVersion} /> : props.parentVersion
+    }
+  ];
+  return (
+    <div className={[props.className, "CollapsableVersion"].join(" ")} style={props.style}>
+      <Collapse items={list} size={"small"} bordered={false} />
+    </div>
+  );
 }
 

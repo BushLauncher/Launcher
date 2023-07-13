@@ -76,7 +76,7 @@
 /*****************************************/
 .VersionCard {
   width: fit-content;
-  height: 10vh;
+  min-height: 6vh;
   background-color: var(--second-background-color);
   display: flex;
   align-items: center;

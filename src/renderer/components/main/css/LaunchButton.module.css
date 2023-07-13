@@ -173,7 +173,10 @@
   z-index: 0;
 }
 
-.LaunchButton[data-version-selector='true'] .runContent:hover + .versionSelectorLoader .versionSelector .dataContainer .dropdownIcon, .LaunchButton[data-version-selector='true'].Launched .runContent + .versionSelectorLoader .versionSelector .dataContainer .dropdownIcon, .LaunchButton[data-version-selector='true'].Error .runContent + .versionSelectorLoader .versionSelector .dataContainer .dropdownIcon, .LaunchButton[data-version-selector='true'].Loading .runContent + .versionSelectorLoader .versionSelector .dataContainer .dropdownIcon {
+.LaunchButton[data-version-selector='true'] .runContent:hover + .versionSelectorLoader .versionSelector .dataContainer .dropdownIcon,
+.LaunchButton[data-version-selector='true'].Launched .runContent + .versionSelectorLoader .versionSelector .dataContainer .dropdownIcon,
+.LaunchButton[data-version-selector='true'].Error .runContent + .versionSelectorLoader .versionSelector .dataContainer .dropdownIcon,
+.LaunchButton[data-version-selector='true'].Loading .runContent + .versionSelectorLoader .versionSelector .dataContainer .dropdownIcon {
   width: 0;
 }
 
@@ -241,22 +244,20 @@
   background: var(--background-color);
   border-radius: 15px;
   left: 0;
-  max-height: 30vh;
+  max-height: 35vh;
   overflow-x: hidden;
   overflow-y: scroll;
   padding: 0 8px;
   position: absolute;
   top: calc(100% + 3px);
   transition: all .3s ease-in-out;
-  width: 45%;
+  width: 48%;
   flex: 1 1 auto;
   min-height: 0;
 }
 
 
 .LaunchButton[data-version-selector='true'] .versionSelector .versionListDropdown .version {
-  margin: 1vh 0;
-  height: 6vh;
   box-sizing: content-box;
 }
 

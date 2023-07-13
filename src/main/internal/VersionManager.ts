@@ -104,3 +104,63 @@ async function isSupported(gameType: GameType, id: string) {
       throw new Error('GameType: ' + gameType + ' is not implemented');
   }
 }
+
+export interface GroupedGameVersions { group: true, parent: GameVersion; children: GameVersion[] };
+
+export function groupMinecraftVersions(versionsList: GameVersion[]): (GameVersion | GroupedGameVersions)[] {
+  versionsList.sort((a, b) => {
+    const aParts = a.id.split('.').map(Number);
+    const bParts = b.id.split('.').map(Number);
+
+    for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
+      const aValue = aParts[i] || 0;
+      const bValue = bParts[i] || 0;
+
+      if (aValue !== bValue) {
+        return bValue - aValue;
+      }
+    }
+
+    return 0;
+  });
+
+  const groups: GroupedGameVersions[] = [];
+  let currentGroup: GroupedGameVersions = {
+    parent: versionsList[0],
+    children: [],
+    group: true
+  };
+
+  for (let i = 1; i < versionsList.length; i++) {
+    const version = versionsList[i];
+    const hasCommonParent = hasCommonParentVersion(version, currentGroup.parent);
+
+    if (hasCommonParent) {
+      currentGroup.children.push(version);
+    } else {
+      groups.push(currentGroup);
+      currentGroup = {
+        parent: version,
+        children: [],
+        group: true
+      };
+    }
+  }
+
+  groups.push(currentGroup);
+  return groups.map((group) => group.children.length === 0 ? group.parent : group);
+}
+
+function hasCommonParentVersion(version: GameVersion, parent: GameVersion): boolean {
+  const versionParts = version.id.split('.').map(Number);
+  const parentParts = parent.id.split('.').map(Number);
+
+
+  for (let i = 0; i < versionParts.length - 1; i++) {
+    if (versionParts[i] !== parentParts[i]) {
+      return false;
+    }
+  }
+
+  return true;
+}

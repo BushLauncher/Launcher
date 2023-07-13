@@ -1,0 +1,22 @@
+#root .CollapsableVersion{
+  margin: 1vh 0;
+}
+#root .CollapsableVersion .ant-collapse {
+  width: 100%;
+  background-color: var(--background-color);
+}
+
+#root .CollapsableVersion .ant-collapse .ant-collapse-header {
+  padding: 0;
+  align-items: center;
+  margin-bottom: 0;
+}
+#root .CollapsableVersion .ant-collapse .ant-collapse-expand-icon {
+  padding-inline-end: 0;
+  margin-inline-start: 0;
+  position: absolute;
+  left: 0.4vw;
+}
+#root .CollapsableVersion .ant-collapse .ant-collapse-content-box {
+  padding: 0.5vh 2vh 0.5vh;
+}
