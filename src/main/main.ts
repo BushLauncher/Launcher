@@ -67,7 +67,7 @@ ipcMain.handle('Version:getList', (event, { gameType, type }: {
   type?: getVersionMethode
 }) => {
   return new Promise(async (resolve, reject) => {
-    if (type === undefined) type = 'auto';
+    type = type || 'auto';
     if (gameType === undefined) {
       resolve(await getAllVersionList(type));
       return;

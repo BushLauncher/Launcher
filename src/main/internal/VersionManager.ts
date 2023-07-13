@@ -1,5 +1,5 @@
-import {  GameType,  GameVersion,  getDefaultGameType,  getDefaultVersion,  getVersion,  isSupported} from '../../public/GameDataPublic';
-import { MinecraftVersion } from '@xmcl/installer';
+import { GameType, GameVersion, getDefaultGameType, getDefaultVersion } from '../../public/GameDataPublic';
+import { MinecraftVersion, MinecraftVersionList } from '@xmcl/installer';
 import { existsSync, readdirSync } from 'fs';
 import path from 'path';
 import { SortMinecraftVersion } from './Utils';
@@ -36,9 +36,9 @@ export async function getVersionList(gameType: GameType): Promise<GameVersion[]>
             console.log(err);
             reject('Cannot get minecraft version list' + err);
           });
-        versionList.versions.forEach((version: MinecraftVersion) => {
+        for (const version of versionList.versions) {
           //reindexing version list to get only releases
-          if (version.type === 'release' && isSupported(gameType, version.id)) {
+          if (version.type === 'release') {
             let newVersion: GameVersion = {
               id: version.id,
               gameType: gameType,
@@ -46,7 +46,7 @@ export async function getVersionList(gameType: GameType): Promise<GameVersion[]>
             };
             foundedList.push(newVersion);
           }
-        });
+        }
         resolve(foundedList);
         break;
       }
@@ -71,7 +71,7 @@ export function getLocalVersionList(gameType: GameType): GameVersion[] {
         .filter((folder) => regex.test(folder) && isSupported(gameType, folder)).sort(SortMinecraftVersion)
         .reverse()
         .map((folder): GameVersion => {
-          const version: GameVersion = getVersion(gameType, folder);
+          const version: GameVersion = constructVersion(gameType, folder, true);
           version.installed = true;
           /*got from locals files, so version folder exist*/
           return version;
@@ -88,4 +88,19 @@ export function versionExist(versionName: string): boolean {
   const localURL = getLocationRoot() + '\\versions\\';
   if (existsSync(localURL)) return readdirSync(localURL).includes(versionName);
   else return false;
+}
+
+
+function constructVersion(gameType: GameType, id: string, installed?: boolean): GameVersion {
+  return <GameVersion>{ gameType, id, installed };
+}
+
+async function isSupported(gameType: GameType, id: string) {
+  const list: MinecraftVersionList = await getXMCLVersionList();
+  switch (gameType) {
+    case GameType.VANILLA:
+      return list.versions.findIndex(version => version.id === id) !== -1;
+    default:
+      throw new Error('GameType: ' + gameType + ' is not implemented');
+  }
 }
