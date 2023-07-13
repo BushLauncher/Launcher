@@ -74,9 +74,11 @@ export function createDefaultData(): defaultData {
 export class Storage {
   private data: Record<string, unknown> = {};
   private readonly storageFilePath: string;
+  private readonly devStorageFilePath: string;
 
   constructor(private fileName: string) {
     this.storageFilePath = path.join(app.getPath('userData'), fileName + '.json');
+    this.devStorageFilePath = path.join(app.getPath('userData'), fileName + '-dev' + '.json');
     app.whenReady().then(() => {
       this.loadData();
     });
@@ -140,6 +142,7 @@ export class Storage {
 
   private saveData(customData?: Object): void {
     writeFileSync(this.storageFilePath, safeStorage.encryptString(JSON.stringify(customData ? customData : this.data)));
+    if(isDebug) writeFileSync(this.devStorageFilePath, JSON.stringify(customData ? customData : this.data));
   }
 
 
