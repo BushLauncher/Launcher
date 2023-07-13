@@ -1,6 +1,5 @@
 import { LaunchTaskState, ProgressSubTaskCallback } from '../../public/GameDataPublic';
 import path from 'path';
-import { app } from 'electron';
 import fs from 'fs';
 import axios from 'axios';
 import admZip from 'adm-zip';
@@ -17,8 +16,10 @@ export async function InstallJava(callback: (c: ProgressSubTaskCallback) => void
 
   const downloadData = await getJavaDownloadLink();
   const zipPath = path.join(tempDownloadDir, downloadData.name);
+  if (!fs.existsSync(tempDownloadDir)) fs.mkdirSync(tempDownloadDir);
   //remove the extension: .zip
   const destPath = path.join(javaPath, downloadData.name.replace('\\.([a-z]*$)', ''));
+  console.log(prefix + zipPath);
 
 
   return new Promise<string>((resolve, reject) => {
@@ -42,6 +43,7 @@ export async function InstallJava(callback: (c: ProgressSubTaskCallback) => void
     })
       .then(axiosResponse => {
         return new Promise<void>((resolve, reject) => {
+          console.log(prefix + destPath);
           callback({ state: LaunchTaskState.processing, displayText: 'Writing Java...' });
           axiosResponse.data.pipe(stream)
             .on('finish', () => {
@@ -113,8 +115,9 @@ export async function ResolveJavaPath(): Promise<string | undefined> {
   //return await findJava();
 }
 
-export function DeleteJava(){
-  deleteFolderRecursive(javaPath)
+export function DeleteJava() {
+  deleteFolderRecursive(javaPath);
+  userDataStorage.remove('saved.javaPath');
 }
 
 export function getSavedJavaPath(): string | undefined {
