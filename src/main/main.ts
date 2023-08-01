@@ -35,8 +35,10 @@ import PreloadWindow from './PreloadWindow';
 import MainWindow from './MainWindow';
 import { DeleteJava } from './internal/JavaEngine';
 import ProgressBarOptions = Electron.ProgressBarOptions;
+import ConsoleManager, { ProcessType } from '../public/ConsoleManager';
 
-const prefix = '[Main Process]: ';
+const console = new ConsoleManager("Main", ProcessType.Internal)
+
 export let currentWindow: BrowserWindow | null = null;
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');

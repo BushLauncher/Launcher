@@ -16,6 +16,10 @@ import { InstallGameFiles, VerifyGameFiles } from './GameFileManager';
 import { versionExist } from './VersionManager';
 import { InstallJava, ResolveJavaPath } from './JavaEngine';
 import { net } from 'electron';
+import ConsoleManager, { ProcessType } from '../../public/ConsoleManager';
+
+const console = new ConsoleManager("LaunchEngine", ProcessType.Internal)
+
 
 export abstract class ResolvedPreLaunchTask {
   public type!: LaunchOperationType;

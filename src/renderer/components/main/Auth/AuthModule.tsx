@@ -14,7 +14,9 @@ import { KnownAuthErrorType } from '../../../../public/ErrorPublic';
 import { MinecraftAccount } from '../../../../public/AuthPublic';
 import { ComponentsPublic } from '../../ComponentsPublic';
 import OutsideAlerter from '../../public/OutsideAlerter';
+import RenderConsoleManager, { ProcessType } from '../../../../public/RenderConsoleManager';
 
+const console = new RenderConsoleManager("AuthModule", ProcessType.Render)
 
 interface AuthModuleProps extends ComponentsPublic {
 }

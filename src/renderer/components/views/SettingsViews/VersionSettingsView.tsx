@@ -14,7 +14,9 @@ import VersionCard from '../../public/VersionCard';
 import toDownloadIcon from '../../../../assets/graphics/icons/download.svg';
 import { Tab } from 'rc-tabs/lib/interface';
 import { JSX } from 'react/jsx-runtime';
+import RenderConsoleManager, { ProcessType } from '../../../../public/RenderConsoleManager';
 
+const console = new RenderConsoleManager("VersionSettingView", ProcessType.Render)
 
 const { Option } = AutoComplete;
 

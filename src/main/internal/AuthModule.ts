@@ -4,19 +4,20 @@ import { AuthProviderType, MinecraftAccount } from '../../public/AuthPublic';
 import { MSAuthToken } from 'msmc/types/auth/auth';
 import { KnownAuthErrorType } from '../../public/ErrorPublic';
 import { MicrosoftAuthenticator } from '@xmcl/user';
+import ConsoleManager, { ProcessType } from '../../public/ConsoleManager';
 
+const console = new ConsoleManager("AuthModule", ProcessType.Internal);
 
-const prefix = '[AuthModule Internal]: ';
 
 const auth = new Auth('login');
 auth.on('load', (asset, message) =>
-  console.log(`${prefix}[Auth Provider (msmc)] ${asset}: ${message}`)
+  console.log(`[Auth Provider (msmc)] ${asset}: ${message}`)
 );
 
 
 
 export function AddAccount(user: MinecraftAccount) {
-  console.log(prefix + 'Adding a new Account...');
+  console.log('Adding a new Account...');
   if (isAccountValid(user)) {
     if (addToStorage(user)) SelectAccount(getAccountList().length - 1);
   } else throw new Error('The new Account is not valid !');
@@ -38,7 +39,7 @@ export async function Login(providerType: AuthProviderType): Promise<MinecraftAc
   return new Promise<MinecraftAccount>((resolve, reject) => {
     switch (providerType) {
       case AuthProviderType.Microsoft: {
-        console.log(`${prefix}Logging-in a new User with: ${providerType}`);
+        console.log(`Logging-in a new User with: ${providerType}`);
         return auth.launch('electron')
           .then(async (res: Xbox) => {
             resolve(await xboxToUser(res));
@@ -58,7 +59,7 @@ export function SelectAccount(account: number | MinecraftAccount) {
   account = (typeof account === 'number') ? getAccount(account) : account;
   const id = resolveUserId(account);
   if (updateStorage('selectedAccount', id)) {
-    console.log(prefix + 'Selected account: ' + id + ', sent verify process');
+    console.log('Selected account: ' + id + ', sent verify process');
     currentWindow?.webContents.send('Auth:CheckAccountProcess', { user: account, id: id });
     return true;
   } else throw new Error('Cannot select Account, local update error');
@@ -102,7 +103,7 @@ export function RemoveAccount(indexToDelete: number) {
     SelectAccount(selectedAccountId - 1);
   }
   if (updateStorage('accountList', removeFromList(indexToDelete))) {
-    console.log(`${prefix}Removed account: ${indexToDelete}`);
+    console.log(`Removed account: ${indexToDelete}`);
   } else throw new Error('Cannot remove Account, local update error');
 }
 
@@ -177,7 +178,7 @@ function xboxToUser(xbox: Xbox): Promise<MinecraftAccount> {
           if (MinecraftLoggedUser.profile !== undefined) {
             const User: MinecraftAccount =
               constructMinecraftUser(MinecraftLoggedUser, AuthProviderType.Microsoft, xbox.msToken);
-            console.log(`${prefix}Logged new Account: ${User.profile?.name}`);
+            console.log(`Logged new Account: ${User.profile?.name}`);
             resolve(User);
           } else throw new Error('User don\'t have Mc profile');
         } else

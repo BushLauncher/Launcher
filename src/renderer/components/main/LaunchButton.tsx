@@ -29,8 +29,9 @@ import VersionCard, { CollapsableVersionCard } from '../public/VersionCard';
 import OutsideAlerter from '../public/OutsideAlerter';
 import { v4 as uuidv4 } from 'uuid';
 import { GroupedGameVersions } from '../../../main/internal/VersionManager';
+import RenderConsoleManager, { ProcessType } from '../../../public/RenderConsoleManager';
 
-
+const console = new RenderConsoleManager("LaunchButton", ProcessType.Render)
 export enum LaunchButtonState {
   Normal = 'Normal', Loading = 'Loading', Error = 'Error', Launched = 'Launched', Preparing = 'Preparing'
 }
