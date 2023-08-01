@@ -6,14 +6,14 @@ import { ResolveXmclVersion } from './PreLaunchEngine';
 import fs, { existsSync } from 'fs';
 import { getLocationRoot } from './Launcher';
 import path from 'path';
+import ConsoleManager, { ProcessType } from '../../public/ConsoleManager';
 
-const prefix = '[GameFileManager]: ';
-
+const console = new ConsoleManager("GameFileManager", ProcessType.Internal)
 export async function VerifyGameFiles(version: GameVersion, path?: string): Promise<true | MinecraftIssueReport> {
   return new Promise(async (resolve, reject) => {
     path = path || getLocationRoot();
     if (!existsSync(path)) reject('path don\' exist');
-    console.log(prefix + `Diagnosing ${version.gameType} ${version.id}`);
+    console.log(`Diagnosing ${version.gameType} ${version.id}`);
     const report = await diagnose(version.id, path);
     resolve((report.issues.length === 0) ? true : report);
     //report can be analysed [https://github.com/Voxelum/minecraft-launcher-core-node/tree/master/packages/core#diagnose]
@@ -21,7 +21,7 @@ export async function VerifyGameFiles(version: GameVersion, path?: string): Prom
 }
 
 export async function InstallGameFiles(version: GameVersion, callback: (callback: ProgressSubTaskCallback) => void): Promise<void> {
-  console.log(prefix + 'Installing game file');
+  console.log('Installing game file');
   callback({ state: LaunchTaskState.processing, displayText: 'Installing Minecraft files...' });
   switch (version.gameType) {
     case GameType.VANILLA: {
@@ -34,9 +34,9 @@ export async function InstallGameFiles(version: GameVersion, callback: (callback
             //use only global task called "install"
             if (task.path === 'install') {
               const downloadPercentage = Math.floor((task.progress * 100) / task.total);
-              //console.log(prefix + "Downloading: " + task.progress + " / " + task.total);
+              //console.log("Downloading: " + task.progress + " / " + task.total);
               //https://github.com/Voxelum/minecraft-launcher-core-node/issues/275
-              console.log(prefix + 'Downloading: ' + downloadPercentage + '%');
+              console.log('Downloading: ' + downloadPercentage + '%');
               callback({ state: LaunchTaskState.processing, localProgress: downloadPercentage });
             }
           },
@@ -45,7 +45,7 @@ export async function InstallGameFiles(version: GameVersion, callback: (callback
           },
           onSucceed(task: any, result: any) {
             if (task.path === 'install') {
-              console.log(prefix + 'finished download all');
+              console.log('finished download all');
               resolve();
             }
           }
@@ -75,7 +75,7 @@ export async function UninstallGameFiles(version: GameVersion, rootPath?: string
           break;
         }
         default:
-          throw new Error(`${prefix + version.gameType} is not implemented in 'UninstallGameFile' function`);
+          throw new Error(`${version.gameType} is not implemented in 'UninstallGameFile' function`);
       }
     } else reject('Cannot find folder: ' + folderPath);
   });

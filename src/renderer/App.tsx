@@ -24,11 +24,12 @@ import './components/views/SettingsViews/css/SettingsModal-ant-override.css';
 import { RunningVersion, RunningVersionState } from '../public/GameDataPublic';
 import loadingIcon from '../assets/graphics/icons/loading.svg';
 import playIcon from '../assets/graphics/icons/caret-right.svg';
+import RenderConsoleManager, { ProcessType } from '../public/RenderConsoleManager';
 
 const Sider = Layout.Sider;
 
 
-const prefix = '[App]: ';
+const console = new RenderConsoleManager("app", ProcessType.Render);
 
 export const NotificationParam = {
   info: {
@@ -57,7 +58,7 @@ export default function App() {
     return new Promise<void>(async (resolve) => {
       const account = user !== undefined ? user : await window.electron.ipcRenderer.invoke('Auth:getSelectedAccount', {});
       const accountId = id !== undefined ? id : await window.electron.ipcRenderer.invoke('Auth:getSelectedId', {});
-      console.log(prefix + `Verifying user ${account?.profile?.name} (storage id: ${accountId})`);
+      console.log(`Verifying user ${account?.profile?.name} (storage id: ${accountId})`);
       if (account === undefined || account === null) {
         //Auth new
         // @ts-ignore
@@ -71,11 +72,11 @@ export default function App() {
         //if account exist
         const notificationId = toast.loading(`Checking your account ${account.profile.name}...`);
         if (await window.electron.ipcRenderer.invoke('Auth:checkAccount', { user: account }) === false) {
-          console.log(prefix + `Account ${account.profile.name} is not valid`);
+          console.log(`Account ${account.profile.name} is not valid`);
           const res = await window.electron.ipcRenderer.invoke('Auth:refreshUser', { userId: accountId });
           if (res === KnownAuthErrorType.CannotRefreshAccount) {
             //if we couldn't refresh Account
-            console.log(prefix + 'Cannot re-auth account');
+            console.log('Cannot re-auth account');
             if (!isOnline) {
               //if we know the user will not be able to re-auth new user
               // @ts-ignore
@@ -94,14 +95,14 @@ export default function App() {
             }
             resolve();
           } else {
-            console.log(prefix + `Re authed account ${account.profile.name}`);
+            console.log(`Re authed account ${account.profile.name}`);
             toast.update(notificationId, Object.assign(NotificationParam.success, {
               render: 'Hi ' + account.profile.name, autoClose: 1500, closeButton: false, pauseOnHover: false
             }));
             resolve();
           }
         } else {
-          console.log(prefix + `Account ${account.profile.name} is valid`);
+          console.log(`Account ${account.profile.name} is valid`);
           toast.update(notificationId, Object.assign(NotificationParam.success, {
             render: 'Switched to ' + account.profile.name, autoClose: 1500, closeButton: false, pauseOnHover: false
           }));
@@ -229,5 +230,3 @@ function SettingsContext({ saveSelectedView, validateUser }: SettingsContextProp
 
 
 }
-
-

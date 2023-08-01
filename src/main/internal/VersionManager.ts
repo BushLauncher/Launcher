@@ -6,8 +6,11 @@ import { SortMinecraftVersion } from './Utils';
 import { userDataStorage } from '../main';
 import { getLocationRoot } from './Launcher';
 import { net } from 'electron';
+import { getVersionList as getXMCLVersionList } from '@xmcl/installer';
+import ConsoleManager, { ProcessType } from '../../public/ConsoleManager';
 
-const { getVersionList: getXMCLVersionList } = require('@xmcl/installer');
+
+const console = new ConsoleManager("VersionManager", ProcessType.Internal)
 
 export function getSelectedVersion(): GameVersion | undefined {
   const storageRes: GameVersion | undefined = userDataStorage.get('version.selected');

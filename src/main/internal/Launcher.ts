@@ -26,8 +26,10 @@ import getAppDataPath from 'appdata-path';
 import { currentWindow, userDataStorage } from '../main';
 import { getLaunchInternal } from './PreLaunchProcessPatern';
 import { CleanUpCatch } from './UserData';
+import ConsoleManager, { ProcessType } from '../../public/ConsoleManager';
 
-const prefix = '[Launcher]: ';
+const console = new ConsoleManager("Launcher", ProcessType.Internal)
+
 
 export const RunningVersionList: RunningVersion[] = [];
 
@@ -59,7 +61,7 @@ export async function RunPreLaunchProcess(baseProcess: PreLaunchProcess | PreLau
     const i = operations.indexOf(operation);
     console.warn('[' + baseProcess.id + '] Executing task ' + (i + 1) + '/' + (stepsCount + 1) + ' : ' + operation.getId());
     const taskCallback = await RunTask(operation, (c) => createCallback(c, i)).catch(err => {
-      console.error(prefix + baseProcess.id + ' ' + err);
+      console.error(baseProcess.id + ' ' + err);
       throw new Error(err);
     });
     responseStorage.push({ task: taskCallback.task.id, ...taskCallback.response });
@@ -94,7 +96,7 @@ export function RunTask(task: ResolvedPreLaunchTask | LaunchTask, callback: (cal
     try {
       resolve(await _task.run(callback));
     } catch (err) {
-      console.error(prefix + 'Cannot execute task', err);
+      console.error('Cannot execute task', err);
     }
   });
 }
@@ -134,7 +136,7 @@ function LaunchGameProcess(id: string, version: GameVersion, javaPath: string, a
       reject();
       return;
     }
-    console.log(prefix + ' Launching minecraft [' + id + '] ' + version.id + ' :' + '\nFor: ', account.profile, '\n from: ' + getLocationRoot() + '\n java: ' + javaPath);
+    console.log(' Launching minecraft [' + id + '] ' + version.id + ' :' + '\nFor: ', account.profile, '\n from: ' + getLocationRoot() + '\n java: ' + javaPath);
     launch({
       gamePath: getLocationRoot(),
       javaPath: javaPath,
@@ -152,7 +154,7 @@ function LaunchGameProcess(id: string, version: GameVersion, javaPath: string, a
         process: process
       };
       const watcher = createMinecraftProcessWatcher(process);
-      watcher.on('error', (err) => console.error(prefix + id + ' ' + err));
+      watcher.on('error', (err) => console.error(id + ' ' + err));
       watcher.on('minecraft-window-ready', () => {
         RunningVersionList[resolveIndexInList(id)] = {
           ...RunningVersionList[resolveIndexInList(id)],
@@ -162,13 +164,13 @@ function LaunchGameProcess(id: string, version: GameVersion, javaPath: string, a
         callback(<StartedCallback>{ type: CallbackType.Success, return: undefined });
       });
       watcher.on('minecraft-exit', () => {
-        console.log(prefix + id + ' Game Exited');
+        console.log(id + ' Game Exited');
         resolve(<ExitedCallback>{ type: CallbackType.Closed });
         RunningVersionList.splice(resolveIndexInList(id), 1);
         currentWindow?.webContents.send('UpdateMainTabsState');
       });
     }).catch(err => {
-      console.error(prefix + id + ' ' + err);
+      console.error(id + ' ' + err);
       reject(err);
     });
 

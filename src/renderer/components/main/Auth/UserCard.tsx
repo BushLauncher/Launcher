@@ -11,7 +11,8 @@ import { AuthProviderType, FakeMinecraftAccount, MinecraftAccount } from '../../
 import msIcon from '../../../../assets/graphics/icons/microsoft.svg';
 import unknownIcon from '../../../../assets/graphics/icons/close.svg';
 import unknownPlayerIcon from '../../../../assets/graphics/images/steve.png';
-
+import RenderConsoleManager, { ProcessType } from '../../../../public/RenderConsoleManager';
+const console = new RenderConsoleManager("UserCard", ProcessType.Render)
 export interface UserAction {
   accountIndex: number;
   reloadFunc: () => void;

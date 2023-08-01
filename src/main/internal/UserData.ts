@@ -5,9 +5,11 @@ import { userDataStorage } from '../main';
 import { Xbox } from 'msmc';
 import { Themes } from '../../public/ThemePublic';
 import { deleteFolderRecursive } from './GameFileManager';
+import path from 'path';
+import ConsoleManager, { ProcessType } from '../../public/ConsoleManager';
 
-const path = require('path');
-const prefix: string = '[UserData]: ';
+const console = new ConsoleManager("UserData", ProcessType.Internal)
+
 const isDebug = process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
 if (isDebug) app.setPath('userData', path.resolve(app.getPath('userData'), '../' + app.getName() + '-DevEnv'));
 console.log(app.getPath('userData'));
@@ -135,7 +137,7 @@ export class Storage {
       const encryptedData: Buffer = Buffer.from(readFileSync(this.storageFilePath));
       this.data = JSON.parse(safeStorage.decryptString(encryptedData));
     } catch {
-      console.log(prefix + 'Creating default configuration file...');
+      console.log('Creating default configuration file...');
       this.saveData(createDefaultData());
     }
   }
