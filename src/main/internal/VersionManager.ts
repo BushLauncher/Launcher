@@ -1,16 +1,15 @@
 import { GameType, GameVersion, getDefaultGameType, getDefaultVersion } from '../../public/GameDataPublic';
-import { MinecraftVersion, MinecraftVersionList } from '@xmcl/installer';
+import { getVersionList as getXMCLVersionList, MinecraftVersionList } from '@xmcl/installer';
 import { existsSync, readdirSync } from 'fs';
 import path from 'path';
 import { SortMinecraftVersion } from './Utils';
 import { userDataStorage } from '../main';
 import { getLocationRoot } from './Launcher';
 import { net } from 'electron';
-import { getVersionList as getXMCLVersionList } from '@xmcl/installer';
 import ConsoleManager, { ProcessType } from '../../public/ConsoleManager';
 
 
-const console = new ConsoleManager("VersionManager", ProcessType.Internal)
+const console = new ConsoleManager('VersionManager', ProcessType.Internal);
 
 export function getSelectedVersion(): GameVersion | undefined {
   const storageRes: GameVersion | undefined = userDataStorage.get('version.selected');
@@ -39,6 +38,7 @@ export async function getVersionList(gameType: GameType): Promise<GameVersion[]>
             console.log(err);
             reject('Cannot get minecraft version list' + err);
           });
+        if (typeof versionList !== 'object') throw new Error('Minecraft version list is void ');
         for (const version of versionList.versions) {
           //reindexing version list to get only releases
           if (version.type === 'release') {
@@ -108,7 +108,11 @@ async function isSupported(gameType: GameType, id: string) {
   }
 }
 
-export interface GroupedGameVersions { group: true, parent: GameVersion; children: GameVersion[] };
+export interface GroupedGameVersions {
+  group: true,
+  parent: GameVersion;
+  children: GameVersion[]
+};
 
 export function groupMinecraftVersions(versionsList: GameVersion[]): (GameVersion | GroupedGameVersions)[] {
   versionsList.sort((a, b) => {
