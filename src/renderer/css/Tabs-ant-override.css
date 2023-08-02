@@ -4,7 +4,6 @@
   display: flex;
   position: relative;
   overflow: hidden;
-
 }
 
 #root .ant-tabs-tabpane-active, #root .ant-tabs-content-left {
@@ -12,14 +11,55 @@
   padding: 0;
 }
 
+#root .ant-layout-sider, #root .ant-layout-sider-children, #root .ant-tabs-nav.Vertical, #root .ant-tabs-nav.Vertical .ant-tabs-nav-wrap, #root .ant-tabs-nav.Vertical .ant-tabs-nav-list {
+  height: 100%;
+}
 
 #root .ant-tabs-tab, #root .ant-tabs-nav-add {
   border-radius: 15px;
   transition: all 0.3s ease;
 }
 
-#root .ant-tabs-tab.ant-tabs-tab-active {
+#root .ant-tabs-tab, #root .extra button {
+  width: 100%;
+  margin-left: 0;
+  /*background-color: red;*/
+  padding: 1.5vh 2vw;
+}
+
+#root .ant-tabs-nav.collapsed .ant-tabs-tab, #root .extra.collapsed button {
+  /*background-color: aqua;*/
+  padding: 1.5vh 0;
+}
+
+#root .ant-tabs-tab span, #root .extra button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 1vw;
+  height: 7vh;
+  text-overflow: ellipsis;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+#root .ant-tabs-nav.collapsed .ant-tabs-tab span p, #root .extra.collapsed button p {
+  width: 0;
+  overflow: hidden;
+}
+
+#root .ant-tabs-nav.collapsed .ant-tabs-tab img, #root .extra.collapsed button img {
+  margin-left: 0.7vw;
+  transform: scale(1.1);
+}
+
+#root .ant-tabs-left .ant-tabs-tab.ant-tabs-tab-active {
   border-right-color: var(--primary-border);
+  background-color: var(--selected-background-color);
+}
+
+#root .ant-tabs-tab:hover, #root .extra button:hover {
+  background-color: var(--hover-background-color);
 }
 
 #root .ant-tabs.transparent .ant-tabs-nav::before {
@@ -37,20 +77,11 @@
 
 #root .ant-tabs-left .ant-tabs-nav-list {
   background-color: var(--second-background-color);
-  padding: 1vh 0.5vw 1vh 0.5vw;
   transition: all 0.3s ease;
 }
 
-#root .ant-tabs-left.transparent .ant-tabs-nav-list {
-  background-color: transparent;
-}
 
-#root .ant-tabs-left.transparent .ant-tabs-content-holder {
-  border: none;
-  padding: 0;
-}
-
-#root .ant-tabs-left[data-center="true"] .ant-tabs-nav .ant-tabs-nav-list {
+.ant-tabs-left[data-center="true"] .ant-tabs-nav .ant-tabs-nav-list {
   justify-content: center;
 }
 
@@ -62,44 +93,60 @@
   width: 100%;
 }
 
-#root .ant-tabs.scrollable .ant-tabs-content {
+
+#root .ant-tabs.scrollable .ant-tabs-nav.Vertical .ant-tabs-nav-list {
   width: 100%;
-  height: 56vh;
   overflow-y: scroll;
-  box-sizing: border-box;
-  padding-left: 5vw;
+  padding: 1vh 1vw 0 1vw;
 }
 
-#root .CollapsableMenu {
-  width: 100%;
-  height: 100%;
-  position: relative;
-  transition: all 0.3s ease;
-}
 
-#root .CollapsableMenu .CollapseButton {
-  position: absolute;
-  /*left: 18vw;*/
-  /*in render*/
-  top: 44%;
-  transform: translateY(-50%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-#root .CollapsableMenu .CollapseButton .icon {
-  /*transform: scale(0.8);*/
-  /*in renderer*/
-  transition: all 0.3s ease;
+#root .ant-tabs.scrollable .ant-tabs-nav-list::-webkit-scrollbar {
+  width: 0;
 }
 
 /** Disable "more" button**/
 /*https://stackoverflow.com/q/73649979*/
 #root .HideOperation .ant-tabs-nav-operations {
-  height: calc(7vh - 5px);
+  height: 0;
 }
 
 #root .HideOperation .ant-tabs-nav-operations * {
   display: none;
+}
+
+/***********/
+#root .ant-tabs-nav.mainNavBar {
+  height: 80vh;
+}
+
+#root .ant-tabs-nav.mainNavBar span .State {
+  position: absolute;
+  bottom: -0.5vh;
+  right: 0.3vw;
+  width: 2vw;
+  height: 2vw;
+}
+
+#root .ant-tabs-nav.mainNavBar span .State img,
+#root .ant-tabs-nav.mainNavBar span .State div {
+  width: 110%;
+  height: 110%;
+  margin-left: 0;
+}
+
+#root .extra {
+  width: 100%;
+  background-color: var(--second-background-color);
+  padding: 1.6vh 1vw 2.2vh 1vw;
+}
+
+#root .extra button {
+  width: auto;
+  cursor: pointer;
+  background-color: transparent;
+  border: none;
+  padding: 14px;
+  box-sizing: content-box;
+  border-radius: 15px;
 }

@@ -1,13 +1,15 @@
-import {  GameType,  GameVersion,  getDefaultGameType,  getDefaultVersion,  getVersion,  isSupported} from '../../public/GameDataPublic';
-import { MinecraftVersion } from '@xmcl/installer';
+import { GameType, GameVersion, getDefaultGameType, getDefaultVersion } from '../../public/GameDataPublic';
+import { getVersionList as getXMCLVersionList, MinecraftVersionList } from '@xmcl/installer';
 import { existsSync, readdirSync } from 'fs';
 import path from 'path';
 import { SortMinecraftVersion } from './Utils';
 import { userDataStorage } from '../main';
 import { getLocationRoot } from './Launcher';
 import { net } from 'electron';
+import ConsoleManager, { ProcessType } from '../../public/ConsoleManager';
 
-const { getVersionList: getXMCLVersionList } = require('@xmcl/installer');
+
+const console = new ConsoleManager('VersionManager', ProcessType.Internal);
 
 export function getSelectedVersion(): GameVersion | undefined {
   const storageRes: GameVersion | undefined = userDataStorage.get('version.selected');
@@ -36,9 +38,10 @@ export async function getVersionList(gameType: GameType): Promise<GameVersion[]>
             console.log(err);
             reject('Cannot get minecraft version list' + err);
           });
-        versionList.versions.forEach((version: MinecraftVersion) => {
+        if (typeof versionList !== 'object') throw new Error('Minecraft version list is void ');
+        for (const version of versionList.versions) {
           //reindexing version list to get only releases
-          if (version.type === 'release' && isSupported(gameType, version.id)) {
+          if (version.type === 'release') {
             let newVersion: GameVersion = {
               id: version.id,
               gameType: gameType,
@@ -46,7 +49,7 @@ export async function getVersionList(gameType: GameType): Promise<GameVersion[]>
             };
             foundedList.push(newVersion);
           }
-        });
+        }
         resolve(foundedList);
         break;
       }
@@ -71,7 +74,7 @@ export function getLocalVersionList(gameType: GameType): GameVersion[] {
         .filter((folder) => regex.test(folder) && isSupported(gameType, folder)).sort(SortMinecraftVersion)
         .reverse()
         .map((folder): GameVersion => {
-          const version: GameVersion = getVersion(gameType, folder);
+          const version: GameVersion = constructVersion(gameType, folder, true);
           version.installed = true;
           /*got from locals files, so version folder exist*/
           return version;
@@ -88,4 +91,83 @@ export function versionExist(versionName: string): boolean {
   const localURL = getLocationRoot() + '\\versions\\';
   if (existsSync(localURL)) return readdirSync(localURL).includes(versionName);
   else return false;
+}
+
+
+function constructVersion(gameType: GameType, id: string, installed?: boolean): GameVersion {
+  return <GameVersion>{ gameType, id, installed };
+}
+
+async function isSupported(gameType: GameType, id: string) {
+  const list: MinecraftVersionList = await getXMCLVersionList();
+  switch (gameType) {
+    case GameType.VANILLA:
+      return list.versions.findIndex(version => version.id === id) !== -1;
+    default:
+      throw new Error('GameType: ' + gameType + ' is not implemented');
+  }
+}
+
+export interface GroupedGameVersions {
+  group: true,
+  parent: GameVersion;
+  children: GameVersion[]
+};
+
+export function groupMinecraftVersions(versionsList: GameVersion[]): (GameVersion | GroupedGameVersions)[] {
+  versionsList.sort((a, b) => {
+    const aParts = a.id.split('.').map(Number);
+    const bParts = b.id.split('.').map(Number);
+
+    for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
+      const aValue = aParts[i] || 0;
+      const bValue = bParts[i] || 0;
+
+      if (aValue !== bValue) {
+        return bValue - aValue;
+      }
+    }
+
+    return 0;
+  });
+
+  const groups: GroupedGameVersions[] = [];
+  let currentGroup: GroupedGameVersions = {
+    parent: versionsList[0],
+    children: [],
+    group: true
+  };
+
+  for (let i = 1; i < versionsList.length; i++) {
+    const version = versionsList[i];
+    const hasCommonParent = hasCommonParentVersion(version, currentGroup.parent);
+
+    if (hasCommonParent) {
+      currentGroup.children.push(version);
+    } else {
+      groups.push(currentGroup);
+      currentGroup = {
+        parent: version,
+        children: [],
+        group: true
+      };
+    }
+  }
+
+  groups.push(currentGroup);
+  return groups.map((group) => group.children.length === 0 ? group.parent : group);
+}
+
+function hasCommonParentVersion(version: GameVersion, parent: GameVersion): boolean {
+  const versionParts = version.id.split('.').map(Number);
+  const parentParts = parent.id.split('.').map(Number);
+
+
+  for (let i = 0; i < versionParts.length - 1; i++) {
+    if (versionParts[i] !== parentParts[i]) {
+      return false;
+    }
+  }
+
+  return true;
 }

@@ -1,26 +1,35 @@
 import './defaultStyle.css';
 import Loader from './components/public/Loader';
 import { toast, ToastContainer } from 'react-toastify';
-import AuthModule from './components/main/Auth/AuthModule';
+import AuthModule, { addAccount, getLogin } from './components/main/Auth/AuthModule';
 import AuthModuleStyle from './components/main/Auth/css/AuthModuleStyle.module.css';
 import { KnownAuthErrorType } from '../public/ErrorPublic';
-import React from 'react';
-import { globalStateContext } from './index';
+import React, { useState } from 'react';
+import { defaultTheme, globalStateContext } from './index';
 import { MinecraftAccount } from '../public/AuthPublic';
-import { Layout } from 'antd';
+import { ConfigProvider, Layout, Modal, Popover, Tabs } from 'antd';
 import Icon from './components/public/Icons/Icon';
+import { StyleProvider } from '@ant-design/cssinjs';
+
 
 import dirtBlockIcon from '../assets/graphics/images/grass_block.png';
 import settingsIcon from '../assets/graphics/icons/settings.svg';
 import VanillaView from './components/views/vanillaView';
-import SettingsView from './components/views/SettingsView';
 import './css/Tabs-ant-override.css';
-import LayoutCollapsableTabs from './components/public/LayoutCollapsableTabs';
-import {addAccount, getLogin} from "./components/main/Auth/AuthModule"
+import CollapsableSider from './components/public/CollapsableSider';
+
+import { CapitalizeFirst } from '../public/Utils';
+import SettingsView from './components/views/SettingsViews/SettingsView';
+import './components/views/SettingsViews/css/SettingsModal-ant-override.css';
+import { RunningVersion, RunningVersionState } from '../public/GameDataPublic';
+import loadingIcon from '../assets/graphics/icons/loading.svg';
+import playIcon from '../assets/graphics/icons/caret-right.svg';
+import RenderConsoleManager, { ProcessType } from '../public/RenderConsoleManager';
 
 const Sider = Layout.Sider;
 
-const prefix = '[App]: ';
+
+const console = new RenderConsoleManager("app", ProcessType.Render);
 
 export const NotificationParam = {
   info: {
@@ -49,7 +58,7 @@ export default function App() {
     return new Promise<void>(async (resolve) => {
       const account = user !== undefined ? user : await window.electron.ipcRenderer.invoke('Auth:getSelectedAccount', {});
       const accountId = id !== undefined ? id : await window.electron.ipcRenderer.invoke('Auth:getSelectedId', {});
-      console.log(prefix + `Verifying user ${account?.profile?.name} (storage id: ${accountId})`);
+      console.log(`Verifying user ${account?.profile?.name} (storage id: ${accountId})`);
       if (account === undefined || account === null) {
         //Auth new
         // @ts-ignore
@@ -63,11 +72,11 @@ export default function App() {
         //if account exist
         const notificationId = toast.loading(`Checking your account ${account.profile.name}...`);
         if (await window.electron.ipcRenderer.invoke('Auth:checkAccount', { user: account }) === false) {
-          console.log(prefix + `Account ${account.profile.name} is not valid`);
+          console.log(`Account ${account.profile.name} is not valid`);
           const res = await window.electron.ipcRenderer.invoke('Auth:refreshUser', { userId: accountId });
           if (res === KnownAuthErrorType.CannotRefreshAccount) {
             //if we couldn't refresh Account
-            console.log(prefix + 'Cannot re-auth account');
+            console.log('Cannot re-auth account');
             if (!isOnline) {
               //if we know the user will not be able to re-auth new user
               // @ts-ignore
@@ -86,14 +95,14 @@ export default function App() {
             }
             resolve();
           } else {
-            console.log(prefix + `Re authed account ${account.profile.name}`);
+            console.log(`Re authed account ${account.profile.name}`);
             toast.update(notificationId, Object.assign(NotificationParam.success, {
               render: 'Hi ' + account.profile.name, autoClose: 1500, closeButton: false, pauseOnHover: false
             }));
             resolve();
           }
         } else {
-          console.log(prefix + `Account ${account.profile.name} is valid`);
+          console.log(`Account ${account.profile.name} is valid`);
           toast.update(notificationId, Object.assign(NotificationParam.success, {
             render: 'Switched to ' + account.profile.name, autoClose: 1500, closeButton: false, pauseOnHover: false
           }));
@@ -105,8 +114,7 @@ export default function App() {
 
   const content = (<Loader
     content={async () => {
-      const interfaceData = await window.electron.ipcRenderer.invoke('getData', { dataPath: 'interface' });
-      const selectedTab: string = interfaceData.selectedTab !== undefined ? interfaceData.selectedTab : 'vanilla';
+
       return (<div id={'MAIN'}>
         <Loader content={async (reload) => {
           window.electron.ipcRenderer.on('Auth:CheckAccountProcess', // @ts-ignore
@@ -114,45 +122,7 @@ export default function App() {
           await validateUser(undefined, undefined, reload);
           return <AuthModule />;
         }} className={AuthModuleStyle.AuthModule} />
-        <LayoutCollapsableTabs items={[
-          { key: 'vanilla', icon: dirtBlockIcon, content: VanillaView() },
-          { key: 'settings', icon: settingsIcon, content: SettingsView() }
-        ].map(tab => {
-          return {
-            key: tab.key,
-
-            label: {
-              style: {
-                display: 'flex',
-                alignItems: 'center',
-                gap: '2vw',
-                maxWidth: '15vw',
-                height: '5.2vw',
-                textOverflow: 'ellipsis',
-                transition: 'all 0.3s ease',
-                overflow: 'hidden'
-              },
-              icon: <Icon icon={tab.icon} />,
-              label: tab.key
-            },
-            children: tab.content,
-            type: 'card',
-            closable: false
-          };
-        })}
-                               tabPosition={'left'}
-                               type={'card'}
-                               tabBarGutter={5}
-                               defaultActiveKey={selectedTab}
-                               moreIcon={<></>}
-                               className={"HideOperation"}
-                               defaultCollapsed={interfaceData['isMenuCollapsed']}
-                               onCollapse={(isCollapsed: boolean) =>
-                                 window.electron.ipcRenderer.sendMessage('updateData', {
-                                   dataPath: 'interface.isMenuCollapsed',
-                                   value: isCollapsed
-                                 })
-                               } onChange={saveSelectedView} />
+        <SettingsContext saveSelectedView={saveSelectedView} validateUser={validateUser} />
         <ToastContainer
           position='bottom-center'
           autoClose={5000}
@@ -173,4 +143,90 @@ export default function App() {
   return content;
 }
 
+interface SettingsContextProps {
+  saveSelectedView: (id: string) => any,
+  validateUser: (user?: MinecraftAccount, id?: number, reloadFunc?: () => any) => Promise<void>
+}
 
+function SettingsContext({ saveSelectedView, validateUser }: SettingsContextProps) {
+  const [open, setOpen] = useState(false);
+  return <>
+    <Loader content={async () => {
+      const interfaceData = await window.electron.ipcRenderer.invoke('getData', { dataPath: 'interface' });
+      const selectedTab: string = interfaceData.selectedTab !== undefined ? interfaceData.selectedTab : 'vanilla';
+
+      return <Layout style={{ width: '100%', height: '100%' }}>
+        <Tabs
+          items={[
+            { key: 'vanilla', icon: dirtBlockIcon, content: VanillaView({ key: 'vanilla' }) },
+
+          ].map(tab => {
+            return {
+              key: tab.key,
+              label:
+                <Popover content={CapitalizeFirst(tab.key)} placement={'right'}>
+                    <span>
+                      <Icon icon={tab.icon} />
+                      <p>{CapitalizeFirst(tab.key)}</p>
+                      <Loader content={async (reload) => {
+                        window.electron.ipcRenderer.once('UpdateMainTabsState', reload);
+                        const list: RunningVersion[] = await window.electron.ipcRenderer.invoke('GameEngine:getRunningList', {});
+                        const version = list.find((rv) => rv.id === tab.key);
+                        if (version === undefined) return <></>;
+                        else return <Icon
+                          icon={version.State === RunningVersionState.Launching ? loadingIcon : playIcon} />;
+                      }} className={'State'} />
+                    </span>
+                </Popover>,
+              children: tab.content,
+              type: 'card',
+              closable: false
+            };
+          })}
+          tabPosition={'left'}
+          type={'card'}
+          tabBarGutter={5}
+          defaultActiveKey={selectedTab}
+          className={'HideOperation scrollable'}
+          renderTabBar={(props, DefaultNavBar) => {
+            return (
+              <CollapsableSider
+                defaultCollapsed={interfaceData['isMenuCollapsed']}
+                onCollapse={(isCollapsed: boolean) =>
+                  window.electron.ipcRenderer.sendMessage('updateData', {
+                    dataPath: 'interface.isMenuCollapsed',
+                    value: isCollapsed
+                  })
+
+                }
+                content={(collapsed) =>
+                  <>
+                    <DefaultNavBar {...props}
+                                   className={[collapsed ? 'collapsed' : undefined, props.tabPosition === 'left' ? 'Vertical' : undefined, 'mainNavBar'].join(' ')} />
+                    <div className={['extra', collapsed ? 'collapsed' : undefined].join(' ')}>
+                      <Popover content={'Settings'} placement={'right'}>
+                        <button onClick={() => setOpen(true)}>
+                          <Icon icon={settingsIcon} />
+                          <p>Settings</p>
+                        </button>
+                      </Popover>
+                    </div>
+                  </>}
+              />
+            );
+          }
+          }
+          onChange={saveSelectedView} />
+      </Layout>;
+    }} />
+    <ConfigProvider theme={defaultTheme}>
+      <StyleProvider hashPriority={'high'}>
+        <Modal className={'SettingsModal'} zIndex={50} open={open} onCancel={() => setOpen(false)} footer={null}
+               centered title={<p>Settings</p>} width={'100%'}
+               okText={'Save'} cancelText={'Close'} style={{ marginTop: '6vh' }}>{SettingsView()}</Modal>
+      </StyleProvider>
+    </ConfigProvider>
+  </>;
+
+
+}

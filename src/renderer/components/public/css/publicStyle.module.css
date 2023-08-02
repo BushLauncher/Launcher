@@ -76,7 +76,7 @@
 /*****************************************/
 .VersionCard {
   width: fit-content;
-  height: 10vh;
+  min-height: 6vh;
   background-color: var(--second-background-color);
   display: flex;
   align-items: center;
@@ -160,4 +160,30 @@
   width: auto;
   height: auto;
   box-sizing: content-box;
+}
+
+/*********************************/
+
+.CollapsableMenu {
+  height: 100%;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.CollapsableMenu .CollapseButton {
+  position: absolute;
+  /*left: 18vw;*/
+  /*in render*/
+  top: 44%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.CollapsableMenu .CollapseButton .icon {
+  /*transform: scale(0.8);*/
+  /*in renderer*/
+  transition: all 0.3s ease;
 }

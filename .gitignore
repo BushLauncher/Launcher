@@ -29,6 +29,5 @@ npm-debug.log.*
 *.scss.d.ts
 
 
-#manually
+#manual
 .report
-

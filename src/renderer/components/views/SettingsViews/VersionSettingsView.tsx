@@ -14,7 +14,9 @@ import VersionCard from '../../public/VersionCard';
 import toDownloadIcon from '../../../../assets/graphics/icons/download.svg';
 import { Tab } from 'rc-tabs/lib/interface';
 import { JSX } from 'react/jsx-runtime';
+import RenderConsoleManager, { ProcessType } from '../../../../public/RenderConsoleManager';
 
+const console = new RenderConsoleManager("VersionSettingView", ProcessType.Render)
 
 const { Option } = AutoComplete;
 
@@ -62,14 +64,15 @@ export default function VersionSettingsView() {
                       install: { active: true, callback: reload }
                     }} className={styles.card} />)}
                 </div>;
-              }} className={styles.scrollable} />
+              }} className={[styles.scrollable, 'tabs'].join(' ')} />
 
 
             });
 
           });
           Promise.all(construct).then(() => {
-            resolve(<Tabs items={tabList} className={[styles.VersionTool,styles.scrollable, 'scrollable transparent'].join(' ')}
+            resolve(<Tabs items={tabList}
+                          className={[styles.VersionTool, styles.scrollable, 'scrollable HideOperation'].join(' ')}
                           type={'card'} centered />);
           });
         }).catch(err => console.error(err));
@@ -80,7 +83,7 @@ export default function VersionSettingsView() {
         <PathInput callback={() => reload()} />
       </div>
     );
-  }} className={[defaultStyle.View, styles.View].join(' ')} style={undefined} />;
+  }} className={[defaultStyle.View, styles.View, 'versionSettings'].join(' ')} style={undefined} />;
 }
 
 function PathInput({ callback }: { callback: () => any }): JSX.Element {
@@ -124,7 +127,9 @@ function PathInput({ callback }: { callback: () => any }): JSX.Element {
       const saved: string = await window.electron.ipcRenderer.invoke('GameEngine:getRootPath', {});
       const defaultPath: string = await window.electron.ipcRenderer.invoke('GameEngine:getDefaultRootPath', {});
       return (
-        <LabeledInput label={'minecraft folder path'} input={
+        <LabeledInput label={'minecraft folder path'}
+
+        >
           <div className={styles.pathSelector}>
             {state !== states.normal && <Icon icon={getIcon()} className={styles.icon} />}
             <AutoComplete status={state === states.error ? 'error' : undefined}
@@ -140,7 +145,7 @@ function PathInput({ callback }: { callback: () => any }): JSX.Element {
             </AutoComplete>
 
           </div>
-        } />);
+        </LabeledInput>);
     }
     } className={styles.pathSelector} style={undefined} />
   );

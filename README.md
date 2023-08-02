@@ -58,6 +58,8 @@ Download the last version of BushLauncher, login, and hit the play button !
 
     MP me on discord `@Gagafeee#3431` or send me a mail at `gagafeee@gmail.com`
 
+
+
 ## Acknowledgements
 
 * [MCHeads API](https://mc-heads.net/)

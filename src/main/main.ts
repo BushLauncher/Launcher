@@ -1,11 +1,16 @@
 /* eslint global-require: off, no-console: off, promise/always-return: off */
 // noinspection JSUnusedLocalSymbols
 
+import * as userData from './internal/UserData';
+import { CleanUpCatch } from './internal/UserData';
 import { app, BrowserWindow, ipcMain, net } from 'electron';
 import * as versionManager from './internal/VersionManager';
-import { getAllVersionList, getSelectedVersion, getVersionMethode } from './internal/VersionManager';
-import * as userData from './internal/UserData';
-import { SetRootPath } from './internal/UserData';
+import {
+  getAllVersionList,
+  getSelectedVersion,
+  getVersionMethode,
+  groupMinecraftVersions
+} from './internal/VersionManager';
 import { Callback, GameType, GameVersion, PreLaunchProcess, PreLaunchRunnableProcess } from '../public/GameDataPublic';
 import {
   AddAccount,
@@ -22,15 +27,18 @@ import {
   SelectAccount
 } from './internal/AuthModule';
 import { AuthProviderType, MinecraftAccount } from '../public/AuthPublic';
-import { getDefaultRootPath, getLocationRoot, RunPreLaunchProcess } from './internal/Launcher';
+import { getDefaultRootPath, getLocationRoot, Launch, RunningVersionList, StopGame } from './internal/Launcher';
 import { InstallGameFiles, UninstallGameFiles, VerifyGameFiles } from './internal/GameFileManager';
 import { KnownAuthErrorType } from '../public/ErrorPublic';
 import { installExtensions } from './extension-installer';
 import PreloadWindow from './PreloadWindow';
 import MainWindow from './MainWindow';
+import { DeleteJava } from './internal/JavaEngine';
 import ProgressBarOptions = Electron.ProgressBarOptions;
+import ConsoleManager, { ProcessType } from '../public/ConsoleManager';
 
-const prefix = '[Main Process]: ';
+const console = new ConsoleManager("Main", ProcessType.Internal)
+
 export let currentWindow: BrowserWindow | null = null;
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
@@ -61,21 +69,22 @@ ipcMain.on('App:Relaunch', (event, args) => {
 });
 ipcMain.handle('App:getVersion', (event, args) => app.getVersion());
 
-ipcMain.handle('Version:getList', (event, { gameType, type }: {
+ipcMain.handle('Version:getList', (event, { gameType, type, grouped = false }: {
   gameType: GameType | undefined,
-  type?: getVersionMethode
+  type?: getVersionMethode,
+  grouped?: boolean,
 }) => {
   return new Promise(async (resolve, reject) => {
-    if (type === undefined) type = 'auto';
+    type = type || 'auto';
     if (gameType === undefined) {
-      resolve(await getAllVersionList(type));
+      resolve(grouped ? groupMinecraftVersions(await getAllVersionList(type)): await getAllVersionList(type));
       return;
     }
-    if ((type === 'network' || type === 'auto') && net.isOnline()) resolve(await versionManager.getVersionList(gameType).catch((err) => {
+    if ((type === 'network' || type === 'auto') && net.isOnline()) resolve(grouped ? groupMinecraftVersions(await versionManager.getVersionList(gameType)) : await versionManager.getVersionList(gameType).catch((err) => {
       console.error(err);
       reject(err);
     }));
-    else resolve(versionManager.getLocalVersionList(gameType));
+    else resolve(grouped ? groupMinecraftVersions(versionManager.getLocalVersionList(gameType)) : versionManager.getLocalVersionList(gameType));
   });
 });
 ipcMain.handle('Version:getTypeList', (event, args) => {
@@ -135,14 +144,13 @@ ipcMain.handle('Auth:Login', async (event, args: { type: AuthProviderType }) => 
 ipcMain.on('Auth:SelectAccount', (event, args: { index: number }) => SelectAccount(args.index));
 
 ipcMain.handle('GameEngine:Launch', async (event, args: {
-  LaunchProcess: PreLaunchProcess | PreLaunchRunnableProcess
+  LaunchProcess: PreLaunchProcess | PreLaunchRunnableProcess,
 }) => {
-  return RunPreLaunchProcess(args.LaunchProcess,
-    (callback: Callback) => {
-      event.sender.send('GameLaunchCallback', callback);
-      //console.log(callback);
-    })
-    .catch(err => {
+  return Launch(args.LaunchProcess, (callback: Callback) => {
+    event.sender.send('GameLaunchCallback', callback);
+    //console.log(callback);
+  })
+    .catch((err: any) => {
       console.error(err);
       return err;
     });
@@ -156,8 +164,17 @@ ipcMain.handle('GameEngine:getRootPath', (event, args) => {
 ipcMain.handle('GameEngine:getDefaultRootPath', (event, args) => {
   return getDefaultRootPath();
 });
+ipcMain.handle('GameEngine:getRunningList', (event, args) => {
+  //must reencode list because we cant pass process Class
+  return RunningVersionList.map(rv => {
+    return { ...rv, process: null };
+  });
+});
+ipcMain.handle('GameEngine:KillProcess', (event, args: { processId: string }) => {
+  return StopGame(args.processId);
+});
 ipcMain.handle('Option:setRootPath', (event, args: { path: string }) => {
-  return SetRootPath(args.path);
+  return userData.SetRootPath(args.path);
 });
 ////////////////////////////////////////////////////////
 export const userDataStorage = new userData.Storage('user-preference');
@@ -173,9 +190,25 @@ ipcMain.on('updateData', (event, arg: { value: any; dataPath: any }) => {
 ipcMain.handle('removeData', (event, arg: { dataPath: string }) => {
   return userDataStorage.remove(arg.dataPath);
 });
-ipcMain.handle('Storage:DeleteAll', (event) => {
-  return userDataStorage.DeleteFile();
+ipcMain.handle('Storage:DeleteAll', async (event) => {
+  DeleteJava();
+  userDataStorage.DeleteFile();
+  CleanUpCatch();
+  currentWindow?.webContents.session.flushStorageData();
+  currentWindow?.webContents.session.clearStorageData().then(() => {
+    app.exit();
+    app.relaunch();
+  });
 });
+ipcMain.handle('Storage:DeleteJava', (event) => {
+  return DeleteJava();
+});
+
+ipcMain.handle('Storage:CleanCatch', (event) => {
+  return CleanUpCatch();
+});
+
+
 ////////////////////////////////////////////////////////
 ipcMain.on('App:setWinBar', (e, args: { percentage: number, options?: ProgressBarOptions }) => {
   if (currentWindow !== null) currentWindow.setProgressBar((args.percentage / 100), args.options);

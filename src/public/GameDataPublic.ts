@@ -1,5 +1,6 @@
 import { knowErrorFormat } from './ErrorPublic';
 import { ResolvedPreLaunchTask } from '../main/internal/PreLaunchEngine';
+import { ChildProcess } from 'child_process';
 
 export enum GameType {
   VANILLA = 'VANILLA'
@@ -11,22 +12,14 @@ export type GameVersion = {
   installed?: boolean;
 };
 export const getDefaultGameType: GameType = GameType.VANILLA;
-export const getDefaultVersion = (gameType: GameType) => {
-  return supportedVersion[
-    supportedVersion.findIndex((v) => v.gameType === gameType)
-    ];
+export const getDefaultVersion = (gameType: GameType): GameVersion => {
+  switch (gameType) {
+    case GameType.VANILLA:
+      return { id: ' 1.20', gameType: gameType };
+    default:
+      throw new Error('GameType: ' + gameType + ' is not implemented');
+  }
 };
-export const supportedVersion: Array<GameVersion> = [
-  { id: '1.20', gameType: GameType.VANILLA },
-  { id: '1.19.4', gameType: GameType.VANILLA },
-  { id: '1.18.2', gameType: GameType.VANILLA },
-  { id: '1.16.5', gameType: GameType.VANILLA },
-  { id: '1.14.4', gameType: GameType.VANILLA },
-  { id: '1.13.2', gameType: GameType.VANILLA },
-  { id: '1.12.2', gameType: GameType.VANILLA },
-  { id: '1.18.9', gameType: GameType.VANILLA },
-  { id: '1.7.10', gameType: GameType.VANILLA }
-];
 
 export enum LaunchOperationType {
   //Check some information before Launch, like: Server state etc...
@@ -56,23 +49,6 @@ export enum PreLaunchTasks {
 export type LaunchTask = {
   id: keyof typeof PreLaunchTasks,
   params?: any
-}
-
-export const isSupported = (gameType: GameType, id: string): boolean => {
-  for (const version of supportedVersion) {
-    if (version.id === id && version.gameType === gameType) {
-      return true;
-    }
-  }
-  return false;
-};
-
-export function getVersion(gameType: GameType, id: string): GameVersion {
-  if (!isSupported(gameType, id)) throw new Error(`Version ${id}, isn't unsupported, maybe is the wrong gameType`);
-  for (const version of supportedVersion) {
-    if (version.id === id && version.gameType === gameType) return version;
-  }
-  throw new Error(`Cannot get minecraft version: ${id} in GameType: ${gameType}.`);
 }
 
 export enum CallbackType {
@@ -141,6 +117,7 @@ export interface FinishedSubTaskCallback extends UpdateLaunchTaskCallback {
 }
 
 export interface PreLaunchProcess {
+  id: string,
   actions: LaunchTask[];
   resolved: false;
   internal: false;
@@ -149,6 +126,7 @@ export interface PreLaunchProcess {
 }
 
 export interface PreLaunchRunnableProcess {
+  id: string,
   actions: ResolvedPreLaunchTask[];
   resolved: true;
   internal?: boolean;
@@ -167,3 +145,14 @@ export interface PreLaunchError extends PreLaunchResponse {
   success: false;
 }
 
+export enum RunningVersionState {
+  Launching,
+  Running
+}
+
+export interface RunningVersion {
+  id: string,
+  Version: GameVersion,
+  State: RunningVersionState,
+  process?: ChildProcess
+}

@@ -23,7 +23,7 @@ declare global {
   }
 }
 export const globalStateContext = React.createContext(globalState);
-const defaultTheme = {
+export const defaultTheme = {
     algorithm: [theme.darkAlgorithm],
     'token': {
       'colorPrimaryBg': '#323232',
@@ -34,7 +34,7 @@ const defaultTheme = {
       'colorError': '#de4747',
       'colorInfo': '#0396ff',
       'colorBgBase': '#0a0a0a',
-      'fontSize': 14,
+      'fontSize': 17,
       'sizeStep': 4,
       'borderRadius': 10,
       'colorPrimary': '#7844e6'
@@ -43,6 +43,7 @@ const defaultTheme = {
 ;
 root.render(
   <ConfigProvider theme={defaultTheme}>
+    {/*Body is also Theme*/}
     <globalStateContext.Provider value={globalState}>
       <Loader content={async () => {
         const theme: Themes = await globalState.theme;

@@ -3,7 +3,7 @@ import { ComponentsPublic } from '../../ComponentsPublic';
 
 export interface InputProps extends ComponentsPublic{
   label?: string | React.ReactNode;
-  input: React.ReactNode;
+  children: JSX.Element[] | JSX.Element
 }
 export default function LabeledInput(props: InputProps) {
   return <div className={styles.input}>
@@ -11,6 +11,6 @@ export default function LabeledInput(props: InputProps) {
       <p className={styles.label}>{props.label + ":"}</p>
       : props.label
     }
-    {props.input}
+    {props.children}
   </div>;
 }

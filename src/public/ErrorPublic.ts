@@ -8,7 +8,7 @@ export enum KnowGameErrorType {
 }
 
 export type knowErrorFormat = {
-  message: string, desc?: string, resolution?: string, additionalError?: any
+  message: string, desc?: string | JSX.Element, resolution?: string, additionalError?: any
 }
 
 //Auth Errors
