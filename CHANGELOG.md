@@ -1,3 +1,4 @@
+# 0.6.0
 # 0.5.0
 ### MainChanges
 - `[GEN-35/GEN-14/GEN-34]` Multiple Game instances
