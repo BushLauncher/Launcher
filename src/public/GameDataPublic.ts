@@ -21,33 +21,52 @@ export const getDefaultVersion = (gameType: GameType): GameVersion => {
   }
 };
 
+/**
+ * @link Documentation https://docs.google.com/document/d/1qbFN9mUhHqPQ5Pp8L_7p3sf6C6kwzn6ldTO5pg2u3Hw/edit#heading=h.n7l628o45j4j
+ */
 export enum LaunchOperationType {
-  //Check some information before Launch, like: Server state etc...
+  //Preload: Assign some variables before the launch
   Preload = 'Preload',
-  //Test and diagnose files, (type like "install if not exist")
-  Parse = 'Parse',
-  //Verify: installed files, configuration, etc (like Parse but return error if not installed)
+  //Verify: Check some value before the launch (can cancel process)
   Verify = 'Verify',
+  //Test and diagnose files, (like "install if not exist")
+  Parse = 'Parse',
   //Install Files not locally present.
   Install = 'Install',
   //Execute some file, setup Program, etc...
   Setup = 'Setup',
-  //Install some special configurations file, like in: .config folder...
+  //Install some special configurations file, like in: "config" folder...
   PostInstall = 'PostInstall'
 }
 
-
-export enum PreLaunchTasks {
+/**
+ * @link Documentation https://docs.google.com/document/d/1qbFN9mUhHqPQ5Pp8L_7p3sf6C6kwzn6ldTO5pg2u3Hw/edit#heading=h.xqpjlolg2avj
+ */
+export enum LaunchOperation {
+  InstallExternal = 'InstallExternal',
+  //
+  ParseBootstrap = 'ParseBootstrap',
+  ParseMods = 'ParseMods',
+  ParseOptifine = 'ParseOptifine',
+  ParseResources = 'ParseResources',
+  //
+  GetPreloadData = 'GetPreloadData',
+  //
   ParseAccount = 'ParseAccount',
-  ParseJava = 'ParseJava',
   ParseGameFile = 'ParseGameFile',
-  VerifyGameFile = 'VerifyGameFile',
-  InstallBootstrap = 'InstallBootstrap',
-  Launch = 'Launch'
+  ParseJava = 'ParseJava',
+  ResolveProcess = 'ResolveProcess',
+  //
+  CheckServer = 'CheckServer',
+  CheckCondition = 'CheckCondition',
+  //
+  RunFile = 'RunFile',
+  //
+  SetConfig = 'SetConfig',
 }
 
 export type LaunchTask = {
-  id: keyof typeof PreLaunchTasks,
+  task: keyof typeof LaunchOperation,
   params?: any
 }
 
@@ -116,6 +135,18 @@ export interface FinishedSubTaskCallback extends UpdateLaunchTaskCallback {
   response: PreLaunchResponse;
 }
 
+export interface LaunchProcess {
+  version: GameVersion,
+  type: GameType,
+  process: LaunchTask[]
+  allowCustomOperations: boolean,
+  manual: boolean,
+  internal: boolean,
+}
+
+/**
+ * @deprecated
+ */
 export interface PreLaunchProcess {
   id: string,
   actions: LaunchTask[];

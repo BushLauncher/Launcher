@@ -10,7 +10,7 @@ import {
   PreLaunchProcess,
   PreLaunchResponse,
   PreLaunchRunnableProcess,
-  PreLaunchTasks,
+  LaunchOperation,
   ProgressCallback,
   RunningVersion,
   RunningVersionState,
@@ -70,15 +70,15 @@ export async function RunPreLaunchProcess(baseProcess: PreLaunchProcess | PreLau
     if (taskCallback.state === LaunchTaskState.error || !taskCallback.response.success) break;
   }
   const version: GameVersion = baseProcess.version;
-  const javaPath: string | undefined = responseStorage.find((response) => response.task === PreLaunchTasks.ParseJava)?.data;
+  const javaPath: string | undefined = responseStorage.find((response) => response.task === LaunchOperation.ParseJava)?.data;
   if (javaPath === undefined) throw  new Error('We couldn\'t retrieve javaPath !');
-  const access_token: string | null = responseStorage.find((response) => response.task === PreLaunchTasks.ParseAccount)?.data;
+  const access_token: string | null = responseStorage.find((response) => response.task === LaunchOperation.ParseAccount)?.data;
   CleanUpCatch();
 
   //Launch
   if (baseProcess.launch) {
     createCallback(<UpdateLaunchTaskCallback>{
-      task: { id: 'Launch', params: {} },
+      task: { task: 'Launch', params: {} },
       state: LaunchTaskState.processing,
       displayText: 'Launching...',
       data: {

@@ -4,7 +4,7 @@ import { existsSync, readdirSync } from 'fs';
 import path from 'path';
 import { SortMinecraftVersion } from './Utils';
 import { userDataStorage } from '../main';
-import { getLocationRoot } from './Launcher';
+import { getLocationRoot } from './Core';
 import { net } from 'electron';
 import ConsoleManager, { ProcessType } from '../../public/ConsoleManager';
 

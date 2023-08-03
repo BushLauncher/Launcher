@@ -7,7 +7,7 @@ import {
   LaunchTask,
   LaunchTaskState,
   PreLaunchError,
-  PreLaunchTasks,
+  LaunchOperation,
   ProgressSubTaskCallback,
   UpdateLaunchTaskCallback
 } from '../../public/GameDataPublic';
@@ -26,13 +26,13 @@ export abstract class ResolvedPreLaunchTask {
   public baseTask: LaunchTask;
 
   protected constructor(baseTask: LaunchTask, type: LaunchOperationType) {
-    console.log('Creating task: ' + baseTask.id + '[', baseTask.params, ']');
+    console.log('Creating task: ' + baseTask.task + '[', baseTask.params, ']');
     this.baseTask = baseTask;
     this.type = type;
   }
 
   public getId() {
-    return this.baseTask.id;
+    return this.baseTask.task;
   }
 
   public abstract run(callback: (callback: UpdateLaunchTaskCallback) => void): Promise<FinishedSubTaskCallback>;
@@ -137,7 +137,7 @@ export class InstallBootstrap extends ResolvedPreLaunchTask {
 }
 
 export function sendUnImplementedException(task: LaunchTask): FinishedSubTaskCallback {
-  const message = `Function ${task.id} is not implemented`;
+  const message = `Function ${task.task} is not implemented`;
   return {
     task: task,
     displayText: message,
@@ -147,19 +147,19 @@ export function sendUnImplementedException(task: LaunchTask): FinishedSubTaskCal
 }
 
 export const ResolvePreLaunchTask: (baseTask: LaunchTask | ParseGameFileLaunchTask) => ResolvedPreLaunchTask = (baseTask) => {
-  switch (baseTask.id) {
-    case PreLaunchTasks.ParseAccount:
+  switch (baseTask.task) {
+    case LaunchOperation.ParseAccount:
       return new ParseAccount(baseTask);
-    case PreLaunchTasks.ParseJava:
+    case LaunchOperation.ParseJava:
       return new ParseJava(baseTask);
-    case PreLaunchTasks.ParseGameFile:
+    case LaunchOperation.ParseGameFile:
       return new ParseGameFile(<ParseGameFileLaunchTask>baseTask);
-    case PreLaunchTasks.VerifyGameFile:
+    case LaunchOperation.VerifyGameFile:
       return new VerifyGameFile(baseTask);
-    case PreLaunchTasks.InstallBootstrap:
+    case LaunchOperation.InstallBootstrap:
       return new InstallBootstrap(baseTask);
     default:
-      throw new Error(`Operation ${baseTask.id} not founded !`);
+      throw new Error(`Operation ${baseTask.task} not founded !`);
   }
 
 };

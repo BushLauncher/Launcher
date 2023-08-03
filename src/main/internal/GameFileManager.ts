@@ -4,7 +4,7 @@ import { knowErrorFormat, knowGameError } from '../../public/ErrorPublic';
 import { diagnose, MinecraftIssueReport } from '@xmcl/core';
 import { ResolveXmclVersion } from './PreLaunchEngine';
 import fs, { existsSync } from 'fs';
-import { getLocationRoot } from './Launcher';
+import { getLocationRoot } from './Core';
 import path from 'path';
 import ConsoleManager, { ProcessType } from '../../public/ConsoleManager';
 

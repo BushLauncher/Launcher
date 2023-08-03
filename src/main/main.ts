@@ -27,7 +27,7 @@ import {
   SelectAccount
 } from './internal/AuthModule';
 import { AuthProviderType, MinecraftAccount } from '../public/AuthPublic';
-import { getDefaultRootPath, getLocationRoot, Launch, RunningVersionList, StopGame } from './internal/Launcher';
+import { getDefaultRootPath, getLocationRoot, Launch, RunningVersionList, StopGame } from './internal/Core';
 import { InstallGameFiles, UninstallGameFiles, VerifyGameFiles } from './internal/GameFileManager';
 import { KnownAuthErrorType } from '../public/ErrorPublic';
 import { installExtensions } from './extension-installer';
