@@ -1,3 +1,4 @@
+
 export enum ProcessType {
   Internal = 'Internal', Render = 'Render', Third = 'Third'
 }
@@ -5,12 +6,14 @@ export enum ProcessType {
 export default class RenderConsoleManager {
   readonly prefix!: string;
   readonly process!: ProcessType;
+  readonly raw!: any;
   logger!: any;
 
   constructor(prefix: string, process: ProcessType) {
     this.process = process;
     this.prefix = `%c[%c${prefix}%c]:`;
     this.logger = console;
+    this.raw = this.logger
   }
 
 
