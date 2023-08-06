@@ -23,10 +23,14 @@ const electronHandler = {
     },
     invoke(channel: Channels, args: { [key: string]: unknown }): Promise<any> {
       return ipcRenderer.invoke(channel, args);
+    },
+    removeAllListeners(channel: string) {
+      ipcRenderer.removeAllListeners(channel);
     }
   }
 
 };
+
 export const versionHandler = {
   node: () => process.versions.node,
   chrome: () => process.versions.chrome,

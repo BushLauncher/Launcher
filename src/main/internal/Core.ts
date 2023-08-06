@@ -3,39 +3,120 @@ import {
   CallbackType,
   ErrorCallback,
   ExitedCallback,
-  FinishedSubTaskCallback,
   GameVersion,
-  LaunchTask,
+  LaunchOperationKit,
+  LaunchProcess,
   LaunchTaskState,
-  PreLaunchProcess,
   PreLaunchResponse,
-  PreLaunchRunnableProcess,
-  LaunchOperation,
   ProgressCallback,
+  RawLaunchProcess,
+  RawLaunchTask,
   RunningVersion,
   RunningVersionState,
-  StartedCallback,
-  UpdateLaunchTaskCallback
+  SubLaunchTaskCallback
 } from '../../public/GameDataPublic';
-import { ResolvedPreLaunchTask, ResolvePreLaunchTask, ResolvePreLaunchTaskList } from './PreLaunchEngine';
+import { AnalyseLaunchProcess, ResolvedLaunchTask, ResolveLaunchTask } from './PreLaunchEngine';
 import { createMinecraftProcessWatcher, launch } from '@xmcl/core';
 import { ChildProcess } from 'child_process';
 import { getSelectedAccount, isAccountValid } from './AuthModule';
 import { net } from 'electron';
 import getAppDataPath from 'appdata-path';
 import { currentWindow, userDataStorage } from '../main';
-import { getLaunchInternal } from './PreLaunchProcessPatern';
-import { CleanUpCatch } from './UserData';
 import ConsoleManager, { ProcessType } from '../../public/ConsoleManager';
 
-const console = new ConsoleManager("Launcher", ProcessType.Internal)
+const console = new ConsoleManager('Launcher', ProcessType.Internal);
 
 
 export const RunningVersionList: RunningVersion[] = [];
 
-export async function RunPreLaunchProcess(baseProcess: PreLaunchProcess | PreLaunchRunnableProcess, Callback: (callback: Callback) => void) {
+
+export function Launch(process: RawLaunchProcess, Callback: (callback: Callback) => void) {
+  console.log('Launching [' + process.id + ']');
+  RunningVersionList.push({ id: process.id, Version: process.version, State: RunningVersionState.Launching });
+  currentWindow?.webContents.send('UpdateMainTabsState');
+  return RunLaunchProcess(process, (callback: Callback) => Callback(callback));
+}
+
+export async function RunLaunchProcess(rawProcess: RawLaunchProcess, Callback: (callback: Callback) => void): Promise<ExitedCallback | ErrorCallback> {
+  return new Promise<ExitedCallback | ErrorCallback>(async (resolve, reject) => {
+    //**Preload**
+    const process: LaunchProcess = await AnalyseLaunchProcess(rawProcess);
+    //Security check
+    if (process.allowCustomOperations) {
+      const res: boolean = await getAutorisation();
+      if (!res) {
+        console.warn('Process execution Canceled (unauthorized)');
+        resolve({ type: CallbackType.Closed });
+        return;
+      } else console.raw.error('** Process running in insecure mode ! **');
+    }
+    //Add internal operations
+    // (Java + GameFile at start and Account at the end)
+    process.process.unshift(<ResolvedLaunchTask>ResolveLaunchTask(LaunchOperationKit.ParseJava), <ResolvedLaunchTask>ResolveLaunchTask(LaunchOperationKit.ParseGameFile));
+    process.process.push(<ResolvedLaunchTask>ResolveLaunchTask(LaunchOperationKit.ParseAccount));
+
+    //Parse process
+    const stepsCount = parseProcess(process);
+    const CreateCallback = (subTask: SubLaunchTaskCallback, index: number) => {
+      if (subTask.state === LaunchTaskState.error) {
+        Callback(<ErrorCallback>{
+          stepId: index, stepCount: stepsCount, return: subTask.data?.return
+        });
+      } else {
+        Callback(<ProgressCallback>{
+          stepId: index, stepCount: stepsCount, task: subTask, type: CallbackType.Progress
+        });
+      }
+    };
+    console.log('Executing ' + stepsCount + ' tasks');
+    console.raw.log(process.process);
+
+    const LaunchStorage: { task: RawLaunchTask, response: PreLaunchResponse }[] = [];
+
+    for (const task of process.process) {
+      const i = process.process.indexOf(task);
+      try {
+        console.warn('Executing task ' + i + '/' + stepsCount + ' : ' + task.baseTask.key + '...');
+        const response = await task.run((c) => CreateCallback(c, i));
+        CreateCallback(response, i);
+        if (response.state === LaunchTaskState.error) {
+          resolve(<ErrorCallback>{ type: CallbackType.Error, return: response.data || response.response.error });
+          return;
+        } else LaunchStorage.push({
+          task: task.baseTask, response: response.response
+        });
+      } catch (err: any) {
+        resolve(<ErrorCallback>{ type: CallbackType.Error, return: err });
+        return;
+      }
+    }
+    console.warn('Executed all tasks ! Launching...');
+
+    setTimeout(() => {
+      resolve(<ExitedCallback>{ type: CallbackType.Closed });
+    }, 2000);
+  });
+}
+
+function parseProcess(process: LaunchProcess) {
+  return process.process.length;
+}
+
+
+async function getAutorisation(): Promise<boolean> {
+  console.log('Waiting for security allow...');
+  //TODO: make security panel
+  return true;
+
+}
+
+/**
+ * @deprecated
+ */
+
+/*export async function RunPreLaunchProcess(baseProcess: LaunchProcess, Callback: (callback: Callback) => void) {
   //resolve process list if not
-  const operations: ResolvedPreLaunchTask[] = (baseProcess.resolved) ? baseProcess.actions : ResolvePreLaunchTaskList(baseProcess.actions);
+  const operations: ResolvedPreLaunchTask[] = ResolveLaunchProcessTasks(baseProcess.actions);
   //Add internal operations
   operations.unshift(...getLaunchInternal(baseProcess.version));
   const stepsCount = parseLaunch(operations);
@@ -61,10 +142,10 @@ export async function RunPreLaunchProcess(baseProcess: PreLaunchProcess | PreLau
     const i = operations.indexOf(operation);
     console.warn('[' + baseProcess.id + '] Executing task ' + (i + 1) + '/' + (stepsCount + 1) + ' : ' + operation.getId());
     const taskCallback = await RunTask(operation, (c) => createCallback(c, i)).catch(err => {
-      console.error(baseProcess.id + ' ' + err);
+      console.raw.error(baseProcess.id + ' ' + err);
       throw new Error(err);
     });
-    responseStorage.push({ task: taskCallback.task.id, ...taskCallback.response });
+    //responseStorage.push({ task: taskCallback.task, ...taskCallback.response });
     createCallback(<UpdateLaunchTaskCallback>taskCallback, i);
     //verify the response
     if (taskCallback.state === LaunchTaskState.error || !taskCallback.response.success) break;
@@ -76,7 +157,6 @@ export async function RunPreLaunchProcess(baseProcess: PreLaunchProcess | PreLau
   CleanUpCatch();
 
   //Launch
-  if (baseProcess.launch) {
     createCallback(<UpdateLaunchTaskCallback>{
       task: { task: 'Launch', params: {} },
       state: LaunchTaskState.processing,
@@ -86,37 +166,20 @@ export async function RunPreLaunchProcess(baseProcess: PreLaunchProcess | PreLau
       }
     }, stepsCount);
     return LaunchGameProcess(baseProcess.id, version, javaPath, access_token, (callback: StartedCallback) => Callback(callback));
-  } else return;
 
 }
-
-export function RunTask(task: ResolvedPreLaunchTask | LaunchTask, callback: (callback: UpdateLaunchTaskCallback) => void): Promise<FinishedSubTaskCallback> {
-  return new Promise(async (resolve) => {
-    const _task = task instanceof ResolvedPreLaunchTask ? task : ResolvePreLaunchTask(task);
-    try {
-      resolve(await _task.run(callback));
-    } catch (err) {
-      console.error('Cannot execute task', err);
-    }
-  });
-}
-
-function parseLaunch(LaunchRunnable: PreLaunchRunnableProcess | PreLaunchProcess | ResolvedPreLaunchTask[]): number {
-  return (Array.isArray(LaunchRunnable) ? LaunchRunnable.length : LaunchRunnable.actions.length) - 1;
-}
+*/
 
 export function StopGame(processId: string) {
-  console.log("Forcing stop process: " + processId)
+  console.log('Forcing stop process: ' + processId);
   const process = RunningVersionList[resolveIndexInList(processId)].process;
-  if (process === undefined) console.warn('Process of Running version ' + processId + ' is undefined');
-  else process.kill();
+  if (process === undefined) console.warn('Process of Running version ' + processId + ' is undefined'); else process.kill();
 }
 
 
 export function getLocationRoot(): string {
   const storageRes: string | null | undefined = userDataStorage.get('saved.rootPath');
-  if (storageRes !== undefined && storageRes !== null) return storageRes;
-  else return setLocalLocationRoot(getDefaultRootPath());
+  if (storageRes !== undefined && storageRes !== null) return storageRes; else return setLocalLocationRoot(getDefaultRootPath());
 }
 
 export function getDefaultRootPath(): string {
@@ -128,11 +191,11 @@ function setLocalLocationRoot(path: string) {
   return path;
 }
 
-function LaunchGameProcess(id: string, version: GameVersion, javaPath: string, access_token: string | null, callback: (callback: StartedCallback) => void): Promise<ExitedCallback> {
+function LaunchGameProcess(id: string, version: GameVersion, javaPath: string, access_token: string | null, callback: (callback: any) => void): Promise<ExitedCallback> {
   return new Promise(async (resolve, reject) => {
     const account = getSelectedAccount();
     if (account === null || !isAccountValid(account)) {
-      console.error(id + ' Cannot launch the game without a valid logged account');
+      console.raw.error(id + ' Cannot launch the game without a valid logged account');
       reject();
       return;
     }
@@ -150,18 +213,16 @@ function LaunchGameProcess(id: string, version: GameVersion, javaPath: string, a
       //TODO: Server, to launch directly on server
     }).then((process: ChildProcess) => {
       RunningVersionList[resolveIndexInList(id)] = {
-        ...RunningVersionList[resolveIndexInList(id)],
-        process: process
+        ...RunningVersionList[resolveIndexInList(id)], process: process
       };
       const watcher = createMinecraftProcessWatcher(process);
-      watcher.on('error', (err) => console.error(id + ' ' + err));
+      watcher.on('error', (err) => console.raw.error(id + ' ' + err));
       watcher.on('minecraft-window-ready', () => {
         RunningVersionList[resolveIndexInList(id)] = {
-          ...RunningVersionList[resolveIndexInList(id)],
-          State: RunningVersionState.Running
+          ...RunningVersionList[resolveIndexInList(id)], State: RunningVersionState.Running
         };
         currentWindow?.webContents.send('UpdateMainTabsState');
-        callback(<StartedCallback>{ type: CallbackType.Success, return: undefined });
+        callback({ type: CallbackType.Success });
       });
       watcher.on('minecraft-exit', () => {
         console.log(id + ' Game Exited');
@@ -170,7 +231,7 @@ function LaunchGameProcess(id: string, version: GameVersion, javaPath: string, a
         currentWindow?.webContents.send('UpdateMainTabsState');
       });
     }).catch(err => {
-      console.error(id + ' ' + err);
+      console.raw.error(id + ' ' + err);
       reject(err);
     });
 
@@ -179,19 +240,7 @@ function LaunchGameProcess(id: string, version: GameVersion, javaPath: string, a
 }
 
 
-export function Launch(process: PreLaunchProcess | PreLaunchRunnableProcess, Callback: (callback: Callback) => void) {
-  RunningVersionList.push({
-    id: process.id,
-    Version: process.version,
-    State: RunningVersionState.Launching
-  });
-  currentWindow?.webContents.send('UpdateMainTabsState');
-  return RunPreLaunchProcess(process, (callback: Callback) => Callback(callback));
-}
-
-
 function resolveIndexInList(id: string) {
   const index = RunningVersionList.findIndex((rv) => rv.id === id);
-  if (index === -1) throw new Error('Cannot resolve Running version in list');
-  else return index;
+  if (index === -1) throw new Error('Cannot resolve Running version in list'); else return index;
 }

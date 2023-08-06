@@ -11,7 +11,7 @@ import {
   getVersionMethode,
   groupMinecraftVersions
 } from './internal/VersionManager';
-import { Callback, GameType, GameVersion, PreLaunchProcess, PreLaunchRunnableProcess } from '../public/GameDataPublic';
+import { Callback, GameType, GameVersion, RawLaunchProcess } from '../public/GameDataPublic';
 import {
   AddAccount,
   getAccountList,
@@ -34,10 +34,10 @@ import { installExtensions } from './extension-installer';
 import PreloadWindow from './PreloadWindow';
 import MainWindow from './MainWindow';
 import { DeleteJava } from './internal/JavaEngine';
-import ProgressBarOptions = Electron.ProgressBarOptions;
 import ConsoleManager, { ProcessType } from '../public/ConsoleManager';
+import ProgressBarOptions = Electron.ProgressBarOptions;
 
-const console = new ConsoleManager("Main", ProcessType.Internal)
+const console = new ConsoleManager('Main', ProcessType.Internal);
 
 export let currentWindow: BrowserWindow | null = null;
 if (process.env.NODE_ENV === 'production') {
@@ -77,7 +77,7 @@ ipcMain.handle('Version:getList', (event, { gameType, type, grouped = false }: {
   return new Promise(async (resolve, reject) => {
     type = type || 'auto';
     if (gameType === undefined) {
-      resolve(grouped ? groupMinecraftVersions(await getAllVersionList(type)): await getAllVersionList(type));
+      resolve(grouped ? groupMinecraftVersions(await getAllVersionList(type)) : await getAllVersionList(type));
       return;
     }
     if ((type === 'network' || type === 'auto') && net.isOnline()) resolve(grouped ? groupMinecraftVersions(await versionManager.getVersionList(gameType)) : await versionManager.getVersionList(gameType).catch((err) => {
@@ -144,10 +144,13 @@ ipcMain.handle('Auth:Login', async (event, args: { type: AuthProviderType }) => 
 ipcMain.on('Auth:SelectAccount', (event, args: { index: number }) => SelectAccount(args.index));
 
 ipcMain.handle('GameEngine:Launch', async (event, args: {
-  LaunchProcess: PreLaunchProcess | PreLaunchRunnableProcess,
+  LaunchProcess: RawLaunchProcess,
 }) => {
+  let i: number = 0;
   return Launch(args.LaunchProcess, (callback: Callback) => {
-    event.sender.send('GameLaunchCallback', callback);
+    event.sender.send('GameLaunchCallback', { ...callback, order: i });
+    console.log(callback);
+    i++;
     //console.log(callback);
   })
     .catch((err: any) => {

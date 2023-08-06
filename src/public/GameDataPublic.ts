@@ -1,6 +1,6 @@
 import { knowErrorFormat } from './ErrorPublic';
-import { ResolvedPreLaunchTask } from '../main/internal/PreLaunchEngine';
 import { ChildProcess } from 'child_process';
+import { ResolvedLaunchTask } from '../main/internal/PreLaunchEngine';
 
 export enum GameType {
   VANILLA = 'VANILLA'
@@ -24,52 +24,62 @@ export const getDefaultVersion = (gameType: GameType): GameVersion => {
 /**
  * @link Documentation https://docs.google.com/document/d/1qbFN9mUhHqPQ5Pp8L_7p3sf6C6kwzn6ldTO5pg2u3Hw/edit#heading=h.n7l628o45j4j
  */
-export enum LaunchOperationType {
+export enum LaunchOperationClass {
+  //Private internal functions
+  Private,
   //Preload: Assign some variables before the launch
-  Preload = 'Preload',
+  Preload,
   //Verify: Check some value before the launch (can cancel process)
-  Verify = 'Verify',
+  Verify,
   //Test and diagnose files, (like "install if not exist")
-  Parse = 'Parse',
+  Parse,
   //Install Files not locally present.
-  Install = 'Install',
+  Install,
   //Execute some file, setup Program, etc...
-  Setup = 'Setup',
+  Setup,
   //Install some special configurations file, like in: "config" folder...
-  PostInstall = 'PostInstall'
+  PostInstall
 }
 
+export type RawLaunchTask = { key: string, type: LaunchOperationClass, params?: { [key: string]: any } }
 /**
  * @link Documentation https://docs.google.com/document/d/1qbFN9mUhHqPQ5Pp8L_7p3sf6C6kwzn6ldTO5pg2u3Hw/edit#heading=h.xqpjlolg2avj
  */
-export enum LaunchOperation {
-  InstallExternal = 'InstallExternal',
-  //
-  ParseBootstrap = 'ParseBootstrap',
-  ParseMods = 'ParseMods',
-  ParseOptifine = 'ParseOptifine',
-  ParseResources = 'ParseResources',
-  //
-  GetPreloadData = 'GetPreloadData',
-  //
-  ParseAccount = 'ParseAccount',
-  ParseGameFile = 'ParseGameFile',
-  ParseJava = 'ParseJava',
-  ResolveProcess = 'ResolveProcess',
-  //
-  CheckServer = 'CheckServer',
-  CheckCondition = 'CheckCondition',
-  //
-  RunFile = 'RunFile',
-  //
-  SetConfig = 'SetConfig',
-}
+export const RawLaunchOperationList: RawLaunchTask[] = [
+  { key: 'InstallExternal', type: LaunchOperationClass.Install },
+  { key: 'ParseBootstrap', type: LaunchOperationClass.Parse },
+  { key: 'ParseMods', type: LaunchOperationClass.Parse },
+  { key: 'ParseOptifine', type: LaunchOperationClass.Parse },
+  { key: 'ParseResources', type: LaunchOperationClass.Parse },
+  { key: 'GetPreloadData', type: LaunchOperationClass.Preload },
+  { key: 'ParseAccount', type: LaunchOperationClass.Private },
+  { key: 'ParseGameFile', type: LaunchOperationClass.Parse },
+  { key: 'ParseJava', type: LaunchOperationClass.Parse },
+  { key: 'Launch', type: LaunchOperationClass.Parse },
+  { key: 'CheckServer', type: LaunchOperationClass.Verify },
+  { key: 'CheckCondition', type: LaunchOperationClass.Verify },
+  { key: 'RunFile', type: LaunchOperationClass.Setup },
+  { key: 'SetConfig', type: LaunchOperationClass.PostInstall }
+];
 
-export type LaunchTask = {
-  task: keyof typeof LaunchOperation,
-  params?: any
-}
+export const LaunchOperationKit: { [f: string]: RawLaunchTask } = {
+  InstallExternal: { key: 'InstallExternal', type: LaunchOperationClass.Install },
+  ParseBootstrap: { key: 'ParseBootstrap', type: LaunchOperationClass.Parse },
+  ParseMods: { key: 'ParseMods', type: LaunchOperationClass.Parse },
+  ParseOptifine: { key: 'ParseOptifine', type: LaunchOperationClass.Parse },
+  ParseResources: { key: 'ParseResources', type: LaunchOperationClass.Parse },
+  GetPreloadData: { key: 'GetPreloadData', type: LaunchOperationClass.Preload },
+  ParseAccount: { key: 'ParseAccount', type: LaunchOperationClass.Private },
+  ParseGameFile: { key: 'ParseGameFile', type: LaunchOperationClass.Parse },
+  ParseJava: { key: 'ParseJava', type: LaunchOperationClass.Parse },
+  Launch: { key: 'Launch', type: LaunchOperationClass.Parse },
+  CheckServer: { key: 'CheckServer', type: LaunchOperationClass.Verify },
+  CheckCondition: { key: 'CheckCondition', type: LaunchOperationClass.Verify },
+  RunFile: { key: 'RunFile', type: LaunchOperationClass.Setup },
+  SetConfig: { key: 'SetConfig', type: LaunchOperationClass.PostInstall }
+};
 
+/*************/
 export enum CallbackType {
   Error = 'Error',
   Progress = 'Progress',
@@ -80,7 +90,7 @@ export enum CallbackType {
 export interface Callback {
   stepId: number,
   stepCount: number
-  return: any,
+  return?: any,
   type: CallbackType,
 }
 
@@ -91,19 +101,12 @@ export interface ErrorCallback extends Callback {
 
 export interface ProgressCallback extends Callback {
   type: CallbackType.Progress,
-  task: UpdateLaunchTaskCallback
+  task: SubLaunchTaskCallback
 }
 
-export interface LaunchedCallback extends Callback {
-  type: CallbackType.Success,
-}
-
-export interface ExitedCallback extends Callback {
+export interface ExitedCallback {
   type: CallbackType.Closed;
-}
-
-export interface StartedCallback extends Callback {
-  type: CallbackType.Success;
+  return?: any;
 }
 
 export enum LaunchTaskState {
@@ -113,8 +116,8 @@ export enum LaunchTaskState {
   error
 }
 
-export interface UpdateLaunchTaskCallback {
-  task: LaunchTask,
+export interface SubLaunchTaskCallback {
+  task?: RawLaunchTask,
   state: LaunchTaskState,
   displayText?: string,
   data?: {
@@ -123,58 +126,40 @@ export interface UpdateLaunchTaskCallback {
   }
 }
 
-export interface ProgressSubTaskCallback {
-  displayText?: string,
-  return?: any,
-  localProgress?: number
-  state: LaunchTaskState
-}
-
-export interface FinishedSubTaskCallback extends UpdateLaunchTaskCallback {
+export interface FinishedSubTaskCallback extends SubLaunchTaskCallback {
   state: LaunchTaskState.finished | LaunchTaskState.error;
   response: PreLaunchResponse;
 }
 
+/**
+ * @link Documentation https://docs.google.com/document/d/1qbFN9mUhHqPQ5Pp8L_7p3sf6C6kwzn6ldTO5pg2u3Hw/edit#heading=h.36qbnosish4f
+ */
+export interface RawLaunchProcess {
+  version: GameVersion,
+  process: RawLaunchTask[],
+  allowCustomOperations?: boolean,
+  manual?: boolean,
+  internal?: boolean,
+  id: string
+}
+
 export interface LaunchProcess {
   version: GameVersion,
-  type: GameType,
-  process: LaunchTask[]
-  allowCustomOperations: boolean,
-  manual: boolean,
-  internal: boolean,
-}
-
-/**
- * @deprecated
- */
-export interface PreLaunchProcess {
-  id: string,
-  actions: LaunchTask[];
-  resolved: false;
-  internal: false;
-  version: GameVersion;
-  launch: boolean;
-}
-
-export interface PreLaunchRunnableProcess {
-  id: string,
-  actions: ResolvedPreLaunchTask[];
-  resolved: true;
-  internal?: boolean;
-  version: GameVersion;
-  launch: boolean;
+  process: ResolvedLaunchTask[],
+  allowCustomOperations?: boolean,
+  manual?: boolean,
+  internal?: boolean,
+  id: string
 }
 
 
 export interface PreLaunchResponse {
   success: boolean;
-  data: any;
+  data?: any;
+  error?: any;
 }
 
-export interface PreLaunchError extends PreLaunchResponse {
-  error: any;
-  success: false;
-}
+/*************/
 
 export enum RunningVersionState {
   Launching,

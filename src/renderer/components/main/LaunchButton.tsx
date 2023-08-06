@@ -14,10 +14,9 @@ import {
   GameVersion,
   getDefaultGameType,
   getDefaultVersion,
-  LaunchedCallback,
   LaunchTaskState,
-  PreLaunchProcess,
-  ProgressCallback
+  ProgressCallback,
+  RawLaunchProcess
 } from '../../../public/GameDataPublic';
 import Loader from '../public/Loader';
 import { globalStateContext } from '../../index';
@@ -31,7 +30,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { GroupedGameVersions } from '../../../main/internal/VersionManager';
 import RenderConsoleManager, { ProcessType } from '../../../public/RenderConsoleManager';
 
-const console = new RenderConsoleManager("LaunchButton", ProcessType.Render)
+const console = new RenderConsoleManager('LaunchButton', ProcessType.Render);
+
 export enum LaunchButtonState {
   Normal = 'Normal', Loading = 'Loading', Error = 'Error', Launched = 'Launched', Preparing = 'Preparing'
 }
@@ -84,8 +84,8 @@ export default function LaunchButton(props: LaunchButtonProps) {
   }
 
   function requestLaunch(version: GameVersion) {
-    const process: PreLaunchProcess = {
-      id: props.id || uuidv4(), actions: [], launch: true, version: version, internal: false, resolved: false
+    const process: RawLaunchProcess = {
+      id: props.id || uuidv4(), process: [], version: version, internal: true, allowCustomOperations: true
     };
     setVersionSelector(false);
     setDisplayText('Initializing...');
@@ -93,17 +93,21 @@ export default function LaunchButton(props: LaunchButtonProps) {
     console.log('Requesting Launch...');
     //@ts-ignore
     window.electron.ipcRenderer.on('GameLaunchCallback', (callback: Callback) => {
+      console.raw.log(callback);
       decodeLaunchCallback(callback);
     });
     window.electron.ipcRenderer.invoke('GameEngine:Launch', { LaunchProcess: process })
       .then((exitedCallback: ExitedCallback) => {
+        console.raw.log(exitedCallback);
+        window.electron.ipcRenderer.removeAllListeners('GameLaunchCallback');
         decodeLaunchCallback(exitedCallback);
       });
 
   }
 
 
-  function decodeLaunchCallback(_callback: Callback | ProgressCallback | ErrorCallback | LaunchedCallback | ExitedCallback) {
+  function decodeLaunchCallback(_callback: Callback | ExitedCallback) {
+
     switch (_callback.type) {
       case CallbackType.Progress: {
         const callback: ProgressCallback = _callback as unknown as ProgressCallback;
@@ -242,49 +246,50 @@ export default function LaunchButton(props: LaunchButtonProps) {
             }} />
             <p className={styles.versionText}>{selected.id.toString()}</p>
           </div>
-          {state === LaunchButtonState.Normal && <OutsideAlerter className={styles.versionListDropdown} onClickOutside={() => {
-            setVersionSelector(false);
-          }} exceptElementClasses={[styles.dropdownIcon]}
-          >
-            <>
-              {list.map((_version: GameVersion | GroupedGameVersions, index: number) => {
-                if ('group' in _version) {
-                  const version = _version as GroupedGameVersions;
-                  return <CollapsableVersionCard
-                    style={{ width: 'fit-content' }} parentVersion={{
-                    version: version.parent, toolBox: toolBox(version.parent), settings: { iconType: 'Installed' },
-                    className: [styles.version, ((version.parent.id === selected.id) ? styles.versionSelected : '')].join(' ')
-                  }} children={version.children.map(childVersion => {
-                    return {
-                      version: childVersion,
-                      toolBox: toolBox(childVersion),
-                      settings: { iconType: 'Installed' },
-                      style: { margin: '0.5vh 0 0.5vh 0' },
-                      className: [styles.version, ((childVersion.id === selected.id) ? styles.versionSelected : '')].join(' ')
-                    };
-                  })} key={index} />;
-                } else {
-                  const version = _version as GameVersion;
-                  return (<Popover key={index}
-                                   content={'Minecraft ' + version.gameType + ' ' + version.id + (!version.installed ? ' Will be installed' : '')}
-                                   placement={'left'}>
-                    <VersionCard version={version}
-                                 style={{ width: 'fit-content' }}
-                                 className={[styles.version, ((version.id === selected.id) ? styles.versionSelected : '')].join(' ')}
-                                 settings={{ iconType: 'Installed' }}
-                                 toolBox={toolBox(version)}
-                    /> </Popover>);
-                }
+          {state === LaunchButtonState.Normal &&
+            <OutsideAlerter className={styles.versionListDropdown} onClickOutside={() => {
+              setVersionSelector(false);
+            }} exceptElementClasses={[styles.dropdownIcon]}
+            >
+              <>
+                {list.map((_version: GameVersion | GroupedGameVersions, index: number) => {
+                  if ('group' in _version) {
+                    const version = _version as GroupedGameVersions;
+                    return <CollapsableVersionCard
+                      style={{ width: 'fit-content' }} parentVersion={{
+                      version: version.parent, toolBox: toolBox(version.parent), settings: { iconType: 'Installed' },
+                      className: [styles.version, ((version.parent.id === selected.id) ? styles.versionSelected : '')].join(' ')
+                    }} children={version.children.map(childVersion => {
+                      return {
+                        version: childVersion,
+                        toolBox: toolBox(childVersion),
+                        settings: { iconType: 'Installed' },
+                        style: { margin: '0.5vh 0 0.5vh 0' },
+                        className: [styles.version, ((childVersion.id === selected.id) ? styles.versionSelected : '')].join(' ')
+                      };
+                    })} key={index} />;
+                  } else {
+                    const version = _version as GameVersion;
+                    return (<Popover key={index}
+                                     content={'Minecraft ' + version.gameType + ' ' + version.id + (!version.installed ? ' Will be installed' : '')}
+                                     placement={'left'}>
+                      <VersionCard version={version}
+                                   style={{ width: 'fit-content' }}
+                                   className={[styles.version, ((version.id === selected.id) ? styles.versionSelected : '')].join(' ')}
+                                   settings={{ iconType: 'Installed' }}
+                                   toolBox={toolBox(version)}
+                      /> </Popover>);
+                  }
 
-              })}
-            </>
-          </OutsideAlerter>}
+                })}
+              </>
+            </OutsideAlerter>}
         </div>);
     } else return <div></div>;
 
   }
 
-  useEffect(()=>setCurrentState(LaunchButtonState.Normal), [])
+  useEffect(() => setCurrentState(LaunchButtonState.Normal), []);
 
   return (
     <div
@@ -329,7 +334,7 @@ export default function LaunchButton(props: LaunchButtonProps) {
               {type === 'default' && <p className={styles.text}>{text}</p>}
             </div>
           </Popover>
-          {props.versionSelector && <Loader content={versionSelectorInit} className={styles.versionSelectorLoader} />          }
+          {props.versionSelector && <Loader content={versionSelectorInit} className={styles.versionSelectorLoader} />}
 
           {props.versionSelector && <Divider className={styles.line} type={'vertical'} />}
         </div>
