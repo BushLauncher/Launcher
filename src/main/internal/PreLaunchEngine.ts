@@ -177,6 +177,11 @@ export function AnalyseLaunchProcess(rawProcess: RawLaunchProcess): Promise<Laun
     if (!Object.keys(GameType).includes(rawProcess.version.gameType)) reject(<ErrorCallback>{
       type: CallbackType.Error, return: `Process type ${rawProcess.version.gameType}, is not supported !`
     });
+    //Add internal operations
+    rawProcess.process.push(LaunchOperationKit.ParseJava, {
+      ...LaunchOperationKit.ParseGameFile,
+      params: { version: rawProcess.version }
+    });
     //Reorder tasks
     let resolvedTaskList: ResolvedLaunchTask[] = [];
     rawProcess.process
@@ -195,14 +200,7 @@ export function AnalyseLaunchProcess(rawProcess: RawLaunchProcess): Promise<Laun
         const task = ResolveLaunchTask(t);
         if (task === undefined) throw new Error(`Task ${t.key} couldn't be resolved \n (task bypassed the analyse !)`); else resolvedTaskList[i] = task;
       }));
-    //Add internal operations
-    // (Java + GameFile at start and Account at the end)
-    resolvedTaskList.unshift(
-      <ResolvedLaunchTask>ResolveLaunchTask(LaunchOperationKit.ParseJava),
-      <ResolvedLaunchTask>ResolveLaunchTask({
-        ...LaunchOperationKit.ParseGameFile,
-        params: { version: rawProcess.version }
-      }));
+    //Add Account operation
     resolvedTaskList.push(<ResolvedLaunchTask>ResolveLaunchTask(LaunchOperationKit.ParseAccount));
     //AUTOMATIONS
     if (!rawProcess.manual) {

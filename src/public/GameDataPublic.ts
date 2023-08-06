@@ -25,12 +25,12 @@ export const getDefaultVersion = (gameType: GameType): GameVersion => {
  * @link Documentation https://docs.google.com/document/d/1qbFN9mUhHqPQ5Pp8L_7p3sf6C6kwzn6ldTO5pg2u3Hw/edit#heading=h.n7l628o45j4j
  */
 export enum LaunchOperationClass {
-  //Private internal functions
-  Private,
   //Preload: Assign some variables before the launch
   Preload,
   //Verify: Check some value before the launch (can cancel process)
   Verify,
+  //Private internal functions
+  Private,
   //Test and diagnose files, (like "install if not exist")
   Parse,
   //Install Files not locally present.
