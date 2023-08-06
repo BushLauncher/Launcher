@@ -11,7 +11,7 @@ import {
   getVersionMethode,
   groupMinecraftVersions
 } from './internal/VersionManager';
-import { Callback, GameType, GameVersion, RawLaunchProcess } from '../public/GameDataPublic';
+import { Callback, CallbackType, GameType, GameVersion, RawLaunchProcess } from '../public/GameDataPublic';
 import {
   AddAccount,
   getAccountList,
@@ -27,7 +27,15 @@ import {
   SelectAccount
 } from './internal/AuthModule';
 import { AuthProviderType, MinecraftAccount } from '../public/AuthPublic';
-import { getDefaultRootPath, getLocationRoot, Launch, RunningVersionList, StopGame } from './internal/Core';
+import {
+  getDefaultRootPath,
+  getLocationRoot,
+  Launch,
+  RegisterRunningVersion,
+  RunningVersionList,
+  StopGame,
+  UnregisterRunningVersion
+} from './internal/Core';
 import { InstallGameFiles, UninstallGameFiles, VerifyGameFiles } from './internal/GameFileManager';
 import { KnownAuthErrorType } from '../public/ErrorPublic';
 import { installExtensions } from './extension-installer';
@@ -142,23 +150,28 @@ ipcMain.handle('Auth:Login', async (event, args: { type: AuthProviderType }) => 
   });
 });
 ipcMain.on('Auth:SelectAccount', (event, args: { index: number }) => SelectAccount(args.index));
-
-ipcMain.handle('GameEngine:Launch', async (event, args: {
-  LaunchProcess: RawLaunchProcess,
-}) => {
-  let i: number = 0;
-  return Launch(args.LaunchProcess, (callback: Callback) => {
-    event.sender.send('GameLaunchCallback', { ...callback, order: i });
-    console.log(callback);
-    i++;
-    //console.log(callback);
-  })
-    .catch((err: any) => {
+ipcMain.handle('GameEngine:RequestLaunch', (event, request_args: { id: string }) => {
+  //Register all IPC functions
+  ipcMain.handle('GameEngine:Launch:' + request_args.id, async (event, args: { LaunchProcess: RawLaunchProcess }) => {
+    //TODO: register new running version here + verify if version doesn't already running
+    RegisterRunningVersion(args.LaunchProcess);
+    try {
+      const operation = Launch(args.LaunchProcess, (callback: Callback) => {
+        event.sender.send('GameLaunchCallback:' + args.LaunchProcess.id, callback);
+        if (callback.type === CallbackType.Error) {
+          UnregisterRunningVersion(args.LaunchProcess.id);
+          return;
+        }
+      });
+      operation.then(e => ipcMain.removeHandler('GameEngine:Launch:' + request_args.id));
+      return await operation;
+    } catch (err) {
       console.error(err);
       return err;
-    });
-  //reject will not pass err and return string [Object object]
+    }
+    //reject will not pass err and return string [Object object]
 
+  });
 });
 
 ipcMain.handle('GameEngine:getRootPath', (event, args) => {

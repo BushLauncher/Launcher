@@ -1,5 +1,5 @@
 import { installTask } from '@xmcl/installer';
-import { GameType, GameVersion, LaunchTaskState, ProgressSubTaskCallback } from '../../public/GameDataPublic';
+import { GameType, GameVersion, LaunchTaskState, SubLaunchTaskCallback } from '../../public/GameDataPublic';
 import { knowErrorFormat, knowGameError } from '../../public/ErrorPublic';
 import { diagnose, MinecraftIssueReport } from '@xmcl/core';
 import { ResolveXmclVersion } from './PreLaunchEngine';
@@ -20,7 +20,7 @@ export async function VerifyGameFiles(version: GameVersion, path?: string): Prom
   });
 }
 
-export async function InstallGameFiles(version: GameVersion, callback: (callback: ProgressSubTaskCallback) => void): Promise<void> {
+export async function InstallGameFiles(version: GameVersion, callback: (callback: SubLaunchTaskCallback) => void): Promise<void> {
   console.log('Installing game file');
   callback({ state: LaunchTaskState.processing, displayText: 'Installing Minecraft files...' });
   switch (version.gameType) {
@@ -37,7 +37,7 @@ export async function InstallGameFiles(version: GameVersion, callback: (callback
               //console.log("Downloading: " + task.progress + " / " + task.total);
               //https://github.com/Voxelum/minecraft-launcher-core-node/issues/275
               console.log('Downloading: ' + downloadPercentage + '%');
-              callback({ state: LaunchTaskState.processing, localProgress: downloadPercentage });
+              callback({ state: LaunchTaskState.processing,data: { localProgress: downloadPercentage } });
             }
           },
           onFailed(task: any, error: any) {
@@ -59,7 +59,7 @@ export async function InstallGameFiles(version: GameVersion, callback: (callback
 
 }
 
-export async function UninstallGameFiles(version: GameVersion, rootPath?: string, callback?: (callback: ProgressSubTaskCallback) => void): Promise<void> {
+export async function UninstallGameFiles(version: GameVersion, rootPath?: string, callback?: (callback: SubLaunchTaskCallback) => void): Promise<void> {
   return new Promise(async (resolve, reject) => {
     rootPath = rootPath || getLocationRoot();
     const folderPath = path.join(rootPath, 'versions', version.id);

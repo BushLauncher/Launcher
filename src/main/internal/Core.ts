@@ -29,10 +29,33 @@ const console = new ConsoleManager('Launcher', ProcessType.Internal);
 
 export const RunningVersionList: RunningVersion[] = [];
 
+export function RegisterRunningVersion(process: LaunchProcess | RawLaunchProcess): boolean {
+  const index = RunningVersionList.findIndex(rv => rv.id === process.id);
+  if (index !== -1) {
+    RunningVersionList.push({ id: process.id, Version: process.version, State: RunningVersionState.Launching });
+    return true;
+  } else {
+    console.raw.error('Version ' + process.id + ' already registered !');
+    return false;
+  }
+}
+
+export function UnregisterRunningVersion(id: string): boolean {
+  const index = RunningVersionList.findIndex(rv => rv.id === id);
+  if (index !== -1) {
+    RunningVersionList.splice(index);
+    return true;
+  } else {
+    console.raw.error('Cannot find ' + id + ' running version');
+    return false;
+  }
+}
 
 export function Launch(process: RawLaunchProcess, Callback: (callback: Callback) => void) {
   console.log('Launching [' + process.id + ']');
-  RunningVersionList.push({ id: process.id, Version: process.version, State: RunningVersionState.Launching });
+  //Register version as Running (Did before in Main!)
+  if (RunningVersionList.findIndex(rv => rv.id === process.id) === -1) RegisterRunningVersion(process);
+
   currentWindow?.webContents.send('UpdateMainTabsState');
   return RunLaunchProcess(process, (callback: Callback) => Callback(callback));
 }
@@ -50,11 +73,6 @@ export async function RunLaunchProcess(rawProcess: RawLaunchProcess, Callback: (
         return;
       } else console.raw.error('** Process running in insecure mode ! **');
     }
-    //Add internal operations
-    // (Java + GameFile at start and Account at the end)
-    process.process.unshift(<ResolvedLaunchTask>ResolveLaunchTask(LaunchOperationKit.ParseJava), <ResolvedLaunchTask>ResolveLaunchTask(LaunchOperationKit.ParseGameFile));
-    process.process.push(<ResolvedLaunchTask>ResolveLaunchTask(LaunchOperationKit.ParseAccount));
-
     //Parse process
     const stepsCount = parseProcess(process);
     const CreateCallback = (subTask: SubLaunchTaskCallback, index: number) => {
@@ -68,7 +86,8 @@ export async function RunLaunchProcess(rawProcess: RawLaunchProcess, Callback: (
         });
       }
     };
-    console.log('Executing ' + stepsCount + ' tasks');
+    // -1 to avoid the 0 at array's start
+    console.log('Executing ' + (stepsCount - 1) + ' tasks...');
     console.raw.log(process.process);
 
     const LaunchStorage: { task: RawLaunchTask, response: PreLaunchResponse }[] = [];
@@ -76,7 +95,7 @@ export async function RunLaunchProcess(rawProcess: RawLaunchProcess, Callback: (
     for (const task of process.process) {
       const i = process.process.indexOf(task);
       try {
-        console.warn('Executing task ' + i + '/' + stepsCount + ' : ' + task.baseTask.key + '...');
+        console.warn('Executing task ' + i + '/' + (stepsCount - 1) + ' : ' + task.baseTask.key + '...');
         const response = await task.run((c) => CreateCallback(c, i));
         CreateCallback(response, i);
         if (response.state === LaunchTaskState.error) {

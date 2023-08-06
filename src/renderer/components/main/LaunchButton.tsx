@@ -87,22 +87,28 @@ export default function LaunchButton(props: LaunchButtonProps) {
     const process: RawLaunchProcess = {
       id: props.id || uuidv4(), process: [], version: version, internal: true, allowCustomOperations: true
     };
+    const channel = { callback: 'GameLaunchCallback:' + process.id, launch: 'GameEngine:Launch:' + process.id };
     setVersionSelector(false);
     setDisplayText('Initializing...');
-    window.electron.ipcRenderer.sendMessage('App:setWinBar', ({ percentage: 0, options: { mode: 'indeterminate' } }));
     console.log('Requesting Launch...');
-    //@ts-ignore
-    window.electron.ipcRenderer.on('GameLaunchCallback', (callback: Callback) => {
-      console.raw.log(callback);
-      decodeLaunchCallback(callback);
-    });
-    window.electron.ipcRenderer.invoke('GameEngine:Launch', { LaunchProcess: process })
-      .then((exitedCallback: ExitedCallback) => {
-        console.raw.log(exitedCallback);
-        window.electron.ipcRenderer.removeAllListeners('GameLaunchCallback');
-        decodeLaunchCallback(exitedCallback);
+    window.electron.ipcRenderer.invoke('GameEngine:RequestLaunch', { id: process.id }).then(() => {
+      console.log(`Listening on [${channel.callback} ]`);
+      window.electron.ipcRenderer.sendMessage('App:setWinBar', ({ percentage: 0, options: { mode: 'indeterminate' } }));
+      //Register callback
+      //@ts-ignore
+      window.electron.ipcRenderer.on(channel.callback, (callback: Callback) => {
+        //console.raw.log(callback);
+        decodeLaunchCallback(callback);
       });
+      //Request Launch
+      window.electron.ipcRenderer.invoke(channel.launch, { LaunchProcess: process })
+        .then((exitedCallback: ExitedCallback) => {
+          //console.raw.log(exitedCallback);
+          window.electron.ipcRenderer.removeAllListeners(channel.callback);
+          decodeLaunchCallback(exitedCallback);
+        });
 
+    });
   }
 
 
@@ -114,6 +120,8 @@ export default function LaunchButton(props: LaunchButtonProps) {
         if (props.onProgressCallback) props.onProgressCallback(callback);
         if (state !== LaunchButtonState.Loading) setCurrentState(LaunchButtonState.Loading);
         if (callback.task.displayText !== undefined) setDisplayText(callback.task.displayText);
+        //avoid 0's array
+        _callback.stepCount -= 1;
         //add or update sub task
         const containLP = !(callback.task.data === undefined) && !(callback.task.data.localProgress === undefined);
         // @ts-ignore

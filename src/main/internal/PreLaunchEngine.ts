@@ -7,6 +7,7 @@ import {
   GameType,
   GameVersion,
   LaunchOperationClass,
+  LaunchOperationKit,
   LaunchProcess,
   LaunchTaskState,
   RawLaunchOperationList,
@@ -20,6 +21,7 @@ import { isSupported, versionExist } from './VersionManager';
 import { InstallJava, ResolveJavaPath } from './JavaEngine';
 import { net } from 'electron';
 import ConsoleManager, { ProcessType } from '../../public/ConsoleManager';
+import { Launch } from './Core';
 
 const console = new ConsoleManager('LaunchEngine', ProcessType.Internal);
 
@@ -193,6 +195,21 @@ export function AnalyseLaunchProcess(rawProcess: RawLaunchProcess): Promise<Laun
         const task = ResolveLaunchTask(t);
         if (task === undefined) throw new Error(`Task ${t.key} couldn't be resolved \n (task bypassed the analyse !)`); else resolvedTaskList[i] = task;
       }));
+    //Add internal operations
+    // (Java + GameFile at start and Account at the end)
+    resolvedTaskList.unshift(
+      <ResolvedLaunchTask>ResolveLaunchTask(LaunchOperationKit.ParseJava),
+      <ResolvedLaunchTask>ResolveLaunchTask({
+        ...LaunchOperationKit.ParseGameFile,
+        params: { version: rawProcess.version }
+      }));
+    resolvedTaskList.push(<ResolvedLaunchTask>ResolveLaunchTask(LaunchOperationKit.ParseAccount));
+    //AUTOMATIONS
+    if (!rawProcess.manual) {
+      let automationCount: number = 0;
+      //
+      console.log(automationCount > 0 ? 'Ran ' + automationCount + ' automations.' : 'No automations ran.');
+    }
     //TODO: check for mods compatibilities
     //Recompose process
     const resolvedProcess: LaunchProcess = { ...rawProcess, process: resolvedTaskList };
