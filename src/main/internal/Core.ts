@@ -135,7 +135,13 @@ async function getAutorisation(): Promise<boolean> {
 export function StopGame(processId: string) {
   console.log('Forcing stop process: ' + processId);
   const process = RunningVersionList.find(rv => rv.id === processId)?.process;
-  if (process === undefined) console.raw.warn('Process of Running version ' + processId + ' is undefined'); else process.kill();
+  if (process === undefined) console.raw.warn('Process of Running version ' + processId + ' is undefined');
+  else {
+    if (process.kill()) {
+      UnregisterRunningVersion(processId)
+      currentWindow?.webContents.send('UpdateMainTabsState');
+    } else throw new Error('Cannot kill process ' + processId);
+  }
 }
 
 
