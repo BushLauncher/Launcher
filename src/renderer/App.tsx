@@ -24,12 +24,13 @@ import './components/views/SettingsViews/css/SettingsModal-ant-override.css';
 import { RunningVersion, RunningVersionState } from '../public/GameDataPublic';
 import loadingIcon from '../assets/graphics/icons/loading.svg';
 import playIcon from '../assets/graphics/icons/caret-right.svg';
+import crossIcon from '../assets/graphics/icons/close.svg';
 import RenderConsoleManager, { ProcessType } from '../public/RenderConsoleManager';
 
 const Sider = Layout.Sider;
 
 
-const console = new RenderConsoleManager("app", ProcessType.Render);
+const console = new RenderConsoleManager('app', ProcessType.Render);
 
 export const NotificationParam = {
   info: {
@@ -155,10 +156,23 @@ function SettingsContext({ saveSelectedView, validateUser }: SettingsContextProp
       const interfaceData = await window.electron.ipcRenderer.invoke('getData', { dataPath: 'interface' });
       const selectedTab: string = interfaceData.selectedTab !== undefined ? interfaceData.selectedTab : 'vanilla';
 
+      function getConfigurationStateIcon(versionState: RunningVersionState) {
+        switch (versionState) {
+          case RunningVersionState.Launching:
+            return loadingIcon;
+          case RunningVersionState.Running:
+            return playIcon;
+          case RunningVersionState.Error:
+            return crossIcon;
+          default:
+            console.raw.error('Cannot find icon for ' + versionState);
+        }
+      }
+
       return <Layout style={{ width: '100%', height: '100%' }}>
         <Tabs
           items={[
-            { key: 'vanilla', icon: dirtBlockIcon, content: VanillaView({ key: 'vanilla' }) },
+            { key: 'vanilla', icon: dirtBlockIcon, content: VanillaView({ key: 'vanilla' }) }
 
           ].map(tab => {
             return {
@@ -174,7 +188,7 @@ function SettingsContext({ saveSelectedView, validateUser }: SettingsContextProp
                         const version = list.find((rv) => rv.id === tab.key);
                         if (version === undefined) return <></>;
                         else return <Icon
-                          icon={version.State === RunningVersionState.Launching ? loadingIcon : playIcon} />;
+                          icon={getConfigurationStateIcon(version.State)} />;
                       }} className={'State'} />
                     </span>
                 </Popover>,

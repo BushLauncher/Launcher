@@ -29,14 +29,28 @@ const console = new ConsoleManager('Launcher', ProcessType.Internal);
 
 export const RunningVersionList: RunningVersion[] = [];
 
-export function RegisterRunningVersion(process: LaunchProcess | RawLaunchProcess): boolean {
+export function SetRunningVersionState(runningVersionId: number, newState: RunningVersionState) {
+  if (RunningVersionList[runningVersionId] !== undefined) {
+    RunningVersionList[runningVersionId].State = newState;
+    currentWindow?.webContents.send('UpdateMainTabsState');
+  } else console.raw.error('Running version ' + runningVersionId + ' doesn\'t exist');
+}
+
+export function RegisterRunningVersion(process: LaunchProcess | RawLaunchProcess): number {
+  //Verify if RV with same key doesn't already exist
   const index = RunningVersionList.findIndex(rv => rv.id === process.id);
   if (index === -1) {
-    RunningVersionList.push({ id: process.id, Version: process.version, State: RunningVersionState.Launching });
-    return true;
+    RunningVersionList.push({
+      id: process.id,
+      Version: process.version,
+      State: RunningVersionState.Launching
+    });
+    currentWindow?.webContents.send('UpdateMainTabsState');
+    // -1 to get the id of last element
+    return RunningVersionList.length - 1;
   } else {
     console.raw.error('Version ' + process.id + ' already registered !');
-    return false;
+    return -1;
   }
 }
 
@@ -44,6 +58,7 @@ export function UnregisterRunningVersion(id: string): boolean {
   const index = RunningVersionList.findIndex(rv => rv.id === id);
   if (index !== -1) {
     RunningVersionList.splice(index);
+    currentWindow?.webContents.send('UpdateMainTabsState');
     return true;
   } else {
     console.raw.error('Cannot find ' + id + ' running version');
@@ -51,16 +66,15 @@ export function UnregisterRunningVersion(id: string): boolean {
   }
 }
 
-export function Launch(process: RawLaunchProcess, Callback: (callback: Callback) => void) {
+export function Launch(process: RawLaunchProcess, Callback: (callback: Callback) => void, runningVersionIndex?: number) {
   console.log('Launching [' + process.id + ']');
   //Register version as Running (Did before in Main!)
-  if (RunningVersionList.findIndex(rv => rv.id === process.id) === -1) RegisterRunningVersion(process);
+  runningVersionIndex = runningVersionIndex || RegisterRunningVersion(process);
 
-  currentWindow?.webContents.send('UpdateMainTabsState');
-  return RunLaunchProcess(process, (callback: Callback) => Callback(callback));
+  return RunLaunchProcess(runningVersionIndex, process, (callback: Callback) => Callback(callback));
 }
 
-export async function RunLaunchProcess(rawProcess: RawLaunchProcess, Callback: (callback: Callback) => void): Promise<ExitedCallback | ErrorCallback> {
+export async function RunLaunchProcess(id: number, rawProcess: RawLaunchProcess, Callback: (callback: Callback) => void): Promise<ExitedCallback | ErrorCallback> {
   return new Promise<ExitedCallback | ErrorCallback>(async (resolve, reject) => {
     //**Preload**
     const process: LaunchProcess = await AnalyseLaunchProcess(rawProcess);
@@ -99,12 +113,14 @@ export async function RunLaunchProcess(rawProcess: RawLaunchProcess, Callback: (
         const response = await task.run((c) => CreateCallback(c, i));
         CreateCallback(response, i);
         if (response.task?.type === LaunchOperationClass.Verify && response.task?.params?.stopOnFalse === true && response.response.data === false) {
+          console.error(response.displayText || 'Some requirements cannot be fulfilled \n STOPPING');
           resolve(<ExitedCallback>{
             type: CallbackType.Closed,
             return: response.displayText || 'Some requirements cannot be fulfilled \n(Retry later)'
           });
         }
         if (response.state === LaunchTaskState.error) {
+          SetRunningVersionState(id, RunningVersionState.Error);
           resolve(<ErrorCallback>{ type: CallbackType.Error, return: response.data || response.response.error });
           return;
         } else LaunchStorage.push({
@@ -150,7 +166,6 @@ export function StopGame(processId: string) {
   else {
     if (process.kill()) {
       UnregisterRunningVersion(processId);
-      currentWindow?.webContents.send('UpdateMainTabsState');
     } else throw new Error('Cannot kill process ' + processId);
   }
 }
@@ -203,16 +218,12 @@ function LaunchGameProcess(id: string, version: GameVersion, javaPath: string, a
       const watcher = createMinecraftProcessWatcher(process);
       watcher.on('error', (err) => console.raw.error(id + ' ' + err));
       watcher.on('minecraft-window-ready', () => {
-        RunningVersionList[runningVersionIndex] = {
-          ...RunningVersionList[runningVersionIndex], State: RunningVersionState.Running
-        };
-        currentWindow?.webContents.send('UpdateMainTabsState');
+        SetRunningVersionState(runningVersionIndex, RunningVersionState.Running);
         callback({ type: CallbackType.Success });
       });
       watcher.on('minecraft-exit', () => {
         console.log(id + ' Game Exited');
         resolve(<ExitedCallback>{ type: CallbackType.Closed });
-        currentWindow?.webContents.send('UpdateMainTabsState');
       });
     }).catch(err => {
       console.raw.error(id + ' ' + err);

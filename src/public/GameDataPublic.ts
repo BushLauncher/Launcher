@@ -163,7 +163,8 @@ export interface PreLaunchResponse {
 
 export enum RunningVersionState {
   Launching,
-  Running
+  Running,
+  Error
 }
 
 export interface RunningVersion {

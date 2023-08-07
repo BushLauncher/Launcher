@@ -14,6 +14,7 @@ import {
   GameVersion,
   getDefaultGameType,
   getDefaultVersion,
+  LaunchOperationKit,
   LaunchTaskState,
   ProgressCallback,
   RawLaunchProcess
@@ -85,7 +86,9 @@ export default function LaunchButton(props: LaunchButtonProps) {
 
   function requestLaunch(version: GameVersion) {
     const process: RawLaunchProcess = {
-      id: props.id || uuidv4(), process: [], version: version, internal: true, allowCustomOperations: true
+      id: props.id || uuidv4(), process: [
+        { ...LaunchOperationKit.CheckCondition }
+      ], version: version, internal: true, allowCustomOperations: true
     };
     const channel = { callback: 'GameLaunchCallback:' + process.id, launch: 'GameEngine:Launch:' + process.id };
     setVersionSelector(false);
@@ -165,7 +168,7 @@ export default function LaunchButton(props: LaunchButtonProps) {
         const callback = _callback as unknown as ErrorCallback;
         if (props.onError) props.onError(callback);
         setCurrentState(LaunchButtonState.Error);
-        setDisplayText('Error');
+        setDisplayText(typeof callback.return === 'string' ? callback.return : callback.return.message || 'Error');
         toast.error(<CallbackMessage callback={callback} />, {
           autoClose: false, hideProgressBar: true, style: { width: 'auto' }
         });
@@ -256,9 +259,8 @@ export default function LaunchButton(props: LaunchButtonProps) {
             <p className={styles.versionText}>{selected.id.toString()}</p>
           </div>
           {state === LaunchButtonState.Normal &&
-            <OutsideAlerter className={styles.versionListDropdown} onClickOutside={() => {
-              setVersionSelector(false);
-            }} exceptElementClasses={[styles.dropdownIcon]}
+            <OutsideAlerter className={styles.versionListDropdown} onClickOutside={() => setVersionSelector(false)}
+                            exceptElementClasses={[styles.dropdownIcon]}
             >
               <>
                 {list.map((_version: GameVersion | GroupedGameVersions, index: number) => {
@@ -322,7 +324,7 @@ export default function LaunchButton(props: LaunchButtonProps) {
           <Popover content={state === LaunchButtonState.Preparing ? 'Please wait for Loading...' : undefined}>
             <div className={styles.runContent}
                  onClick={async () => {
-                   if (state === LaunchButtonState.Normal) {
+                   if (state === LaunchButtonState.Normal || state === LaunchButtonState.Error) {
                      let version = await getSelected();
                      if (version === undefined) {
                        const defaultVersion = getDefaultVersion(getDefaultGameType);

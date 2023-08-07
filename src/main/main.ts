@@ -153,8 +153,7 @@ ipcMain.on('Auth:SelectAccount', (event, args: { index: number }) => SelectAccou
 ipcMain.handle('GameEngine:RequestLaunch', (event, request_args: { id: string }) => {
   //Register all IPC functions
   ipcMain.handle('GameEngine:Launch:' + request_args.id, async (event, args: { LaunchProcess: RawLaunchProcess }) => {
-    //TODO: register new running version here + verify if version doesn't already running
-    RegisterRunningVersion(args.LaunchProcess);
+    const runningIndex = RegisterRunningVersion(args.LaunchProcess);
     try {
       const operation = Launch(args.LaunchProcess, (callback: Callback) => {
         event.sender.send('GameLaunchCallback:' + args.LaunchProcess.id, callback);
@@ -162,7 +161,7 @@ ipcMain.handle('GameEngine:RequestLaunch', (event, request_args: { id: string })
           UnregisterRunningVersion(args.LaunchProcess.id);
           return;
         }
-      });
+      }, runningIndex);
       operation.then(e => {
         ipcMain.removeHandler('GameEngine:Launch:' + request_args.id);
         UnregisterRunningVersion(args.LaunchProcess.id);
