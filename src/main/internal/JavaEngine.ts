@@ -1,4 +1,4 @@
-import { LaunchTaskState, ProgressSubTaskCallback } from '../../public/GameDataPublic';
+import { LaunchTaskState, SubLaunchTaskCallback } from '../../public/GameDataPublic';
 import path from 'path';
 import fs from 'fs';
 import axios from 'axios';
@@ -9,10 +9,10 @@ import { deleteFolderRecursive, findFileRecursively } from './GameFileManager';
 import { javaPath, tempDownloadDir } from './UserData';
 import ConsoleManager, { ProcessType } from '../../public/ConsoleManager';
 
-const console = new ConsoleManager("JavaEngine", ProcessType.Internal)
+const console = new ConsoleManager('JavaEngine', ProcessType.Internal);
 
 
-export async function InstallJava(callback: (c: ProgressSubTaskCallback) => void): Promise<string> {
+export async function InstallJava(callback: (c: SubLaunchTaskCallback) => void): Promise<string> {
   console.warn('Installing Java...');
   callback({ state: LaunchTaskState.processing, displayText: 'Installing Java...' });
 
@@ -32,14 +32,14 @@ export async function InstallJava(callback: (c: ProgressSubTaskCallback) => void
     axios.get(downloadData.link, {
       responseType: 'stream',
       onDownloadProgress: progressEvent => {
-        const downloadPercentage = Math.floor(
-          (progressEvent.loaded * 100) / (progressEvent.total ? progressEvent.total : downloadData.size)
-        );
+        const downloadPercentage = Math.floor((progressEvent.loaded * 100) / (progressEvent.total || downloadData.size));
         console.log('Downloading Java: ' + downloadPercentage + '%');
         callback({
           state: LaunchTaskState.processing,
           displayText: 'Downloading Java...',
-          localProgress: downloadPercentage
+          data: {
+            localProgress: downloadPercentage
+          }
         });
       }
     })

@@ -113,15 +113,16 @@ export default function LaunchButton(props: LaunchButtonProps) {
 
 
   function decodeLaunchCallback(_callback: Callback | ExitedCallback) {
-
+    //avoid 0's array
+    if ('stepId' in _callback) _callback.stepId += 1;
+    //if ('stepCount' in _callback) _callback.stepCount += 1;
     switch (_callback.type) {
       case CallbackType.Progress: {
         const callback: ProgressCallback = _callback as unknown as ProgressCallback;
         if (props.onProgressCallback) props.onProgressCallback(callback);
         if (state !== LaunchButtonState.Loading) setCurrentState(LaunchButtonState.Loading);
         if (callback.task.displayText !== undefined) setDisplayText(callback.task.displayText);
-        //avoid 0's array
-        _callback.stepCount -= 1;
+
         //add or update sub task
         const containLP = !(callback.task.data === undefined) && !(callback.task.data.localProgress === undefined);
         // @ts-ignore
@@ -142,9 +143,9 @@ export default function LaunchButton(props: LaunchButtonProps) {
         };
         lp = setLp();
         // @ts-ignore
-        let calculatedProgress: number = 100 * (callback.stepId + 1);
+        let calculatedProgress: number = 100 * callback.stepId;
         calculatedProgress += lp - 100;
-        calculatedProgress /= (callback.stepCount + 1);
+        calculatedProgress /= callback.stepCount;
         /*console.log(`((100 * ${callback.stepId}) - ${lp})/ ${callback.stepCount}
     = (${100 * callback.stepId} - ${lp})/ ${callback.stepCount})
     = (${(100 * callback.stepId) - lp})/ ${callback.stepCount})

@@ -21,10 +21,8 @@ import { isSupported, versionExist } from './VersionManager';
 import { InstallJava, ResolveJavaPath } from './JavaEngine';
 import { net } from 'electron';
 import ConsoleManager, { ProcessType } from '../../public/ConsoleManager';
-import { Launch } from './Core';
 
 const console = new ConsoleManager('LaunchEngine', ProcessType.Internal);
-
 
 export abstract class ResolvedLaunchTask {
   public type!: LaunchOperationClass;
@@ -63,7 +61,7 @@ export class ParseAccount extends ResolvedLaunchTask {
 
   public override async run(callback: (callback: SubLaunchTaskCallback) => void) {
     callback({ task: this.baseTask, state: LaunchTaskState.starting, displayText: 'Checking account...' });
-    const data = await parseAccount();
+    const data = await parseAccount((c: SubLaunchTaskCallback) => callback(this.getCallback(c)));
     return <FinishedSubTaskCallback>{
       task: this.baseTask,
       state: LaunchTaskState.finished,
@@ -125,6 +123,7 @@ export class ParseGameFile extends ResolvedLaunchTask {
   }
 }
 
+/************/
 export function ResolveLaunchTask(task: RawLaunchTask): ResolvedLaunchTask | undefined {
   //convert
   switch (task.key) {
@@ -215,9 +214,16 @@ export function AnalyseLaunchProcess(rawProcess: RawLaunchProcess): Promise<Laun
   });
 }
 
-export function parseGameFile(version: GameVersion, callback: (callback: SubLaunchTaskCallback) => void): Promise<void> {
+/************/
+
+
+function parseGameFile(version: GameVersion, callback: (callback: SubLaunchTaskCallback) => void): Promise<void> {
   return new Promise(async (resolve, reject) => {
-    const Install = () => InstallGameFiles(version, (c) => callback(c))
+    const Install = (operation: 'Install' | 'Repaire') => InstallGameFiles(version, (c) => {
+      if (operation === 'Repaire') c.displayText = c.displayText?.replace('Installing', 'Repairing');
+
+      callback(c);
+    })
       .then(async () => {
         console.log('Installed Minecraft files !');
         const report = await VerifyGameFiles(version);
@@ -231,7 +237,7 @@ export function parseGameFile(version: GameVersion, callback: (callback: SubLaun
       .catch((err) => reject(err));
 
 
-    if (!versionExist(version.id)) await Install(); else {
+    if (!versionExist(version.id)) await Install('Install'); else {
       //check for corruption
       callback({ state: LaunchTaskState.processing, displayText: 'Checking Minecraft file...' });
       const checkResult = await VerifyGameFiles(version /*no Callback needed*/);
@@ -240,7 +246,7 @@ export function parseGameFile(version: GameVersion, callback: (callback: SubLaun
         resolve();
       } else {
         callback({ state: LaunchTaskState.processing, displayText: 'Repairing Minecraft Files...' });
-        await Install();
+        await Install('Repaire');
       }
     }
   });
@@ -249,10 +255,15 @@ export function parseGameFile(version: GameVersion, callback: (callback: SubLaun
 /**
  * @return the access_token or *false* if account not valid
  */
-export async function parseAccount(): Promise<string | null | false> {
+async function parseAccount(callback: (callback: SubLaunchTaskCallback) => void): Promise<string | undefined | false> {
   const account = AccountManager.getSelectedAccount();
   if (account != null && AccountManager.isAccountValid(account)) {
-    return net.isOnline() ? (await getAccessToken(account)).access_token : null;
+    callback({
+      state: LaunchTaskState.processing,
+      data: { localProgress: 50 },
+      displayText: 'Getting account access...'
+    });
+    return net.isOnline() ? (await getAccessToken(account)).access_token : undefined;
   } else return false;
 }
 
@@ -260,7 +271,7 @@ export async function parseAccount(): Promise<string | null | false> {
  * @return The (installed | founded) Java executable path
  * @param callback installation callback
  */
-export function parseJava(callback: (c: SubLaunchTaskCallback) => void): Promise<string> {
+function parseJava(callback: (c: SubLaunchTaskCallback) => void): Promise<string> {
   return new Promise<string>(async (resolve) => {
     console.log('Parsing java...');
     callback({ state: LaunchTaskState.processing, displayText: 'Parsing Java...' });

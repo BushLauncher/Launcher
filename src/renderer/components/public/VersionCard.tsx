@@ -1,4 +1,4 @@
-import { GameVersion, ProgressSubTaskCallback, RunningVersion } from '../../../public/GameDataPublic';
+import { GameVersion, SubLaunchTaskCallback, RunningVersion } from '../../../public/GameDataPublic';
 import Icon from './Icons/Icon';
 import { getGameTypeIcon, getInstalledIcon } from '../views/SettingsViews/VersionSettingsView';
 import styles from './css/publicStyle.module.css';
@@ -43,7 +43,7 @@ export default function VersionCard({ version, toolBox, settings, className, sty
     });
     const id = 'uninstallOperation' + version.id + version.gameType;
     // @ts-ignore
-    window.electron.ipcRenderer.on('VersionManager:Uninstall', (callback: ProgressSubTaskCallback) => {
+    window.electron.ipcRenderer.on('VersionManager:Uninstall', (callback: SubLaunchTaskCallback) => {
       if (callback.displayText) toast.update(id, { render: `Uninstalling ${version.id}: ${callback.displayText}` });
     });
     await toast.promise(operation, {
@@ -142,11 +142,11 @@ export default function VersionCard({ version, toolBox, settings, className, sty
       });
     let localProgress: number = 0;
     // @ts-ignore
-    window.electron.ipcRenderer.on('VersionManager:Install', (callback: ProgressSubTaskCallback) => {
-      if (callback.localProgress !== undefined) localProgress = callback.localProgress;
+    window.electron.ipcRenderer.on('VersionManager:Install', (callback: SubLaunchTaskCallback) => {
+      if (callback.data?.localProgress !== undefined) localProgress = callback.data?.localProgress;
       if (callback.displayText) toast.update(id, {
         render: `Installing ${version.id}: ${callback.displayText}`,
-        progress: callback.localProgress ? callback.localProgress : localProgress
+        progress: callback.data?.localProgress ? callback.data?.localProgress : localProgress
       });
     });
   }

@@ -27,7 +27,7 @@ export const getDefaultVersion = (gameType: GameType): GameVersion => {
 export enum LaunchOperationClass {
   //Preload: Assign some variables before the launch
   Preload,
-  //Verify: Check so²me value before the launch (can cancel process)
+  //Verify: Check some value before the launch (can cancel process)
   Verify,
   //Private internal functions
   Private,

@@ -4,6 +4,7 @@ import {
   ErrorCallback,
   ExitedCallback,
   GameVersion,
+  LaunchOperationClass,
   LaunchOperationKit,
   LaunchProcess,
   LaunchTaskState,
@@ -97,6 +98,12 @@ export async function RunLaunchProcess(rawProcess: RawLaunchProcess, Callback: (
         console.warn('Executing task ' + i + '/' + (stepsCount - 1) + ' : ' + task.baseTask.key + '...');
         const response = await task.run((c) => CreateCallback(c, i));
         CreateCallback(response, i);
+        if (response.task?.type === LaunchOperationClass.Verify && response.task?.params?.stopOnFalse === true && response.response.data === false) {
+          resolve(<ExitedCallback>{
+            type: CallbackType.Closed,
+            return: response.displayText || 'Some requirements cannot be fulfilled \n(Retry later)'
+          });
+        }
         if (response.state === LaunchTaskState.error) {
           resolve(<ErrorCallback>{ type: CallbackType.Error, return: response.data || response.response.error });
           return;
@@ -113,7 +120,11 @@ export async function RunLaunchProcess(rawProcess: RawLaunchProcess, Callback: (
     const access_token = LaunchStorage[LaunchStorage.length - 1].response.data;
     if (java_path === undefined) throw new Error('Cannot get \'java_path\'');
     //access_token can be null (offline)
-    CreateCallback({ state: LaunchTaskState.processing, displayText: 'Launching...' }, stepsCount);
+    CreateCallback({
+      state: LaunchTaskState.processing,
+      displayText: 'Launching...',
+      data: { localProgress: 100 }
+    }, stepsCount - 1);
 
     resolve(LaunchGameProcess(process.id, process.version, java_path, access_token, (callback: Callback) => Callback(callback)));
   });
@@ -138,7 +149,7 @@ export function StopGame(processId: string) {
   if (process === undefined) console.raw.warn('Process of Running version ' + processId + ' is undefined');
   else {
     if (process.kill()) {
-      UnregisterRunningVersion(processId)
+      UnregisterRunningVersion(processId);
       currentWindow?.webContents.send('UpdateMainTabsState');
     } else throw new Error('Cannot kill process ' + processId);
   }

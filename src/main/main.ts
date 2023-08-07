@@ -163,7 +163,10 @@ ipcMain.handle('GameEngine:RequestLaunch', (event, request_args: { id: string })
           return;
         }
       });
-      operation.then(e => ipcMain.removeHandler('GameEngine:Launch:' + request_args.id));
+      operation.then(e => {
+        ipcMain.removeHandler('GameEngine:Launch:' + request_args.id);
+        UnregisterRunningVersion(args.LaunchProcess.id);
+      });
       return await operation;
     } catch (err) {
       console.error(err);
