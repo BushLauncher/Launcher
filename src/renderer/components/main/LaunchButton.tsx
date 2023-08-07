@@ -8,8 +8,8 @@ import React, { useEffect, useState } from 'react';
 import {
   Callback,
   CallbackType,
-  ErrorCallback,
   ExitedCallback,
+  ExitedReason,
   GameType,
   GameVersion,
   getDefaultGameType,
@@ -48,7 +48,7 @@ export interface LaunchButtonProps extends ComponentsPublic {
   type?: 'square' | 'default',
   onRun?: (version: GameVersion) => any,
   onProgressCallback?: (callback: ProgressCallback) => any,
-  onError?: (err: ErrorCallback | any) => any
+  onError?: (err: ExitedCallback | any) => any
   onExited?: (exitedCallback: ExitedCallback) => any
   onLaunched?: () => any
 }
@@ -118,7 +118,7 @@ export default function LaunchButton(props: LaunchButtonProps) {
   function decodeLaunchCallback(_callback: Callback | ExitedCallback) {
     //avoid 0's array
     if ('stepId' in _callback) _callback.stepId += 1;
-    //if ('stepCount' in _callback) _callback.stepCount += 1;
+    if (_callback.stepId !== undefined) _callback.stepId += 1;
     switch (_callback.type) {
       case CallbackType.Progress: {
         const callback: ProgressCallback = _callback as unknown as ProgressCallback;
@@ -164,14 +164,11 @@ export default function LaunchButton(props: LaunchButtonProps) {
         });
         break;
       }
+      //An error occurred but process execution continue
       case CallbackType.Error: {
-        const callback = _callback as unknown as ErrorCallback;
+        const callback = _callback as unknown as ExitedCallback;
         if (props.onError) props.onError(callback);
-        setCurrentState(LaunchButtonState.Error);
-        setDisplayText(typeof callback.return === 'string' ? callback.return : callback.return.message || 'Error');
-        toast.error(<CallbackMessage callback={callback} />, {
-          autoClose: false, hideProgressBar: true, style: { width: 'auto' }
-        });
+        toast.error(<CallbackMessage callback={callback as Callback} />);
         window.electron.ipcRenderer.sendMessage('App:setWinBar', ({
           percentage: progress.progressVal,
           options: { mode: 'error' }
@@ -187,15 +184,48 @@ export default function LaunchButton(props: LaunchButtonProps) {
         window.electron.ipcRenderer.sendMessage('App:setWinBar', ({ percentage: 0, options: { mode: 'none' } }));
         break;
       }
-      case CallbackType.Closed: {
+      //Process Exited (Error, Unable to Launch, or normal Game exit)
+      case CallbackType.Exited: {
         const callback = _callback as unknown as ExitedCallback;
         if (props.onExited) props.onExited(callback);
-        setDisplayText('Launch');
-        setCurrentState(LaunchButtonState.Normal);
-        setProgress({
-          currentStep: -1, stepCount: 0, progressVal: 0
-        });
-        console.log('Game Exited');
+        switch (callback.return.reason) {
+          case ExitedReason.Exited: {
+            //Game Exited normally
+            setDisplayText('Launch');
+            setCurrentState(LaunchButtonState.Normal);
+            setProgress({
+              currentStep: -1, stepCount: 0, progressVal: 0
+            });
+            console.log('Game Exited');
+            break;
+          }
+          case ExitedReason.Error: {
+            if (props.onError) props.onError(callback);
+            setCurrentState(LaunchButtonState.Error);
+            setDisplayText((typeof callback.return.display === 'string' ? callback.return.display : callback.return.display?.message) || 'Error');
+            toast.error(<CallbackMessage callback={callback as Callback} />, {
+              autoClose: false, hideProgressBar: true, style: { width: 'auto' }
+            });
+            window.electron.ipcRenderer.sendMessage('App:setWinBar', ({
+              percentage: progress.progressVal,
+              options: { mode: 'error' }
+            }));
+            break;
+          }
+          case ExitedReason.UnableToLaunch: {
+            toast.error(<CallbackMessage callback={callback as Callback} />, {
+              autoClose: false, hideProgressBar: true, style: { width: 'auto' }
+            });
+            setDisplayText('Launch');
+            setCurrentState(LaunchButtonState.Normal);
+            setProgress({
+              currentStep: -1, stepCount: 0, progressVal: 0
+            });
+            console.log('Process Exited: ', callback.return.display);
+            break;
+          }
+        }
+
         break;
       }
       default :
@@ -211,18 +241,20 @@ export default function LaunchButton(props: LaunchButtonProps) {
           grouped: true
         })
           .catch(async err => {
-            const callback: ErrorCallback = {
-              stepId: -1, stepCount: -1, type: CallbackType.Error, return: {
-                message: 'Services error',
-                desc: <>
-                  <p>Cannot get versions from network </p>
-                  <p>(Check <a href={'https://support.xbox.com/fr-FR/xbox-live-status'} target={'_blank'}>Xbox
-                    Status</a>)</p>
-                </>,
-                resolution: err.message
+            const callback: ExitedCallback = {
+              type: CallbackType.Error, return: {
+                reason: ExitedReason.Error, display: {
+                  message: 'Services error',
+                  desc: <>
+                    <p>Cannot get versions from network </p>
+                    <p>(Check <a href={'https://support.xbox.com/fr-FR/xbox-live-status'} target={'_blank'}>Xbox
+                      Status</a>)</p>
+                  </>,
+                  resolution: err.message
+                }
               }
             };
-            toast.warn(<CallbackMessage callback={callback} />, { toastId: 'Version:getListError' });
+            toast.warn(<CallbackMessage callback={callback as Callback} />, { toastId: 'Version:getListError' });
             const localRes = await window.electron.ipcRenderer.invoke('Version:getList', {
               gameType: GameType.VANILLA, type: 'local'
             });

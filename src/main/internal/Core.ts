@@ -1,8 +1,8 @@
 import {
   Callback,
   CallbackType,
-  ErrorCallback,
   ExitedCallback,
+  ExitedReason,
   GameVersion,
   LaunchOperationClass,
   LaunchOperationKit,
@@ -69,13 +69,12 @@ export function UnregisterRunningVersion(id: string): boolean {
 export function Launch(process: RawLaunchProcess, Callback: (callback: Callback) => void, runningVersionIndex?: number) {
   console.log('Launching [' + process.id + ']');
   //Register version as Running (Did before in Main!)
-  runningVersionIndex = runningVersionIndex || RegisterRunningVersion(process);
-
+  if (runningVersionIndex === undefined) runningVersionIndex = RegisterRunningVersion(process);
   return RunLaunchProcess(runningVersionIndex, process, (callback: Callback) => Callback(callback));
 }
 
-export async function RunLaunchProcess(id: number, rawProcess: RawLaunchProcess, Callback: (callback: Callback) => void): Promise<ExitedCallback | ErrorCallback> {
-  return new Promise<ExitedCallback | ErrorCallback>(async (resolve, reject) => {
+export async function RunLaunchProcess(id: number, rawProcess: RawLaunchProcess, Callback: (callback: Callback) => void): Promise<ExitedCallback> {
+  return new Promise<ExitedCallback>(async (resolve, reject) => {
     //**Preload**
     const process: LaunchProcess = await AnalyseLaunchProcess(rawProcess);
     //Security check
@@ -83,7 +82,10 @@ export async function RunLaunchProcess(id: number, rawProcess: RawLaunchProcess,
       const res: boolean = await getAutorisation();
       if (!res) {
         console.warn('Process execution Canceled (unauthorized)');
-        resolve({ type: CallbackType.Closed });
+        resolve(<ExitedCallback>{
+          type: CallbackType.Exited,
+          return: { reason: ExitedReason.UnableToLaunch, display: 'Unauthorized to launch' }
+        });
         return;
       } else console.raw.error('** Process running in insecure mode ! **');
     }
@@ -91,8 +93,11 @@ export async function RunLaunchProcess(id: number, rawProcess: RawLaunchProcess,
     const stepsCount = parseProcess(process);
     const CreateCallback = (subTask: SubLaunchTaskCallback, index: number) => {
       if (subTask.state === LaunchTaskState.error) {
-        Callback(<ErrorCallback>{
-          stepId: index, stepCount: stepsCount, return: subTask.data?.return
+        Callback({
+          stepId: index,
+          stepCount: stepsCount,
+          type: CallbackType.Error,
+          return: { reason: ExitedReason.Error, display: subTask.data?.return }
         });
       } else {
         Callback(<ProgressCallback>{
@@ -112,22 +117,41 @@ export async function RunLaunchProcess(id: number, rawProcess: RawLaunchProcess,
         console.warn('Executing task ' + i + '/' + (stepsCount - 1) + ' : ' + task.baseTask.key + '...');
         const response = await task.run((c) => CreateCallback(c, i));
         CreateCallback(response, i);
-        if (response.task?.type === LaunchOperationClass.Verify && response.task?.params?.stopOnFalse === true && response.response.data === false) {
-          console.error(response.displayText || 'Some requirements cannot be fulfilled \n STOPPING');
-          resolve(<ExitedCallback>{
-            type: CallbackType.Closed,
-            return: response.displayText || 'Some requirements cannot be fulfilled \n(Retry later)'
-          });
+        //Check for condition stop
+        if (response.task?.params?.stopOnFalse === true) {
+          if (response.task?.type === LaunchOperationClass.Verify && response.response.data.result === false) {
+            console.error(response.displayText || 'Some requirements cannot be fulfilled', '\n STOPPING');
+            resolve(<ExitedCallback>{
+              type: CallbackType.Exited,
+              return: {
+                reason: ExitedReason.UnableToLaunch,
+                display: response.displayText || 'Some requirements cannot be fulfilled \n(please retry later)'
+              }
+            });
+            return;
+          }
         }
         if (response.state === LaunchTaskState.error) {
           SetRunningVersionState(id, RunningVersionState.Error);
-          resolve(<ErrorCallback>{ type: CallbackType.Error, return: response.data || response.response.error });
+          resolve(<ExitedCallback>{
+            stepId: i,
+            stepCount: stepsCount,
+            type: CallbackType.Error,
+            return: { reason: ExitedReason.Error, display: response.data || response.response.error }
+          });
           return;
-        } else LaunchStorage.push({
-          task: task.baseTask, response: response.response
-        });
+        } else {
+          LaunchStorage.push({
+            task: task.baseTask, response: response.response
+          });
+        }
       } catch (err: any) {
-        resolve(<ErrorCallback>{ type: CallbackType.Error, return: err });
+        resolve(<ExitedCallback>{
+          stepId: i,
+          stepCount: stepsCount,
+          type: CallbackType.Error,
+          return: { reason: ExitedReason.Error, display: err }
+        });
         return;
       }
     }
@@ -141,7 +165,8 @@ export async function RunLaunchProcess(id: number, rawProcess: RawLaunchProcess,
       displayText: 'Launching...',
       data: { localProgress: 100 }
     }, stepsCount - 1);
-
+    //The "[object]" in CheckCondition function result is normal
+    console.log('Storage result: ', LaunchStorage);
     resolve(LaunchGameProcess(process.id, process.version, java_path, access_token, (callback: Callback) => Callback(callback)));
   });
 }
@@ -185,14 +210,15 @@ function setLocalLocationRoot(path: string) {
   return path;
 }
 
-function LaunchGameProcess(id: string, version: GameVersion, javaPath: string, access_token: string | undefined, callback: (callback: any) => void): Promise<ExitedCallback | ErrorCallback> {
+function LaunchGameProcess(id: string, version: GameVersion, javaPath: string, access_token: string | undefined, callback: (callback: any) => void): Promise<ExitedCallback> {
   return new Promise(async (resolve, reject) => {
     //get account data
     const account = getSelectedAccount();
     if (account === null || !isAccountValid(account)) {
       console.raw.error(id + ' Cannot launch the game without a valid logged account');
-      resolve(<ErrorCallback>{
-        type: CallbackType.Error, return: 'Cannot launch the game without a valid logged account !'
+      resolve(<ExitedCallback>{
+        type: CallbackType.Error,
+        return: { reason: ExitedReason.Error, display: 'Cannot launch the game without a valid logged account !' }
       });
       return;
     }
@@ -210,7 +236,12 @@ function LaunchGameProcess(id: string, version: GameVersion, javaPath: string, a
       accessToken: access_token,
       launcherName: `BushLauncher`,
       launcherBrand: `BushLauncher`,
-      gameName: `Bush Launcher Minecraft [${version.id}]`
+      gameName: `Bush Launcher Minecraft [${version.id}]`,
+      resolution: process.env.NODE_ENV === 'development' ? {
+        width: 854,
+        height: 480,
+        fullscreen: undefined
+      } : undefined
       //TODO: set game icon, name and Discord RTC
       //TODO: Server, to launch directly on server
     }).then((process: ChildProcess) => {
@@ -223,7 +254,7 @@ function LaunchGameProcess(id: string, version: GameVersion, javaPath: string, a
       });
       watcher.on('minecraft-exit', () => {
         console.log(id + ' Game Exited');
-        resolve(<ExitedCallback>{ type: CallbackType.Closed });
+        resolve(<ExitedCallback>{ type: CallbackType.Exited, return: { reason: ExitedReason.Exited } });
       });
     }).catch(err => {
       console.raw.error(id + ' ' + err);
