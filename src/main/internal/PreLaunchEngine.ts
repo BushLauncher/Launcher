@@ -2,7 +2,9 @@ import * as AccountManager from './AuthModule';
 import { getAccessToken } from './AuthModule';
 import {
   CallbackType,
-  ErrorCallback,
+  Condition,
+  ExitedCallback,
+  ExitedReason,
   FinishedSubTaskCallback,
   GameType,
   GameVersion,
@@ -21,6 +23,7 @@ import { isSupported, versionExist } from './VersionManager';
 import { InstallJava, ResolveJavaPath } from './JavaEngine';
 import { net } from 'electron';
 import ConsoleManager, { ProcessType } from '../../public/ConsoleManager';
+import { Compile } from './ConditionCompiler';
 
 const console = new ConsoleManager('LaunchEngine', ProcessType.Internal);
 
@@ -52,6 +55,51 @@ export abstract class ResolvedLaunchTask {
     };
   }
 
+}
+
+/********/
+
+export interface CheckConditionParams extends Omit<RawLaunchTask, 'params'> {
+  params: { condition: Condition[] | Condition, stopOnFalse: boolean };
+}
+
+export class CheckCondition extends ResolvedLaunchTask {
+  constructor(baseTask: CheckConditionParams) {
+    super(baseTask, LaunchOperationClass.Parse);
+  }
+
+  public override async run(callback: (callback: SubLaunchTaskCallback) => void) {
+    //Analyse params
+    if (this.baseTask.params !== undefined) {
+      if (this.baseTask.params.conditions === undefined) {
+        console.raw.error('function to check is undefined !');
+        return <FinishedSubTaskCallback>{
+          task: this.baseTask,
+          state: LaunchTaskState.error,
+          response: { error: 'function to check is undefined !' }
+        };
+      }
+      if (this.baseTask.params.stopOnFalse === undefined) this.baseTask.params.stopOnFalse = true;
+    } else {
+      console.raw.error('Condition cannot be compiled: no param');
+      return <FinishedSubTaskCallback>{
+        task: this.baseTask,
+        state: LaunchTaskState.error,
+        response: { error: this.baseTask.key + ': no params' }
+      };
+    }
+    //Execute
+    const conditions: Condition | Condition[] = this.baseTask.params.conditions;
+    console.log('Compiling ' + (Array.isArray(conditions) ? conditions.length : 1) + ' condition', (this.baseTask.params.stopOnFalse ? ' And stopping if false' : ''));
+    callback({ task: this.baseTask, state: LaunchTaskState.starting, displayText: 'Checking integrity...' });
+    const conditionResult = Compile(this.baseTask.params.conditions);
+    return <FinishedSubTaskCallback>{
+      task: this.baseTask,
+      state: LaunchTaskState.finished,
+      displayText: (conditionResult.var !== undefined ? conditionResult.var + ' doesn\'t match' : undefined),
+      response: { success: true, data: conditionResult }
+    };
+  }
 }
 
 export class ParseAccount extends ResolvedLaunchTask {
@@ -137,8 +185,6 @@ export function ResolveLaunchTask(task: RawLaunchTask): ResolvedLaunchTask | und
       throw new Error('Unimplemented function');
     case 'ParseResources' :
       throw new Error('Unimplemented function');
-    case 'GetPreloadData' :
-      throw new Error('Unimplemented function');
     case 'ParseAccount' :
       return new ParseAccount(task);
     case 'ParseGameFile' :
@@ -152,7 +198,7 @@ export function ResolveLaunchTask(task: RawLaunchTask): ResolvedLaunchTask | und
     case 'CheckServer' :
       throw new Error('Unimplemented function');
     case 'CheckCondition' :
-      throw new Error('Unimplemented function');
+      return new CheckCondition(<CheckConditionParams>task);
     case 'RunFile' :
       throw new Error('Unimplemented function');
     case 'SetConfig' :
@@ -164,54 +210,83 @@ export function ResolveLaunchTask(task: RawLaunchTask): ResolvedLaunchTask | und
 
 export function AnalyseLaunchProcess(rawProcess: RawLaunchProcess): Promise<LaunchProcess> {
   return new Promise(async (resolve, reject) => {
-    //set undefined const
-    rawProcess.manual = rawProcess.manual || false;
-    rawProcess.allowCustomOperations = rawProcess.allowCustomOperations || false;
-    //Verify version validity
-    if (!(await isSupported(rawProcess.version))) reject(<ErrorCallback>{
-      type: CallbackType.Error,
-      return: `Version [${rawProcess.version.gameType}] ${rawProcess.version.id}, is not supported !`
-    });
-    //Verify game type
-    if (!Object.keys(GameType).includes(rawProcess.version.gameType)) reject(<ErrorCallback>{
-      type: CallbackType.Error, return: `Process type ${rawProcess.version.gameType}, is not supported !`
-    });
-    //Add internal operations
-    rawProcess.process.push(LaunchOperationKit.ParseJava, {
-      ...LaunchOperationKit.ParseGameFile,
-      params: { version: rawProcess.version }
-    });
-    //Reorder tasks
-    let resolvedTaskList: ResolvedLaunchTask[] = [];
-    rawProcess.process
-      //Analyse
-      .filter((t) => {
-        if (RawLaunchOperationList.find((task) => t.key === task.key) !== undefined) return true;
-        else {
-          console.warn(`(Analyse) Task named "${t.key}" isn't recognized \n -> (it was ignored)`);
-          return false;
+      //set undefined const
+      rawProcess.manual = rawProcess.manual || false;
+      rawProcess.allowCustomOperations = rawProcess.allowCustomOperations || false;
+      //Verify version validity
+      if (!(await isSupported(rawProcess.version))) reject(<ExitedCallback>{
+        type: CallbackType.Error,
+        return: {
+          reason: ExitedReason.Error,
+          display: `Version [${rawProcess.version.gameType}] ${rawProcess.version.id}, is not supported !`
         }
-      })
-      //Sort the tasks with theirs type (if process is not custom)
-      .sort((a, b) => !rawProcess.internal ? Object.keys(LaunchOperationClass).indexOf(a.type.toString()) - Object.keys(LaunchOperationClass).indexOf(b.type.toString()) : 0)
-      //Push executable version of tasks
-      .map(((t, i) => {
-        const task = ResolveLaunchTask(t);
-        if (task === undefined) throw new Error(`Task ${t.key} couldn't be resolved \n (task bypassed the analyse !)`); else resolvedTaskList[i] = task;
-      }));
-    //Add Account operation
-    resolvedTaskList.push(<ResolvedLaunchTask>ResolveLaunchTask(LaunchOperationKit.ParseAccount));
-    //AUTOMATIONS
-    if (!rawProcess.manual) {
-      let automationCount: number = 0;
+      });
+      //Verify game type
+      if (!Object.keys(GameType).includes(rawProcess.version.gameType)) reject(<ExitedCallback>{
+        type: CallbackType.Error, return: {
+          reason: ExitedReason.Error, display: `Process type ${rawProcess.version.gameType}, is not supported !`
+        }
+      });
+      //Add internal operations
+      rawProcess.process.push(LaunchOperationKit.ParseJava, {
+        ...LaunchOperationKit.ParseGameFile,
+        params: { version: rawProcess.version }
+      });
+      //Reorder tasks
+      let resolvedTaskList: ResolvedLaunchTask[] = [];
+
+      const preloadFunctions: RawLaunchTask[] = [];
+      rawProcess.process = rawProcess.process
+        //Analyse
+        .filter((t) => {
+          if (RawLaunchOperationList.find((task) => t.key === task.key) !== undefined) return true;
+          else {
+            console.warn(`(Analyse) Task named "${t.key}" isn't recognized \n -> (it was ignored)`);
+            return false;
+          }
+        })
+        //Filter Verify & Preload functions to move theme in verifyProcess
+        .filter((task) => {
+          if (task.type === LaunchOperationClass.Verify || task.type === LaunchOperationClass.Preload) {
+            preloadFunctions.push(task);
+            return false;
+          } else return true;
+        })
+        //Sort the tasks with theirs type (if process is not custom)
+        .sort((a, b) => !rawProcess.internal ? Object.keys(LaunchOperationClass).indexOf(a.type.toString()) - Object.keys(LaunchOperationClass).indexOf(b.type.toString()) : 0)
+        //Push executable version of tasks
+        .map(((t, i) => {
+          const task = ResolveLaunchTask(t);
+          if (task === undefined) throw new Error(`Task ${t.key} couldn't be resolved \n (task bypassed the analyse !)`);
+          else resolvedTaskList[i] = task;
+          return t;
+        }));
       //
-      console.log(automationCount > 0 ? 'Ran ' + automationCount + ' automations.' : 'No automations ran.');
+      //Compile VerifyProcess
+      let preloadProcess: ResolvedLaunchTask[] = [];
+      //Push executable version of tasks
+      preloadFunctions.map((t, i) => {
+        if (t.type !== LaunchOperationClass.Verify && t.type !== LaunchOperationClass.Preload) throw new Error('Function doesn\'t have the right type and has been ordered incorrectly !');
+        const task = ResolveLaunchTask(t);
+        if (task === undefined) throw new Error(`Task ${t.key} couldn't be resolved \n (task bypassed the analyse !)`);
+        else preloadProcess[i] = task;
+      });
+
+      //Add Account operation
+      resolvedTaskList.push(<ResolvedLaunchTask>ResolveLaunchTask(LaunchOperationKit.ParseAccount));
+      //AUTOMATIONS
+      if (!rawProcess.manual) {
+        let automationCount: number = 0;
+        //
+        console.log(automationCount > 0 ? 'Ran ' + automationCount + ' automations.' : 'No automations ran.');
+      }
+      //TODO: check for mods compatibilities
+      //Recompose process
+      const resolvedProcess: LaunchProcess = { ...rawProcess, process: resolvedTaskList, preloadProcess: preloadProcess };
+      resolve(resolvedProcess);
     }
-    //TODO: check for mods compatibilities
-    //Recompose process
-    const resolvedProcess: LaunchProcess = { ...rawProcess, process: resolvedTaskList };
-    resolve(resolvedProcess);
-  });
+  )
+    ;
 }
 
 /************/

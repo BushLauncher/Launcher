@@ -16,6 +16,8 @@ import {
   getDefaultVersion,
   LaunchOperationKit,
   LaunchTaskState,
+  PreloadCallback,
+  PreloadVar,
   ProgressCallback,
   RawLaunchProcess
 } from '../../../public/GameDataPublic';
@@ -86,9 +88,7 @@ export default function LaunchButton(props: LaunchButtonProps) {
 
   function requestLaunch(version: GameVersion) {
     const process: RawLaunchProcess = {
-      id: props.id || uuidv4(), process: [
-        { ...LaunchOperationKit.CheckCondition }
-      ], version: version, internal: true, allowCustomOperations: true
+      id: props.id || uuidv4(), process: [], version: version, internal: true, allowCustomOperations: true
     };
     const channel = { callback: 'GameLaunchCallback:' + process.id, launch: 'GameEngine:Launch:' + process.id };
     setVersionSelector(false);
@@ -114,11 +114,9 @@ export default function LaunchButton(props: LaunchButtonProps) {
     });
   }
 
-
   function decodeLaunchCallback(_callback: Callback | ExitedCallback) {
     //avoid 0's array
-    if ('stepId' in _callback) _callback.stepId += 1;
-    if (_callback.stepId !== undefined) _callback.stepId += 1;
+    if (_callback.progressing?.stepId !== undefined) _callback.progressing.stepId += 1;
     switch (_callback.type) {
       case CallbackType.Progress: {
         const callback: ProgressCallback = _callback as unknown as ProgressCallback;
@@ -146,21 +144,23 @@ export default function LaunchButton(props: LaunchButtonProps) {
         };
         lp = setLp();
         // @ts-ignore
-        let calculatedProgress: number = 100 * callback.stepId;
+        let calculatedProgress: number = 100 * callback.progressing.stepId;
         calculatedProgress += lp - 100;
-        calculatedProgress /= callback.stepCount;
-        /*console.log(`((100 * ${callback.stepId}) - ${lp})/ ${callback.stepCount}
-    = (${100 * callback.stepId} - ${lp})/ ${callback.stepCount})
-    = (${(100 * callback.stepId) - lp})/ ${callback.stepCount})
+        calculatedProgress /= callback.progressing.stepCount;
+        /*console.log(`((100 * ${callback.progressing.stepId}) - ${lp})/ ${callback.progressing.stepCount}
+    = (${100 * callback.progressing.stepId} - ${lp})/ ${callback.progressing.stepCount})
+    = (${(100 * callback.progressing.stepId) - lp})/ ${callback.progressing.stepCount})
     = ${calculatedProgress}`);*/
-        //console.log(callback.stepId + ' + ' + lp + ' | ' + localStepPercentage + '  : ' + calculatedProgress + '\n', callback);
+        //console.log(callback.progressing.stepId + ' + ' + lp + ' | ' + localStepPercentage + '  : ' + calculatedProgress + '\n', callback);
         if (containLP) localStepPercentage = lp;
         window.electron.ipcRenderer.sendMessage('App:setWinBar', ({
           percentage: calculatedProgress,
           options: { mode: 'normal' }
         }));
         setProgress({
-          progressVal: calculatedProgress, stepCount: callback.stepCount, currentStep: callback.stepId
+          progressVal: calculatedProgress,
+          stepCount: callback.progressing.stepCount,
+          currentStep: callback.progressing.stepId
         });
         break;
       }
@@ -228,6 +228,12 @@ export default function LaunchButton(props: LaunchButtonProps) {
 
         break;
       }
+      case CallbackType.Preparing: {
+        const callback = _callback as unknown as PreloadCallback;
+        setCurrentState(LaunchButtonState.Preparing);
+        setDisplayText(callback.task.displayText || 'Preparing...');
+        break;
+      }
       default :
         console.error('Cannot update interface from : ', _callback);
     }
@@ -264,11 +270,8 @@ export default function LaunchButton(props: LaunchButtonProps) {
         setStorage(versionList);
         return versionList;
       }
-
       const selected = selectedVersion || await getSelected();
       const list = storage || await generateList();
-
-
       function handleCallback(version: GameVersion) {
         Select(version);
         window.electron.ipcRenderer.sendMessage('Version:set', { version: version });
@@ -350,7 +353,6 @@ export default function LaunchButton(props: LaunchButtonProps) {
             success: 'Killed process'
           }).then(() => setTryingKill(false));
         }} danger>Force Stop</Button>} placement={'bottom'}>
-
         <div className={styles.Content}>
           {/*to preserve HTML structure for css selector, the content is reorganized after in css*/}
           <Popover content={state === LaunchButtonState.Preparing ? 'Please wait for Loading...' : undefined}>
@@ -378,14 +380,15 @@ export default function LaunchButton(props: LaunchButtonProps) {
             </div>
           </Popover>
           {props.versionSelector && <Loader content={versionSelectorInit} className={styles.versionSelectorLoader} />}
-
           {props.versionSelector && <Divider className={styles.line} type={'vertical'} />}
         </div>
       </Popover>
-      {type === 'default' && <div className={styles.LoadingContent}>
-        <p>{progress.currentStep + '/' + progress.stepCount}</p>
-        <Progress percent={Math.floor(progress.progressVal)} type={'line'} status={'active'} strokeColor={'#39c457'} />
-      </div>}
+      {type === 'default' && (
+        <div className={styles.LoadingContent}>
+          <p>{progress.currentStep + '/' + progress.stepCount}</p>
+          <Progress percent={Math.floor(progress.progressVal)} type={'line'} status={'active'}
+                    strokeColor={'#39c457'} />
+        </div>)}
     </div>
   );
 }

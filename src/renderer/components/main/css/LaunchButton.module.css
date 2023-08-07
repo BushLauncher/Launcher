@@ -86,11 +86,18 @@
   width: 0;
 }
 
-.LaunchButton.Launched .runContent, .LaunchButton.Error .runContent, .LaunchButton.Loading .runContent, .LaunchButton.Loading .LoadingContent .ProgressBar {
+.LaunchButton.Launched .runContent,
+.LaunchButton.Error .runContent,
+.LaunchButton.Preparing .runContent,
+.LaunchButton.Loading .runContent,
+.LaunchButton.Loading .LoadingContent .ProgressBar {
   flex: 2;
 }
 
-.LaunchButton.Launched .versionSelectorLoader, .LaunchButton.Error .versionSelectorLoader, .LaunchButton.Loading .versionSelectorLoader {
+.LaunchButton.Launched .versionSelectorLoader,
+.LaunchButton.Error .versionSelectorLoader,
+.LaunchButton.Preparing .versionSelectorLoader,
+.LaunchButton.Loading .versionSelectorLoader {
   flex: 0;
 }
 
@@ -117,7 +124,10 @@
   transform: scale(1);
 }
 
-.LaunchButton.Loading .runContent .text, .LaunchButton.Error .runContent .text, .LaunchButton.Launched .runContent .text {
+.LaunchButton.Loading .runContent .text,
+.LaunchButton.Error .runContent .text,
+.LaunchButton.Preparing .runContent .text,
+.LaunchButton.Launched .runContent .text {
   font-size: 40px;
 }
 
@@ -150,7 +160,12 @@
   flex: none;
 }
 
-.LaunchButton:hover, .LaunchButton[data-version-selector='true'][data-version-selector-opened='true'], .LaunchButton.Loading, .LaunchButton.Error, .LaunchButton.Launched {
+.LaunchButton:hover,
+.LaunchButton[data-version-selector='true'][data-version-selector-opened='true'],
+.LaunchButton.Loading,
+.LaunchButton.Preparing,
+.LaunchButton.Error,
+.LaunchButton.Launched {
   transform: scale(1.1);
 }
 
@@ -176,11 +191,16 @@
 .LaunchButton[data-version-selector='true'] .runContent:hover + .versionSelectorLoader .versionSelector .dataContainer .dropdownIcon,
 .LaunchButton[data-version-selector='true'].Launched .runContent + .versionSelectorLoader .versionSelector .dataContainer .dropdownIcon,
 .LaunchButton[data-version-selector='true'].Error .runContent + .versionSelectorLoader .versionSelector .dataContainer .dropdownIcon,
+.LaunchButton[data-version-selector='true'].Preparing .runContent + .versionSelectorLoader .versionSelector .dataContainer .dropdownIcon,
 .LaunchButton[data-version-selector='true'].Loading .runContent + .versionSelectorLoader .versionSelector .dataContainer .dropdownIcon {
   width: 0;
 }
 
-.LaunchButton[data-version-selector='true'] .runContent:hover + .versionSelectorLoader .versionSelector .dataContainer, .LaunchButton.Loading .runContent + .versionSelectorLoader .versionSelector .dataContainer, .LaunchButton.Error .runContent + .versionSelectorLoader .versionSelector .dataContainer, .LaunchButton.Launched .runContent + .versionSelectorLoader .versionSelector .dataContainer {
+.LaunchButton[data-version-selector='true'] .runContent:hover + .versionSelectorLoader .versionSelector .dataContainer,
+.LaunchButton.Loading .runContent + .versionSelectorLoader .versionSelector .dataContainer,
+.LaunchButton.Error .runContent + .versionSelectorLoader .versionSelector .dataContainer,
+.LaunchButton.Preparing .runContent + .versionSelectorLoader .versionSelector .dataContainer,
+.LaunchButton.Launched .runContent + .versionSelectorLoader .versionSelector .dataContainer {
   gap: 0;
 }
 
@@ -236,7 +256,8 @@
   width: fit-content;
 }
 
-.LaunchButton[data-version-selector='true'] .versionSelector .dataContainer:hover .dropdownIcon, .LaunchButton[data-version-selector='true'][data-version-selector-opened='true'] .versionSelector .dataContainer .dropdownIcon {
+.LaunchButton[data-version-selector='true'] .versionSelector .dataContainer:hover .dropdownIcon,
+.LaunchButton[data-version-selector='true'][data-version-selector-opened='true'] .versionSelector .dataContainer .dropdownIcon {
   transform: scale(1.3) translateY(3px);
 }
 
@@ -276,24 +297,24 @@
   background-color: var(--valid);
 }
 
-.LaunchButton[data-version-selector='true']:not(.Loading):not(.Error):not(.Launched) .Content {
+.LaunchButton[data-version-selector='true']:not(.Loading):not(.Error):not(.Launched):not(.Preparing) .Content {
   gap: 4px;
 }
 
-.LaunchButton[data-version-selector='true']:not(.Loading):not(.Error):not(.Launched) .runContent .icon {
+.LaunchButton[data-version-selector='true']:not(.Loading):not(.Error):not(.Launched):not(.Preparing) .runContent .icon {
   transform: scale(1.4);
 }
 
-.LaunchButton[data-version-selector='true']:not(.Loading):not(.Error):not(.Launched) .runContent .text {
+.LaunchButton[data-version-selector='true']:not(.Loading):not(.Error):not(.Launched):not(.Preparing) .runContent .text {
   font-size: 40px;
   line-height: 52px;
 }
 
-.LaunchButton[data-version-selector='true']:not(.Loading):not(.Error):not(.Launched) .runContent:hover .icon {
+.LaunchButton[data-version-selector='true']:not(.Loading):not(.Error):not(.Launched):not(.Preparing) .runContent:hover .icon {
   transform: scale(2);
 }
 
-.LaunchButton[data-version-selector='true']:not(.Loading):not(.Error):not(.Launched) .runContent:hover .text {
+.LaunchButton[data-version-selector='true']:not(.Loading):not(.Error):not(.Launched):not(.Preparing) .runContent:hover .text {
   font-size: 45px;
 }
 

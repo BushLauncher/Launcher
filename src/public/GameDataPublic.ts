@@ -51,7 +51,6 @@ export const RawLaunchOperationList: RawLaunchTask[] = [
   { key: 'ParseMods', type: LaunchOperationClass.Parse },
   { key: 'ParseOptifine', type: LaunchOperationClass.Parse },
   { key: 'ParseResources', type: LaunchOperationClass.Parse },
-  { key: 'GetPreloadData', type: LaunchOperationClass.Preload },
   { key: 'ParseAccount', type: LaunchOperationClass.Private },
   { key: 'ParseGameFile', type: LaunchOperationClass.Parse },
   { key: 'ParseJava', type: LaunchOperationClass.Parse },
@@ -68,7 +67,6 @@ export const LaunchOperationKit: { [f: string]: RawLaunchTask } = {
   ParseMods: { key: 'ParseMods', type: LaunchOperationClass.Parse },
   ParseOptifine: { key: 'ParseOptifine', type: LaunchOperationClass.Parse },
   ParseResources: { key: 'ParseResources', type: LaunchOperationClass.Parse },
-  GetPreloadData: { key: 'GetPreloadData', type: LaunchOperationClass.Preload },
   ParseAccount: { key: 'ParseAccount', type: LaunchOperationClass.Private },
   ParseGameFile: { key: 'ParseGameFile', type: LaunchOperationClass.Parse },
   ParseJava: { key: 'ParseJava', type: LaunchOperationClass.Parse },
@@ -79,34 +77,65 @@ export const LaunchOperationKit: { [f: string]: RawLaunchTask } = {
   SetConfig: { key: 'SetConfig', type: LaunchOperationClass.PostInstall }
 };
 
+export enum PreloadVar {
+  OS = 'OS'
+}
+
+export interface PreloadVars {
+  OS: NodeJS.Platform;
+}
+
+export interface Condition {
+  var: PreloadVar,
+  state: PreloadVars[PreloadVar]
+}
+
+export interface CompileResult {
+  result: boolean,
+  var?: PreloadVar
+}
+
 /*************/
 export enum CallbackType {
+  Preparing = 'Preparing',
   Error = 'Error',
   Progress = 'Progress',
   Success = 'Success',
-  Closed = 'Closed',
+  Exited = 'Exited',
 }
 
 export interface Callback {
-  stepId: number,
-  stepCount: number
+  progressing: {
+    stepId: number,
+    stepCount: number
+  }
   return?: any,
   type: CallbackType,
 }
-
-export interface ErrorCallback extends Callback {
-  type: CallbackType.Error,
-  return: knowErrorFormat | string
+export interface PreloadCallback extends Callback {
+  type: CallbackType.Preparing,
+  task: SubLaunchTaskCallback,
 }
-
 export interface ProgressCallback extends Callback {
   type: CallbackType.Progress,
   task: SubLaunchTaskCallback
 }
 
-export interface ExitedCallback {
-  type: CallbackType.Closed;
-  return?: any;
+export interface ExitedCallback extends Omit<Callback, 'return' | 'progressing'> {
+  type: CallbackType.Exited | CallbackType.Error;
+  progressing?: {
+    stepId?: number,
+    stepCount?: number,
+    toRemove?: number
+  };
+  return: { reason: ExitedReason, display?: string | knowErrorFormat };
+}
+
+export enum ExitedReason {
+  Exited,
+  //Some verification doesn't pass
+  UnableToLaunch,
+  Error
 }
 
 export enum LaunchTaskState {
@@ -146,6 +175,7 @@ export interface RawLaunchProcess {
 export interface LaunchProcess {
   version: GameVersion,
   process: ResolvedLaunchTask[],
+  preloadProcess: ResolvedLaunchTask[],
   allowCustomOperations?: boolean,
   manual?: boolean,
   internal?: boolean,
