@@ -90,10 +90,10 @@ export class CheckCondition extends ResolvedLaunchTask {
       };
     }
     //Execute
-    const conditions: Condition | Condition[] = this.baseTask.params.condition;
-    console.log('Compiling ' + (Array.isArray(conditions) ? conditions.length : 1) + ' condition', (this.baseTask.params.stopOnFalse ? ' And stopping if false' : ''));
+    const conditionList: Condition | Condition[] = this.baseTask.params.condition;
+    console.log('Compiling ' + (Array.isArray(conditionList) ? conditionList.length : 1) + ' condition', (this.baseTask.params.stopOnFalse ? ' And stopping if false' : ''));
     callback({ task: this.baseTask, state: LaunchTaskState.starting, displayText: 'Checking integrity...' });
-    const conditionResult = Compile(this.baseTask.params.conditions);
+    const conditionResult = Compile(this.baseTask.params.condition);
     return <FinishedSubTaskCallback>{
       task: this.baseTask,
       state: LaunchTaskState.finished,
@@ -159,6 +159,7 @@ export class CheckService extends ResolvedLaunchTask {
       return <FinishedSubTaskCallback>{
         task: this.baseTask,
         state: LaunchTaskState.finished,
+        displayText: conditionResult.result ? '' : 'Services unavailable',
         response: { success: true, data: conditionResult }
       };
     }

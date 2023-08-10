@@ -14,7 +14,6 @@ import {
   GameVersion,
   getDefaultGameType,
   getDefaultVersion,
-  LaunchOperationKit,
   LaunchTaskState,
   PreloadCallback,
   ProgressCallback,
@@ -87,15 +86,7 @@ export default function LaunchButton(props: LaunchButtonProps) {
 
   function requestLaunch(version: GameVersion) {
     const process: RawLaunchProcess = {
-      id: props.id || uuidv4(), process: [
-        {
-          ...LaunchOperationKit.CheckService,
-          params: {
-            condition: { address: "https://api.mcsrvstat.us/3/mc.hypixel.net", path: 'online', state: true },
-            stopOnFalse: true
-          }
-        }
-      ], version: version, internal: true, allowCustomOperations: true
+      id: props.id || uuidv4(), process: [], version: version, internal: true, allowCustomOperations: true
     };
     const channel = { callback: 'GameLaunchCallback:' + process.id, launch: 'GameEngine:Launch:' + process.id };
     setVersionSelector(false);
