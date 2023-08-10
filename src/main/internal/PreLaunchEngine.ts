@@ -15,6 +15,7 @@ import {
   RawLaunchOperationList,
   RawLaunchProcess,
   RawLaunchTask,
+  ServiceCondition,
   SubLaunchTaskCallback
 } from '../../public/GameDataPublic';
 import { getVersionList, MinecraftVersion } from '@xmcl/installer';
@@ -23,7 +24,7 @@ import { isSupported, versionExist } from './VersionManager';
 import { InstallJava, ResolveJavaPath } from './JavaEngine';
 import { net } from 'electron';
 import ConsoleManager, { ProcessType } from '../../public/ConsoleManager';
-import { Compile } from './ConditionCompiler';
+import { Compile, CompileService } from './ConditionCompiler';
 
 const console = new ConsoleManager('LaunchEngine', ProcessType.Internal);
 
@@ -71,7 +72,7 @@ export class CheckCondition extends ResolvedLaunchTask {
   public override async run(callback: (callback: SubLaunchTaskCallback) => void) {
     //Analyse params
     if (this.baseTask.params !== undefined) {
-      if (this.baseTask.params.conditions === undefined) {
+      if (this.baseTask.params.condition === undefined) {
         console.raw.error('function to check is undefined !');
         return <FinishedSubTaskCallback>{
           task: this.baseTask,
@@ -89,7 +90,7 @@ export class CheckCondition extends ResolvedLaunchTask {
       };
     }
     //Execute
-    const conditions: Condition | Condition[] = this.baseTask.params.conditions;
+    const conditions: Condition | Condition[] = this.baseTask.params.condition;
     console.log('Compiling ' + (Array.isArray(conditions) ? conditions.length : 1) + ' condition', (this.baseTask.params.stopOnFalse ? ' And stopping if false' : ''));
     callback({ task: this.baseTask, state: LaunchTaskState.starting, displayText: 'Checking integrity...' });
     const conditionResult = Compile(this.baseTask.params.conditions);
@@ -99,6 +100,68 @@ export class CheckCondition extends ResolvedLaunchTask {
       displayText: (conditionResult.var !== undefined ? conditionResult.var + ' doesn\'t match' : undefined),
       response: { success: true, data: conditionResult }
     };
+  }
+}
+
+export interface CheckServiceParams extends Omit<RawLaunchTask, 'params'> {
+  params: { condition: ServiceCondition, stopOnFalse: boolean };
+}
+
+export class CheckService extends ResolvedLaunchTask {
+  constructor(baseTask: CheckServiceParams) {
+    super(baseTask, LaunchOperationClass.Parse);
+  }
+
+  public override async run(callback: (callback: SubLaunchTaskCallback) => void) {
+    //Analyse params
+    if (this.baseTask.params !== undefined) {
+      if (this.baseTask.params.stopOnFalse === undefined) this.baseTask.params.stopOnFalse = true;
+      if (this.baseTask.params.condition === undefined) {
+        console.raw.error('service to check is undefined !');
+        return <FinishedSubTaskCallback>{
+          task: this.baseTask,
+          state: LaunchTaskState.error,
+          response: { success: false, error: 'service to check is undefined !' }
+        };
+      } else {
+        if (this.baseTask.params.condition.address === undefined) {
+          console.raw.error('address to check is undefined !');
+          return <FinishedSubTaskCallback>{
+            task: this.baseTask,
+            state: LaunchTaskState.error,
+            response: { success: false, error: 'address to check is undefined !' }
+          };
+        }
+        if (this.baseTask.params.condition.state === undefined) console.raw.warn('state to check is undefined (condition will always return true)');
+      }
+    } else {
+      console.raw.error('Condition cannot be compiled: no param');
+      return <FinishedSubTaskCallback>{
+        task: this.baseTask,
+        state: LaunchTaskState.error,
+        response: { success: false, error: this.baseTask.key + ': no params' }
+      };
+    }
+    //Execute
+    const condition: ServiceCondition = this.baseTask.params.condition;
+    console.log('Compiling ' + (Array.isArray(condition) ? condition.length : 1) + ' condition', (this.baseTask.params.stopOnFalse ? ' And stopping if false' : ''));
+    callback({ task: this.baseTask, state: LaunchTaskState.starting, displayText: 'Checking services...' });
+    let conditionResult = await CompileService(condition);
+    console.log(conditionResult);
+    if (typeof conditionResult === 'string') {
+      return <FinishedSubTaskCallback>{
+        task: this.baseTask,
+        state: LaunchTaskState.error,
+        displayText: conditionResult,
+        response: { success: false, error: conditionResult }
+      };
+    } else {
+      return <FinishedSubTaskCallback>{
+        task: this.baseTask,
+        state: LaunchTaskState.finished,
+        response: { success: true, data: conditionResult }
+      };
+    }
   }
 }
 
@@ -195,8 +258,8 @@ export function ResolveLaunchTask(task: RawLaunchTask): ResolvedLaunchTask | und
       throw new Error('Unimplemented function');
     case 'Launch' :
       throw new Error('Unimplemented function');
-    case 'CheckServer' :
-      throw new Error('Unimplemented function');
+    case 'CheckService' :
+      return new CheckService(<CheckServiceParams>task);
     case 'CheckCondition' :
       return new CheckCondition(<CheckConditionParams>task);
     case 'RunFile' :
@@ -234,14 +297,13 @@ export function AnalyseLaunchProcess(rawProcess: RawLaunchProcess): Promise<Laun
       });
       //Reorder tasks
       let resolvedTaskList: ResolvedLaunchTask[] = [];
-
       const preloadFunctions: RawLaunchTask[] = [];
       rawProcess.process = rawProcess.process
         //Analyse
         .filter((t) => {
           if (RawLaunchOperationList.find((task) => t.key === task.key) !== undefined) return true;
           else {
-            console.warn(`(Analyse) Task named "${t.key}" isn't recognized \n -> (it was ignored)`);
+            console.warn(`(Analyse) Task named "${t.key}" isn't recognized \n(it was ignored)`);
             return false;
           }
         })

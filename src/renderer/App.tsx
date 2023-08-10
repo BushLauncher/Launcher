@@ -24,7 +24,6 @@ import './components/views/SettingsViews/css/SettingsModal-ant-override.css';
 import { RunningVersion, RunningVersionState } from '../public/GameDataPublic';
 import loadingIcon from '../assets/graphics/icons/loading.svg';
 import playIcon from '../assets/graphics/icons/caret-right.svg';
-import crossIcon from '../assets/graphics/icons/close.svg';
 import RenderConsoleManager, { ProcessType } from '../public/RenderConsoleManager';
 
 const Sider = Layout.Sider;
@@ -49,8 +48,7 @@ export default function App() {
 
   function saveSelectedView(id: string) {
     window.electron.ipcRenderer.sendMessage('updateData', {
-      dataPath: 'interface.selectedTab',
-      value: id
+      dataPath: 'interface.selectedTab', value: id
     });
   }
 
@@ -156,29 +154,12 @@ function SettingsContext({ saveSelectedView, validateUser }: SettingsContextProp
       const interfaceData = await window.electron.ipcRenderer.invoke('getData', { dataPath: 'interface' });
       const selectedTab: string = interfaceData.selectedTab !== undefined ? interfaceData.selectedTab : 'vanilla';
 
-      function getConfigurationStateIcon(versionState: RunningVersionState) {
-        switch (versionState) {
-          case RunningVersionState.Launching:
-            return loadingIcon;
-          case RunningVersionState.Running:
-            return playIcon;
-          case RunningVersionState.Error:
-            return crossIcon;
-          default:
-            console.raw.error('Cannot find icon for ' + versionState);
-        }
-      }
-
       return <Layout style={{ width: '100%', height: '100%' }}>
         <Tabs
-          items={[
-            { key: 'vanilla', icon: dirtBlockIcon, content: VanillaView({ key: 'vanilla' }) }
-
-          ].map(tab => {
-            return {
-              key: tab.key,
-              label:
-                <Popover content={CapitalizeFirst(tab.key)} placement={'right'}>
+          items={[{ key: 'vanilla', icon: dirtBlockIcon, content: VanillaView({ key: 'vanilla' }) }]
+            .map(tab => {
+              return {
+                key: tab.key, label: <Popover content={CapitalizeFirst(tab.key)} placement={'right'}>
                     <span>
                       <Icon icon={tab.icon} />
                       <p>{CapitalizeFirst(tab.key)}</p>
@@ -186,50 +167,51 @@ function SettingsContext({ saveSelectedView, validateUser }: SettingsContextProp
                         window.electron.ipcRenderer.once('UpdateMainTabsState', reload);
                         const list: RunningVersion[] = await window.electron.ipcRenderer.invoke('GameEngine:getRunningList', {});
                         const version = list.find((rv) => rv.id === tab.key);
-                        if (version === undefined) return <></>;
-                        else return <Icon
-                          icon={getConfigurationStateIcon(version.State)} />;
+                        if (version === undefined) return <></>; else {
+                          function getConfigurationStateIcon(versionState: RunningVersionState) {
+                            switch (versionState) {
+                              case RunningVersionState.Launching:
+                                return loadingIcon;
+                              case RunningVersionState.Running:
+                                return playIcon;
+                              default:
+                                console.raw.error('Cannot find icon for ' + versionState);
+                            }
+                          }
+
+                          const icon = getConfigurationStateIcon(version.State);
+                          return <Icon icon={icon} />;
+                        }
                       }} className={'State'} />
                     </span>
-                </Popover>,
-              children: tab.content,
-              type: 'card',
-              closable: false
-            };
-          })}
+                </Popover>, children: tab.content, type: 'card', closable: false
+              };
+            })}
           tabPosition={'left'}
           type={'card'}
           tabBarGutter={5}
           defaultActiveKey={selectedTab}
           className={'HideOperation scrollable'}
           renderTabBar={(props, DefaultNavBar) => {
-            return (
-              <CollapsableSider
-                defaultCollapsed={interfaceData['isMenuCollapsed']}
-                onCollapse={(isCollapsed: boolean) =>
-                  window.electron.ipcRenderer.sendMessage('updateData', {
-                    dataPath: 'interface.isMenuCollapsed',
-                    value: isCollapsed
-                  })
-
-                }
-                content={(collapsed) =>
-                  <>
-                    <DefaultNavBar {...props}
-                                   className={[collapsed ? 'collapsed' : undefined, props.tabPosition === 'left' ? 'Vertical' : undefined, 'mainNavBar'].join(' ')} />
-                    <div className={['extra', collapsed ? 'collapsed' : undefined].join(' ')}>
-                      <Popover content={'Settings'} placement={'right'}>
-                        <button onClick={() => setOpen(true)}>
-                          <Icon icon={settingsIcon} />
-                          <p>Settings</p>
-                        </button>
-                      </Popover>
-                    </div>
-                  </>}
-              />
-            );
-          }
-          }
+            return (<CollapsableSider
+              defaultCollapsed={interfaceData['isMenuCollapsed']}
+              onCollapse={(isCollapsed: boolean) => window.electron.ipcRenderer.sendMessage('updateData', {
+                dataPath: 'interface.isMenuCollapsed', value: isCollapsed
+              })}
+              content={(collapsed) => <>
+                <DefaultNavBar {...props}
+                               className={[collapsed ? 'collapsed' : undefined, props.tabPosition === 'left' ? 'Vertical' : undefined, 'mainNavBar'].join(' ')} />
+                <div className={['extra', collapsed ? 'collapsed' : undefined].join(' ')}>
+                  <Popover content={'Settings'} placement={'right'}>
+                    <button onClick={() => setOpen(true)}>
+                      <Icon icon={settingsIcon} />
+                      <p>Settings</p>
+                    </button>
+                  </Popover>
+                </div>
+              </>}
+            />);
+          }}
           onChange={saveSelectedView} />
       </Layout>;
     }} />

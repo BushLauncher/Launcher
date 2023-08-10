@@ -9,13 +9,13 @@ import {
   LaunchProcess,
   LaunchTaskState,
   PreLaunchResponse,
+  PreloadCallback,
   ProgressCallback,
   RawLaunchProcess,
   RawLaunchTask,
   RunningVersion,
   RunningVersionState,
-  SubLaunchTaskCallback,
-  PreloadCallback
+  SubLaunchTaskCallback
 } from '../../public/GameDataPublic';
 import { AnalyseLaunchProcess, ResolvedLaunchTask } from './PreLaunchEngine';
 import { createMinecraftProcessWatcher, launch } from '@xmcl/core';
@@ -42,9 +42,7 @@ export function RegisterRunningVersion(process: LaunchProcess | RawLaunchProcess
   const index = RunningVersionList.findIndex(rv => rv.id === process.id);
   if (index === -1) {
     RunningVersionList.push({
-      id: process.id,
-      Version: process.version,
-      State: RunningVersionState.Launching
+      id: process.id, Version: process.version, State: RunningVersionState.Launching
     });
     currentWindow?.webContents.send('UpdateMainTabsState');
     // -1 to get the id of last element
@@ -84,8 +82,7 @@ export async function RunLaunchProcess(id: number, rawProcess: RawLaunchProcess,
       if (!res) {
         console.warn('Process execution Canceled (unauthorized)');
         resolve(<ExitedCallback>{
-          type: CallbackType.Exited,
-          return: { reason: ExitedReason.UnableToLaunch, display: 'Unauthorized to launch' }
+          type: CallbackType.Exited, return: { reason: ExitedReason.UnableToLaunch, display: 'Unauthorized to launch' }
         });
         return;
       } else console.raw.error('** Process running in insecure mode ! **');
@@ -95,28 +92,25 @@ export async function RunLaunchProcess(id: number, rawProcess: RawLaunchProcess,
 
     const LaunchStorage: { task: RawLaunchTask, response: PreLaunchResponse }[] = [];
     /******************/
-
-    Callback(<PreloadCallback>{
-      type: CallbackType.Preparing,
-      task: { state: LaunchTaskState.starting, displayText: 'Checking integrity...' }
-    });
-    const CreateVerifyCallback = (subTask: SubLaunchTaskCallback, index: number) => {
-      if (subTask.state === LaunchTaskState.error) {
-        Callback({
-          progressing: { stepId: index, stepCount: preload_stepsCount },
-          type: CallbackType.Error,
-          return: { reason: ExitedReason.Error, display: subTask.data?.return }
-        });
-      } else {
-        Callback(<Callback>{
-          progressing: { stepId: index, stepCount: preload_stepsCount },
-          task: subTask,
-          type: CallbackType.Preparing
-        });
-      }
-    };
     //Execute Preload functions
     if (preload_stepsCount > 0) {
+
+      Callback(<PreloadCallback>{
+        type: CallbackType.Preparing, task: { state: LaunchTaskState.starting, displayText: 'Checking integrity...' }
+      });
+      const CreateVerifyCallback = (subTask: SubLaunchTaskCallback, index: number) => {
+        if (subTask.state === LaunchTaskState.error) {
+          Callback({
+            progressing: { stepId: index, stepCount: preload_stepsCount },
+            type: CallbackType.Error,
+            return: { reason: ExitedReason.Error, display: subTask.data?.return }
+          });
+        } else {
+          Callback(<Callback>{
+            progressing: { stepId: index, stepCount: preload_stepsCount }, task: subTask, type: CallbackType.Preparing
+          });
+        }
+      };
       console.log('Verifying ' + preload_stepsCount + ' tasks...');
       for (const task of process.preloadProcess) {
         const i = process.preloadProcess.indexOf(task);
@@ -125,11 +119,11 @@ export async function RunLaunchProcess(id: number, rawProcess: RawLaunchProcess,
           const response = await task.run((c) => CreateVerifyCallback(c, i));
           //Check for condition stop
           if (response.task?.params?.stopOnFalse === true) {
-            if (response.task?.type === LaunchOperationClass.Verify && response.response.data.result === false) {
-              console.error(response.displayText || 'Some requirements cannot be fulfilled', '\n STOPPING');
+            if (response.task?.type === LaunchOperationClass.Verify && (!response.response.success || response.response.data.result === false)) {
+              console.raw.error((response.task.params.condition.var || response.task.params.condition.address) + (response.task.params.condition.path ? '.' + response.task.params.condition.path : '') + ' is not ' + response.task.params.condition.state);
+              console.error(response.displayText || 'Some requirements cannot be fulfilled');
               resolve(<ExitedCallback>{
-                type: CallbackType.Exited,
-                return: {
+                type: CallbackType.Exited, return: {
                   reason: ExitedReason.UnableToLaunch,
                   display: response.displayText || 'Some requirements cannot be fulfilled \n(please retry later)'
                 }
@@ -138,11 +132,10 @@ export async function RunLaunchProcess(id: number, rawProcess: RawLaunchProcess,
             }
           }
           if (response.state === LaunchTaskState.error) {
-            SetRunningVersionState(id, RunningVersionState.Error);
+            //SetRunningVersionState(id, RunningVersionState.Error);
             resolve(<ExitedCallback>{
               progressing: {
-                stepId: i,
-                stepCount: preload_stepsCount
+                stepId: i, stepCount: preload_stepsCount
               },
               type: CallbackType.Error,
               return: { reason: ExitedReason.Error, display: response.data || response.response.error }
@@ -156,11 +149,8 @@ export async function RunLaunchProcess(id: number, rawProcess: RawLaunchProcess,
         } catch (err: any) {
           resolve(<ExitedCallback>{
             progressing: {
-              stepId: i,
-              stepCount: preload_stepsCount
-            },
-            type: CallbackType.Error,
-            return: { reason: ExitedReason.Error, display: err }
+              stepId: i, stepCount: preload_stepsCount
+            }, type: CallbackType.Error, return: { reason: ExitedReason.Error, display: err }
           });
           return;
         }
@@ -180,15 +170,12 @@ export async function RunLaunchProcess(id: number, rawProcess: RawLaunchProcess,
         });
       } else {
         Callback(<ProgressCallback>{
-          progressing: { stepId: index, stepCount: process_stepsCount },
-          task: subTask,
-          type: CallbackType.Progress
+          progressing: { stepId: index, stepCount: process_stepsCount }, task: subTask, type: CallbackType.Progress
         });
       }
     };
     // -1 to avoid the 0 at array's start
     console.log('Executing ' + process_stepsCount + ' tasks...');
-
 
     for (const task of process.process) {
       const i = process.process.indexOf(task);
@@ -197,11 +184,10 @@ export async function RunLaunchProcess(id: number, rawProcess: RawLaunchProcess,
         const response = await task.run((c) => CreateProcessCallback(c, i));
         CreateProcessCallback(response, i);
         if (response.state === LaunchTaskState.error) {
-          SetRunningVersionState(id, RunningVersionState.Error);
+          //SetRunningVersionState(id, RunningVersionState.Error);
           resolve(<ExitedCallback>{
             progressing: {
-              stepId: i,
-              stepCount: process_stepsCount
+              stepId: i, stepCount: process_stepsCount
             },
             type: CallbackType.Error,
             return: { reason: ExitedReason.Error, display: response.data || response.response.error }
@@ -215,11 +201,8 @@ export async function RunLaunchProcess(id: number, rawProcess: RawLaunchProcess,
       } catch (err: any) {
         resolve(<ExitedCallback>{
           progressing: {
-            stepId: i,
-            stepCount: process_stepsCount
-          },
-          type: CallbackType.Error,
-          return: { reason: ExitedReason.Error, display: err }
+            stepId: i, stepCount: process_stepsCount
+          }, type: CallbackType.Error, return: { reason: ExitedReason.Error, display: err }
         });
         return;
       }
@@ -230,9 +213,7 @@ export async function RunLaunchProcess(id: number, rawProcess: RawLaunchProcess,
     if (java_path === undefined) throw new Error('Cannot get \'java_path\'');
     //access_token can be null (offline)
     CreateProcessCallback({
-      state: LaunchTaskState.processing,
-      displayText: 'Launching...',
-      data: { localProgress: 100 }
+      state: LaunchTaskState.processing, displayText: 'Launching...', data: { localProgress: 100 }
     }, process_stepsCount - 1);
     //The "[object]" in CheckCondition function result is normal
     resolve(LaunchGameProcess(process.id, process.version, java_path, access_token, (callback: Callback) => Callback(callback)));
@@ -255,8 +236,7 @@ async function getAutorisation(): Promise<boolean> {
 export function StopGame(processId: string) {
   console.log('Forcing stop process: ' + processId);
   const process = RunningVersionList.find(rv => rv.id === processId)?.process;
-  if (process === undefined) console.raw.warn('Process of Running version ' + processId + ' is undefined');
-  else {
+  if (process === undefined) console.raw.warn('Process of Running version ' + processId + ' is undefined'); else {
     if (process.kill()) {
       UnregisterRunningVersion(processId);
     } else throw new Error('Cannot kill process ' + processId);
@@ -305,9 +285,7 @@ function LaunchGameProcess(id: string, version: GameVersion, javaPath: string, a
       launcherBrand: `BushLauncher`,
       gameName: `Bush Launcher Minecraft [${version.id}]`,
       resolution: process.env.NODE_ENV === 'development' ? {
-        width: 854,
-        height: 480,
-        fullscreen: undefined
+        width: 854, height: 480, fullscreen: undefined
       } : undefined
       //TODO: set game icon, name and Discord RTC
       //TODO: Server, to launch directly on server

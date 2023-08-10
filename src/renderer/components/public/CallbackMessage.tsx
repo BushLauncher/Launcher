@@ -9,6 +9,7 @@ import { knowErrorFormat } from '../../../public/ErrorPublic';
 
 export default function CallbackMessage({ callback }: { callback: Callback }) {
   const [extended, setExtended] = useState(false);
+  console.log(callback);
   if (callback.type === CallbackType.Exited) {
     callback.return = callback.return as { reason: ExitedReason, display?: string | knowErrorFormat };
     switch (callback.return.reason) {
@@ -49,9 +50,11 @@ export default function CallbackMessage({ callback }: { callback: Callback }) {
           <p>{callback.return}</p>
         </div>);
     }
-  } else {
-    console.warn('Cannot display CallbackMessage from type ' + callback.type + '(not implemented)\n', callback);
-    return <></>
+  } else if (callback.type === CallbackType.Error){
+    return <div>{callback.return.display || callback.return}</div>
+  } else{
+    console.warn('Cannot display CallbackMessage from type ' + callback.type + ' (not implemented)\n', callback);
+    return (<div>{callback.return}</div>);
   }
 
 }

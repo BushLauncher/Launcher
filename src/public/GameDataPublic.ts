@@ -55,7 +55,7 @@ export const RawLaunchOperationList: RawLaunchTask[] = [
   { key: 'ParseGameFile', type: LaunchOperationClass.Parse },
   { key: 'ParseJava', type: LaunchOperationClass.Parse },
   { key: 'Launch', type: LaunchOperationClass.Parse },
-  { key: 'CheckServer', type: LaunchOperationClass.Verify },
+  { key: 'CheckService', type: LaunchOperationClass.Verify },
   { key: 'CheckCondition', type: LaunchOperationClass.Verify },
   { key: 'RunFile', type: LaunchOperationClass.Setup },
   { key: 'SetConfig', type: LaunchOperationClass.PostInstall }
@@ -71,7 +71,7 @@ export const LaunchOperationKit: { [f: string]: RawLaunchTask } = {
   ParseGameFile: { key: 'ParseGameFile', type: LaunchOperationClass.Parse },
   ParseJava: { key: 'ParseJava', type: LaunchOperationClass.Parse },
   Launch: { key: 'Launch', type: LaunchOperationClass.Parse },
-  CheckServer: { key: 'CheckServer', type: LaunchOperationClass.Verify },
+  CheckService: { key: 'CheckService', type: LaunchOperationClass.Verify },
   CheckCondition: { key: 'CheckCondition', type: LaunchOperationClass.Verify },
   RunFile: { key: 'RunFile', type: LaunchOperationClass.Setup },
   SetConfig: { key: 'SetConfig', type: LaunchOperationClass.PostInstall }
@@ -90,9 +90,15 @@ export interface Condition {
   state: PreloadVars[PreloadVar]
 }
 
+export interface ServiceCondition {
+  address: string,
+  state: string | boolean | number | any,
+  path?: string
+}
+
 export interface CompileResult {
   result: boolean,
-  var?: PreloadVar
+  var?: PreloadVar | string
 }
 
 /*************/
@@ -112,10 +118,12 @@ export interface Callback {
   return?: any,
   type: CallbackType,
 }
+
 export interface PreloadCallback extends Callback {
   type: CallbackType.Preparing,
   task: SubLaunchTaskCallback,
 }
+
 export interface ProgressCallback extends Callback {
   type: CallbackType.Progress,
   task: SubLaunchTaskCallback
@@ -125,8 +133,7 @@ export interface ExitedCallback extends Omit<Callback, 'return' | 'progressing'>
   type: CallbackType.Exited | CallbackType.Error;
   progressing?: {
     stepId?: number,
-    stepCount?: number,
-    toRemove?: number
+    stepCount?: number
   };
   return: { reason: ExitedReason, display?: string | knowErrorFormat };
 }
@@ -193,8 +200,7 @@ export interface PreLaunchResponse {
 
 export enum RunningVersionState {
   Launching,
-  Running,
-  Error
+  Running
 }
 
 export interface RunningVersion {

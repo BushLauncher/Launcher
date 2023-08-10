@@ -11,7 +11,14 @@ import {
   getVersionMethode,
   groupMinecraftVersions
 } from './internal/VersionManager';
-import { Callback, CallbackType, GameType, GameVersion, RawLaunchProcess } from '../public/GameDataPublic';
+import {
+  Callback,
+  CallbackType,
+  ExitedReason,
+  GameType,
+  GameVersion,
+  RawLaunchProcess
+} from '../public/GameDataPublic';
 import {
   AddAccount,
   getAccountList,
@@ -154,7 +161,7 @@ ipcMain.handle('GameEngine:RequestLaunch', (event, request_args: { id: string })
   //Register all IPC functions
   ipcMain.handle('GameEngine:Launch:' + request_args.id, async (event, args: { LaunchProcess: RawLaunchProcess }) => {
     try {
-    const runningIndex = RegisterRunningVersion(args.LaunchProcess);
+      const runningIndex = RegisterRunningVersion(args.LaunchProcess);
       const operation = Launch(args.LaunchProcess, (callback: Callback) => {
         event.sender.send('GameLaunchCallback:' + args.LaunchProcess.id, callback);
         if (callback.type === CallbackType.Exited) {
@@ -164,7 +171,7 @@ ipcMain.handle('GameEngine:RequestLaunch', (event, request_args: { id: string })
       }, runningIndex);
       operation.then(e => {
         ipcMain.removeHandler('GameEngine:Launch:' + request_args.id);
-       if(RunningVersionList.findIndex(rv=>rv.id === request_args.id) !== -1) UnregisterRunningVersion(args.LaunchProcess.id);
+        if (RunningVersionList.findIndex(rv => rv.id === request_args.id) !== -1) UnregisterRunningVersion(args.LaunchProcess.id);
       });
       return await operation;
     } catch (err) {

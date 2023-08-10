@@ -1,6 +1,8 @@
-import { CompileResult, Condition, PreloadVar } from '../../public/GameDataPublic';
-import { isArray } from 'util';
+import { CompileResult, Condition, PreloadVar, ServiceCondition } from '../../public/GameDataPublic';
+import ConsoleManager, { ProcessType } from '../../public/ConsoleManager';
+import axios from 'axios';
 
+const console = new ConsoleManager('ConditionCompiler', ProcessType.Internal);
 
 export function transform(rawConditions: string): Condition[] {
   return <Condition[]>JSON.parse(rawConditions);
@@ -26,6 +28,40 @@ export function Compile(conditions: Condition[] | Condition): CompileResult {
   }
 
 }
+
+
+export async function CompileService(serviceCondition: ServiceCondition): Promise<CompileResult | string> {
+  if (serviceCondition.address === '') return 'Service Condition address is null, it was skipped';
+  else if (!serviceCondition.address.startsWith('https:')) return 'Function doesn\'t accept unsecured request, address must start with \'https\'!';
+  else {
+    const path = serviceCondition.path || '';
+    return await axios.get(serviceCondition.address, {
+      timeout: 2000,
+      timeoutErrorMessage: 'Could not contact service (timeout)',
+      responseType: 'json'
+    }).then(res => {
+      const [key, object] = assignProperty(res.data, path);
+      return {
+        result: (object[key] === serviceCondition.state),
+        var: serviceCondition.address
+      };
+    }).catch(err => {
+      return err.message || err.toString();
+    });
+  }
+}
+
+function assignProperty(object: { [key: string]: any }, path: string): [string, Record<string, unknown>] {
+  const properties = path.split('.');
+  for (let i = 0; i < properties.length - 1; i++) {
+    const property = properties[i];
+    object[property] = object[property] ?? {};
+    object = object[property] as Record<string, unknown>;
+  }
+  const key = properties[properties.length - 1];
+  return [key, object];
+}
+
 
 function getPreloadVars(...vars: PreloadVar[]) {
   const response: any[] = [];
