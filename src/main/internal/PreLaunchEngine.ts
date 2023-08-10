@@ -15,6 +15,7 @@ import {
   RawLaunchOperationList,
   RawLaunchProcess,
   RawLaunchTask,
+  ServerCondition,
   ServiceCondition,
   SubLaunchTaskCallback
 } from '../../public/GameDataPublic';
@@ -66,7 +67,7 @@ export interface CheckConditionParams extends Omit<RawLaunchTask, 'params'> {
 
 export class CheckCondition extends ResolvedLaunchTask {
   constructor(baseTask: CheckConditionParams) {
-    super(baseTask, LaunchOperationClass.Parse);
+    super(baseTask, LaunchOperationClass.Verify);
   }
 
   public override async run(callback: (callback: SubLaunchTaskCallback) => void) {
@@ -91,7 +92,7 @@ export class CheckCondition extends ResolvedLaunchTask {
     }
     //Execute
     const conditionList: Condition | Condition[] = this.baseTask.params.condition;
-    console.log('Compiling ' + (Array.isArray(conditionList) ? conditionList.length : 1) + ' condition', (this.baseTask.params.stopOnFalse ? ' And stopping if false' : ''));
+    console.log('Compiling ' + (Array.isArray(conditionList) ? conditionList.length : 1) + ' condition', (this.baseTask.params.stopOnFalse ? ' and stopping if false' : ''));
     callback({ task: this.baseTask, state: LaunchTaskState.starting, displayText: 'Checking integrity...' });
     const conditionResult = Compile(this.baseTask.params.condition);
     return <FinishedSubTaskCallback>{
@@ -109,7 +110,7 @@ export interface CheckServiceParams extends Omit<RawLaunchTask, 'params'> {
 
 export class CheckService extends ResolvedLaunchTask {
   constructor(baseTask: CheckServiceParams) {
-    super(baseTask, LaunchOperationClass.Parse);
+    super(baseTask, LaunchOperationClass.Verify);
   }
 
   public override async run(callback: (callback: SubLaunchTaskCallback) => void) {
@@ -144,7 +145,7 @@ export class CheckService extends ResolvedLaunchTask {
     }
     //Execute
     const condition: ServiceCondition = this.baseTask.params.condition;
-    console.log('Compiling ' + (Array.isArray(condition) ? condition.length : 1) + ' condition', (this.baseTask.params.stopOnFalse ? ' And stopping if false' : ''));
+    console.log('Compiling ' + (Array.isArray(condition) ? condition.length : 1) + ' condition', (this.baseTask.params.stopOnFalse ? ' and stopping if false' : ''));
     callback({ task: this.baseTask, state: LaunchTaskState.starting, displayText: 'Checking services...' });
     let conditionResult = await CompileService(condition);
     console.log(conditionResult);
@@ -160,6 +161,72 @@ export class CheckService extends ResolvedLaunchTask {
         task: this.baseTask,
         state: LaunchTaskState.finished,
         displayText: conditionResult.result ? '' : 'Services unavailable',
+        response: { success: true, data: conditionResult }
+      };
+    }
+  }
+}
+
+export interface PingServerParams extends Omit<RawLaunchTask, 'params'> {
+  params: { condition: ServerCondition, stopOnFalse: boolean };
+}
+
+export class PingServer extends ResolvedLaunchTask {
+  constructor(baseTask: PingServerParams) {
+    super(baseTask, LaunchOperationClass.Verify);
+  }
+
+  public override async run(callback: (callback: SubLaunchTaskCallback) => void) {
+    //Analyse params
+    if (this.baseTask.params !== undefined) {
+      if (this.baseTask.params.stopOnFalse === undefined) this.baseTask.params.stopOnFalse = true;
+      if (this.baseTask.params.condition === undefined) {
+        console.raw.error('server to ping is undefined !');
+        return <FinishedSubTaskCallback>{
+          task: this.baseTask,
+          state: LaunchTaskState.error,
+          response: { success: false, error: 'server to ping is undefined !' }
+        };
+      } else {
+        if (this.baseTask.params.condition.serverIp === undefined) {
+          console.raw.error('server Ip is undefined !');
+          return <FinishedSubTaskCallback>{
+            task: this.baseTask,
+            state: LaunchTaskState.error,
+            response: { success: false, error: 'server Ip is undefined !' }
+          };
+        }
+      }
+    } else {
+      console.raw.error('Condition cannot be compiled: no param');
+      return <FinishedSubTaskCallback>{
+        task: this.baseTask,
+        state: LaunchTaskState.error,
+        response: { success: false, error: this.baseTask.key + ': no params' }
+      };
+    }
+    //Execute
+    const condition: ServerCondition = this.baseTask.params.condition;
+    console.log('Testing ' + condition.serverIp + ' ', (this.baseTask.params.stopOnFalse ? ' and stopping if false' : ''));
+    callback({ task: this.baseTask, state: LaunchTaskState.starting, displayText: 'Checking server...' });
+    let conditionResult = await CompileService(<ServiceCondition>{
+      address: 'https://api.mcsrvstat.us/3/' + condition.serverIp.trim(),
+      path: 'online',
+      state: true
+    });
+    console.log(conditionResult);
+    if (typeof conditionResult === 'string') {
+      return <FinishedSubTaskCallback>{
+        task: this.baseTask,
+        state: LaunchTaskState.error,
+        displayText: conditionResult,
+        response: { success: false, error: conditionResult }
+      };
+    } else {
+      return <FinishedSubTaskCallback>{
+        task: this.baseTask,
+        state: LaunchTaskState.finished,
+        displayText: conditionResult.result ? '' : 'Server offline',
         response: { success: true, data: conditionResult }
       };
     }
@@ -263,6 +330,8 @@ export function ResolveLaunchTask(task: RawLaunchTask): ResolvedLaunchTask | und
       return new CheckService(<CheckServiceParams>task);
     case 'CheckCondition' :
       return new CheckCondition(<CheckConditionParams>task);
+    case 'PingServer':
+      return new PingServer(<PingServerParams>task);
     case 'RunFile' :
       throw new Error('Unimplemented function');
     case 'SetConfig' :

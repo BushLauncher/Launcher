@@ -120,7 +120,7 @@ export async function RunLaunchProcess(id: number, rawProcess: RawLaunchProcess,
           //Check for condition stop
           if (response.task?.params?.stopOnFalse === true) {
             if (response.task?.type === LaunchOperationClass.Verify && (!response.response.success || response.response.data.result === false)) {
-              console.raw.error((response.task.params.condition.var || response.task.params.condition.address) + (response.task.params.condition.path ? '.' + response.task.params.condition.path : '') + ' is not ' + response.task.params.condition.state);
+              console.raw.error((response.task.params.condition.var || response.task.params.condition.address || response.task.params.condition.serverIp) + (response.task.params.condition.path ? '.' + response.task.params.condition.path : '') + ' is not ' + response.task.params.condition.state);
               console.error(response.displayText || 'Some requirements cannot be fulfilled');
               resolve(<ExitedCallback>{
                 type: CallbackType.Exited, return: {

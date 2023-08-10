@@ -55,8 +55,9 @@ export const RawLaunchOperationList: RawLaunchTask[] = [
   { key: 'ParseGameFile', type: LaunchOperationClass.Parse },
   { key: 'ParseJava', type: LaunchOperationClass.Parse },
   { key: 'Launch', type: LaunchOperationClass.Parse },
-  { key: 'CheckService', type: LaunchOperationClass.Verify },
   { key: 'CheckCondition', type: LaunchOperationClass.Verify },
+  { key: 'CheckService', type: LaunchOperationClass.Verify },
+  { key: 'PingServer', type: LaunchOperationClass.Verify },
   { key: 'RunFile', type: LaunchOperationClass.Setup },
   { key: 'SetConfig', type: LaunchOperationClass.PostInstall }
 ];
@@ -71,8 +72,9 @@ export const LaunchOperationKit: { [f: string]: RawLaunchTask } = {
   ParseGameFile: { key: 'ParseGameFile', type: LaunchOperationClass.Parse },
   ParseJava: { key: 'ParseJava', type: LaunchOperationClass.Parse },
   Launch: { key: 'Launch', type: LaunchOperationClass.Parse },
-  CheckService: { key: 'CheckService', type: LaunchOperationClass.Verify },
   CheckCondition: { key: 'CheckCondition', type: LaunchOperationClass.Verify },
+  CheckService: { key: 'CheckService', type: LaunchOperationClass.Verify },
+  PingServer: { key: 'PingServer', type: LaunchOperationClass.Verify },
   RunFile: { key: 'RunFile', type: LaunchOperationClass.Setup },
   SetConfig: { key: 'SetConfig', type: LaunchOperationClass.PostInstall }
 };
@@ -94,6 +96,10 @@ export interface ServiceCondition {
   address: string,
   state: string | boolean | number | any,
   path?: string
+}
+
+export interface ServerCondition {
+  serverIp: string;
 }
 
 export interface CompileResult {
