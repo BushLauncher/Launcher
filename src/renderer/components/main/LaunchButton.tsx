@@ -13,7 +13,7 @@ import {
   GameType,
   GameVersion,
   getDefaultGameType,
-  getDefaultVersion, LaunchOperationKit,
+  getDefaultVersion,
   LaunchTaskState,
   PreloadCallback,
   ProgressCallback,
@@ -86,9 +86,7 @@ export default function LaunchButton(props: LaunchButtonProps) {
 
   function requestLaunch(version: GameVersion) {
     const process: RawLaunchProcess = {
-      id: props.id || uuidv4(), process: [
-        {...LaunchOperationKit.PingServer, params: {condition: {serverIp: "6279cb822e3c4af0ab7ec3d79b9eb691.feathermc.gg"}}}
-      ], version: version, internal: true, allowCustomOperations: true
+      id: props.id || uuidv4(), process: [], version: version, internal: true, allowCustomOperations: true
     };
     const channel = { callback: 'GameLaunchCallback:' + process.id, launch: 'GameEngine:Launch:' + process.id };
     setVersionSelector(false);
