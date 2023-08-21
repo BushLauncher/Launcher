@@ -44,8 +44,9 @@ export async function getVersionList(gameType: GameType): Promise<GameVersion[]>
           if (version.type === 'release') {
             let newVersion: GameVersion = {
               id: version.id,
-              gameType: gameType,
-              installed: versionExist(version.id)
+              gameType: gameType/*,
+              installed: versionExist(version.id)*/
+              //TODO: Resolve version in all instances
             };
             foundedList.push(newVersion);
           }
@@ -87,9 +88,8 @@ export function getLocalVersionList(gameType: GameType): GameVersion[] {
   }
 }
 
-export function versionExist(versionName: string): boolean {
-  const localURL = getLocationRoot() + '\\versions\\';
-  if (existsSync(localURL)) return readdirSync(localURL).includes(versionName);
+export function versionExist(path: string, versionName: string): boolean {
+  if (existsSync(path)) return readdirSync(path).includes(versionName);
   else return false;
 }
 

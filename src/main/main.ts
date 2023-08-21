@@ -11,14 +11,7 @@ import {
   getVersionMethode,
   groupMinecraftVersions
 } from './internal/VersionManager';
-import {
-  Callback,
-  CallbackType,
-  ExitedReason,
-  GameType,
-  GameVersion,
-  RawLaunchProcess
-} from '../public/GameDataPublic';
+import { Callback, CallbackType, GameType, GameVersion, RawLaunchProcess } from '../public/GameDataPublic';
 import {
   AddAccount,
   getAccountList,
@@ -43,7 +36,7 @@ import {
   StopGame,
   UnregisterRunningVersion
 } from './internal/Core';
-import { InstallGameFiles, UninstallGameFiles, VerifyGameFiles } from './internal/GameFileManager';
+import { InstallGameFiles, UninstallGameFiles, VerifyGameFiles } from './internal/FileManager';
 import { KnownAuthErrorType } from '../public/ErrorPublic';
 import { installExtensions } from './extension-installer';
 import PreloadWindow from './PreloadWindow';
@@ -53,6 +46,7 @@ import ConsoleManager, { ProcessType } from '../public/ConsoleManager';
 import ProgressBarOptions = Electron.ProgressBarOptions;
 
 const console = new ConsoleManager('Main', ProcessType.Internal);
+
 
 export let currentWindow: BrowserWindow | null = null;
 if (process.env.NODE_ENV === 'production') {
@@ -116,10 +110,15 @@ ipcMain.handle('VersionManager:Uninstall', async (event, args: { version: GameVe
   return await UninstallGameFiles(args.version, args.path, (callback) => event.sender.send('VersionManager:Uninstall', callback));
 });
 ipcMain.handle('VersionManager:Diagnose', async (event, args: { version: GameVersion, path?: string }) => {
-  return await VerifyGameFiles(args.version, args.path);
+  const path = args.path || '';
+  //TODO: resolve in all instances
+  return await VerifyGameFiles(args.version, path);
 });
-ipcMain.handle('VersionManager:Install', async (event, args: { version: GameVersion }) => {
-  return await InstallGameFiles(args.version, (callback) => event.sender.send('VersionManager:Install', callback));
+ipcMain.handle('VersionManager:Install', async (event, args: { version: GameVersion, path: string }) => {
+  /**
+   * @deprecated
+   */
+  return await InstallGameFiles(args.version, args.path, (callback) => event.sender.send('VersionManager:Install', callback));
 });
 
 ipcMain.handle('Auth:Add', (event, args: { user: MinecraftAccount }) => {
@@ -175,7 +174,7 @@ ipcMain.handle('GameEngine:RequestLaunch', (event, request_args: { id: string })
       });
       return await operation;
     } catch (err) {
-      console.error(err);
+      console.raw.error(err);
       return err;
     }
     //reject will not pass err and return string [Object object]

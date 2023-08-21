@@ -4,7 +4,7 @@ import fs, { readFileSync, writeFileSync } from 'fs';
 import { userDataStorage } from '../main';
 import { Xbox } from 'msmc';
 import { Themes } from '../../public/ThemePublic';
-import { deleteFolderRecursive } from './GameFileManager';
+import { deleteFolderRecursive } from './FileManager';
 import path from 'path';
 import ConsoleManager, { ProcessType } from '../../public/ConsoleManager';
 

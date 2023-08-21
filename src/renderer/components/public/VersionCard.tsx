@@ -23,6 +23,9 @@ interface VersionCardProps extends ComponentsPublic {
   toolBox: {
     uninstall?: activeAndCallback,
     diagnose?: activeAndCallback,
+    /**
+     * @deprecated
+     */
     install?: activeAndCallback,
     launch?: activeAndCallback,
     select?: activeAndCallback
@@ -115,6 +118,9 @@ export default function VersionCard({ version, toolBox, settings, className, sty
     setRunning(true);
   }
 
+  /**
+   * @deprecated
+   */
   async function requestInstall() {
     const id = toast.loading(`Installing ${version.id}...`, {
       toastId: 'installOperation' + version.id + version.gameType,
@@ -168,13 +174,13 @@ export default function VersionCard({ version, toolBox, settings, className, sty
         const runningList: RunningVersion[] = await window.electron.ipcRenderer.invoke('GameEngine:getRunningList', {});
         const _isRunning = runningList.find(rv => rv.Version.id === version.id) !== undefined;
         if (isRunning !== _isRunning) setRunning(_isRunning);
-        return <>{toolBox.install && !version.installed &&
+        return <>{/*toolBox.install && !version.installed &&
           <Popover content={'Install'}>
             <Button key={'install'} type={'primary'} size={'large'} disabled={isLoading}
                     style={{ backgroundColor: 'var(--valid)' }}
                     icon={<DownloadOutlined style={{ fontSize: '2.5vw' }} />}
                     className={styles.button} onClick={requestInstall} />
-          </Popover>}
+          </Popover>*/}
           {toolBox.diagnose && version.installed &&
             <Popover content={!isRunning ? 'Diagnose' : 'Version is running...'}>
               <Button key={'diagnose'} size={'large'} icon={<Icon icon={hammerIcon} className={styles.icon} />}

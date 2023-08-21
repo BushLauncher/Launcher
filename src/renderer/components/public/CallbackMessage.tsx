@@ -6,10 +6,9 @@ import Button, { ButtonType } from './Input/Button';
 import { useState } from 'react';
 import { knowErrorFormat } from '../../../public/ErrorPublic';
 
-
 export default function CallbackMessage({ callback }: { callback: Callback }) {
   const [extended, setExtended] = useState(false);
-  console.log(callback);
+  console.error(callback);
   if (callback.type === CallbackType.Exited) {
     callback.return = callback.return as { reason: ExitedReason, display?: string | knowErrorFormat };
     switch (callback.return.reason) {
@@ -41,7 +40,7 @@ export default function CallbackMessage({ callback }: { callback: Callback }) {
           );
         }
       }
-      case ExitedReason.UnableToLaunch:
+      case ExitedReason.Canceled:
         return (<div>
           <p>{'Launch cancelled: ' + callback.return.display}</p>
         </div>);
@@ -51,6 +50,7 @@ export default function CallbackMessage({ callback }: { callback: Callback }) {
         </div>);
     }
   } else if (callback.type === CallbackType.Error){
+    console.log(callback.return.display || callback.return);
     return <div>{callback.return.display || callback.return}</div>
   } else{
     console.warn('Cannot display CallbackMessage from type ' + callback.type + ' (not implemented)\n', callback);

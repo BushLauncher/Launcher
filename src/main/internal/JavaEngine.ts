@@ -5,7 +5,7 @@ import axios from 'axios';
 import admZip from 'adm-zip';
 import { knowErrorFormat, knowGameError } from '../../public/ErrorPublic';
 import { userDataStorage } from '../main';
-import { deleteFolderRecursive, findFileRecursively } from './GameFileManager';
+import { deleteFolderRecursive, findFileRecursively } from './FileManager';
 import { javaPath, tempDownloadDir } from './UserData';
 import ConsoleManager, { ProcessType } from '../../public/ConsoleManager';
 

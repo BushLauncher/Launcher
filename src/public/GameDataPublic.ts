@@ -121,7 +121,7 @@ export interface Callback {
     stepId: number,
     stepCount: number
   }
-  return?: any,
+  return?: any | Error,
   type: CallbackType,
 }
 
@@ -147,7 +147,7 @@ export interface ExitedCallback extends Omit<Callback, 'return' | 'progressing'>
 export enum ExitedReason {
   Exited,
   //Some verification doesn't pass
-  UnableToLaunch,
+  Canceled,
   Error
 }
 

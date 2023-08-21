@@ -24,6 +24,9 @@ import { getSelectedAccount, isAccountValid } from './AuthModule';
 import getAppDataPath from 'appdata-path';
 import { currentWindow, userDataStorage } from '../main';
 import ConsoleManager, { ProcessType } from '../../public/ConsoleManager';
+import * as Path from 'path';
+import fs from 'fs';
+import { Runtime } from './Composer';
 
 const console = new ConsoleManager('Launcher', ProcessType.Internal);
 
@@ -82,15 +85,20 @@ export async function RunLaunchProcess(id: number, rawProcess: RawLaunchProcess,
       if (!res) {
         console.warn('Process execution Canceled (unauthorized)');
         resolve(<ExitedCallback>{
-          type: CallbackType.Exited, return: { reason: ExitedReason.UnableToLaunch, display: 'Unauthorized to launch' }
+          type: CallbackType.Exited, return: { reason: ExitedReason.Canceled, display: 'Unauthorized to launch' }
         });
         return;
       } else console.raw.error('** Process running in insecure mode ! **');
     }
     //Parse process
     const preload_stepsCount = process.preloadProcess.length;
-
     const LaunchStorage: { task: RawLaunchTask, response: PreLaunchResponse }[] = [];
+    //Create instance folder
+    const path = Path.join(getInstancePath(), '/' + process.id);
+    if (!fs.existsSync(path)) {
+      console.log('Creating instance folder...');
+      fs.mkdirSync(path);
+    }
     /******************/
     //Execute Preload functions
     if (preload_stepsCount > 0) {
@@ -116,7 +124,7 @@ export async function RunLaunchProcess(id: number, rawProcess: RawLaunchProcess,
         const i = process.preloadProcess.indexOf(task);
         try {
           console.warn('Verify: Executing task ' + i + '/' + (preload_stepsCount - 1) + ' : ' + task.baseTask.key + '...');
-          const response = await task.run((c) => CreateVerifyCallback(c, i));
+          const response = await task.run((c) => CreateVerifyCallback(c, i), { dir: path });
           //Check for condition stop
           if (response.task?.params?.stopOnFalse === true) {
             if (response.task?.type === LaunchOperationClass.Verify && (!response.response.success || response.response.data.result === false)) {
@@ -124,7 +132,7 @@ export async function RunLaunchProcess(id: number, rawProcess: RawLaunchProcess,
               console.error(response.displayText || 'Some requirements cannot be fulfilled');
               resolve(<ExitedCallback>{
                 type: CallbackType.Exited, return: {
-                  reason: ExitedReason.UnableToLaunch,
+                  reason: ExitedReason.Canceled,
                   display: response.displayText || 'Some requirements cannot be fulfilled \n(please retry later)'
                 }
               });
@@ -181,18 +189,19 @@ export async function RunLaunchProcess(id: number, rawProcess: RawLaunchProcess,
       const i = process.process.indexOf(task);
       try {
         console.warn('Executing task ' + i + '/' + (process_stepsCount - 1) + ' : ' + task.baseTask.key + '...');
-        const response = await task.run((c) => CreateProcessCallback(c, i));
+        const response = await task.run((c) => CreateProcessCallback(c, i), { dir: path });
         CreateProcessCallback(response, i);
-        if (response.state === LaunchTaskState.error) {
+        if (response.state === LaunchTaskState.error || !response.response.success) {
           //SetRunningVersionState(id, RunningVersionState.Error);
           resolve(<ExitedCallback>{
             progressing: {
               stepId: i, stepCount: process_stepsCount
             },
-            type: CallbackType.Error,
+            type: CallbackType.Exited,
             return: { reason: ExitedReason.Error, display: response.data || response.response.error }
           });
-          return;
+          console.raw.log(response.response.error);
+          break;
         } else {
           LaunchStorage.push({
             task: task.baseTask, response: response.response
@@ -216,7 +225,15 @@ export async function RunLaunchProcess(id: number, rawProcess: RawLaunchProcess,
       state: LaunchTaskState.processing, displayText: 'Launching...', data: { localProgress: 100 }
     }, process_stepsCount - 1);
     //The "[object]" in CheckCondition function result is normal
-    resolve(LaunchGameProcess(process.id, process.version, java_path, access_token, (callback: Callback) => Callback(callback)));
+
+    //Create Runtime
+    const runtime = new Runtime({ id: process.id, path: path });
+    const composRes = await runtime.Compose();
+    if (typeof composRes === 'object') {
+      resolve(composRes);
+      return;
+    }
+    resolve(LaunchGameProcess(process.id, process.version, java_path, access_token, runtime.runPath, (callback: Callback) => Callback(callback)));
   });
 }
 
@@ -246,7 +263,29 @@ export function StopGame(processId: string) {
 
 export function getLocationRoot(): string {
   const storageRes: string | null | undefined = userDataStorage.get('saved.rootPath');
-  if (storageRes !== undefined && storageRes !== null) return storageRes; else return setLocalLocationRoot(getDefaultRootPath());
+  if (storageRes !== undefined && storageRes !== null) {
+    if(!fs.existsSync(storageRes)) fs.mkdirSync(storageRes);
+    return storageRes;
+  }
+  else return setLocalLocationRoot(getDefaultRootPath());
+}
+
+export function getRuntimePath(): string {
+  const path = Path.join(getLocationRoot(), '/runtime/');
+  if (!fs.existsSync(path)) {
+    console.log('Creating runtime folder');
+    fs.mkdirSync(path);
+  }
+  return path;
+}
+
+export function getInstancePath(): string {
+  const path = Path.join(getLocationRoot(), '/instances/');
+  if (!fs.existsSync(path)) {
+    console.log('Creating instance folder');
+    fs.mkdirSync(path);
+  }
+  return path;
 }
 
 export function getDefaultRootPath(): string {
@@ -258,7 +297,7 @@ function setLocalLocationRoot(path: string) {
   return path;
 }
 
-function LaunchGameProcess(id: string, version: GameVersion, javaPath: string, access_token: string | undefined, callback: (callback: any) => void): Promise<ExitedCallback> {
+function LaunchGameProcess(id: string, version: GameVersion, javaPath: string, access_token: string | undefined, runPath: string, callback: (callback: any) => void): Promise<ExitedCallback> {
   return new Promise(async (resolve, reject) => {
     //get account data
     const account = getSelectedAccount();
@@ -274,9 +313,9 @@ function LaunchGameProcess(id: string, version: GameVersion, javaPath: string, a
     const runningVersionIndex = RunningVersionList.findIndex((rv) => rv.id === id);
     if (runningVersionIndex === -1) throw new Error('Cannot resolve Running version in list');
     //Start
-    console.warn('Launching minecraft [' + id + '] ' + version.id + ' :' + '\nFor: ', account.profile, '\n from: ' + getLocationRoot() + '\n java: ' + javaPath);
+    console.warn('Launching minecraft [' + id + '] ' + version.id + ' :' + '\nFor: ', account.profile.name, '\n from: ' + runPath + '\n java: ' + javaPath);
     launch({
-      gamePath: getLocationRoot(),
+      gamePath: runPath,
       javaPath: javaPath,
       version: version.id,
       gameProfile: { id: account.profile.id, name: account.profile.name },

@@ -60,8 +60,8 @@ export default function VersionSettingsView() {
                   {versionList.map((version, i) =>
                     <VersionCard version={version} key={i} toolBox={{
                       diagnose: { active: true },
-                      uninstall: { active: true, callback: reload },
-                      install: { active: true, callback: reload }
+                      uninstall: { active: true, callback: reload }/*,
+                      install: { active: true, callback: reload }*/
                     }} className={styles.card} />)}
                 </div>;
               }} className={[styles.scrollable, 'tabs'].join(' ')} />

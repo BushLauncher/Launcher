@@ -20,7 +20,7 @@ import {
   SubLaunchTaskCallback
 } from '../../public/GameDataPublic';
 import { getVersionList, MinecraftVersion } from '@xmcl/installer';
-import { InstallGameFiles, VerifyGameFiles } from './GameFileManager';
+import { InstallGameFiles, VerifyGameFiles } from './FileManager';
 import { isSupported, versionExist } from './VersionManager';
 import { InstallJava, ResolveJavaPath } from './JavaEngine';
 import { net } from 'electron';
@@ -43,7 +43,9 @@ export abstract class ResolvedLaunchTask {
     return this.baseTask.key;
   }
 
-  public abstract run(callback: (callback: SubLaunchTaskCallback) => void): Promise<FinishedSubTaskCallback>;
+  public abstract run(callback: (callback: SubLaunchTaskCallback) => void, additionalParams: {
+    [key: string]: any
+  }): Promise<FinishedSubTaskCallback>;
 
   public getCallback(processingCallback: SubLaunchTaskCallback): SubLaunchTaskCallback {
     return {
@@ -278,7 +280,7 @@ export class ParseGameFile extends ResolvedLaunchTask {
     super(baseTask, LaunchOperationClass.Parse);
   }
 
-  public override async run(callback: (callback: SubLaunchTaskCallback) => void) {
+  public override async run(callback: (callback: SubLaunchTaskCallback) => void, { dir }: { dir: string }) {
     //Analyse params
     if (this.baseTask.params === undefined || !(await isSupported(this.baseTask.params.version))) {
       console.raw.error('Passed version is not valid !');
@@ -290,15 +292,17 @@ export class ParseGameFile extends ResolvedLaunchTask {
     }
     //Execute
     callback({ task: this.baseTask, state: LaunchTaskState.starting, displayText: 'Checking Minecraft files...' });
-    await parseGameFile(this.baseTask.params.version, (c: SubLaunchTaskCallback) => callback(this.getCallback(c))).catch(err => {
-      console.raw.error(err);
-      return <FinishedSubTaskCallback>{
-        task: this.baseTask, state: LaunchTaskState.error, response: { success: false }
-      };
-    });
-    return <FinishedSubTaskCallback>{
-      task: this.baseTask, state: LaunchTaskState.finished, response: { success: true }
-    };
+    return parseGameFile(this.baseTask.params.version, dir, (c: SubLaunchTaskCallback) => callback(this.getCallback(c)))
+      .catch(err => {
+        console.raw.error(err);
+        return <FinishedSubTaskCallback>{
+          task: this.baseTask, state: LaunchTaskState.error, response: { success: false, error: err }
+        };
+      }).then(() => {
+        return <FinishedSubTaskCallback>{
+          task: this.baseTask, state: LaunchTaskState.finished, response: { success: true }
+        };
+      });
   }
 }
 
@@ -424,30 +428,39 @@ export function AnalyseLaunchProcess(rawProcess: RawLaunchProcess): Promise<Laun
 /************/
 
 
-function parseGameFile(version: GameVersion, callback: (callback: SubLaunchTaskCallback) => void): Promise<void> {
+function parseGameFile(version: GameVersion, dir: string, callback: (callback: SubLaunchTaskCallback) => void): Promise<void> {
   return new Promise(async (resolve, reject) => {
-    const Install = (operation: 'Install' | 'Repaire') => InstallGameFiles(version, (c) => {
-      if (operation === 'Repaire') c.displayText = c.displayText?.replace('Installing', 'Repairing');
-
-      callback(c);
-    })
-      .then(async () => {
-        console.log('Installed Minecraft files !');
-        const report = await VerifyGameFiles(version);
-        if (report !== true) {
-          throw new Error('Cannot install Minecraft File, Minecraft\'s installed game files are corrupted\n' + report);
-        } else {
-          callback({ state: LaunchTaskState.finished });
-          resolve();
+    async function Install(operation: 'Install' | 'Repaire') {
+      console.raw.warn('install');
+      InstallGameFiles(version, dir, (c) => {
+        if (operation === 'Repaire') {
+          c.displayText = c.displayText?.replace('Installing', 'Repairing');
+          console.raw.log(c.displayText);
         }
+        callback(c);
       })
-      .catch((err) => reject(err));
+        .then(async () => {
+          console.log('Installed Minecraft files !');
+          const report = await VerifyGameFiles(version, dir);
+          if (report === true) {
+            callback({ state: LaunchTaskState.finished });
+            resolve();
+          } else {
+            console.raw.error(report);
+            throw new Error('Cannot install Minecraft File, Minecraft\'s installed game files are corrupted');
+          }
+        })
+        .catch((err) => {
+          reject(err);
+          return;
+        });
+    }
 
-
-    if (!versionExist(version.id)) await Install('Install'); else {
+    if (!versionExist(dir, version.id)) await Install('Install');
+    else {
       //check for corruption
       callback({ state: LaunchTaskState.processing, displayText: 'Checking Minecraft file...' });
-      const checkResult = await VerifyGameFiles(version /*no Callback needed*/);
+      const checkResult = await VerifyGameFiles(version, dir);
       if (checkResult === true) {
         callback({ state: LaunchTaskState.finished });
         resolve();
@@ -495,5 +508,6 @@ export async function ResolveXmclVersion(version: GameVersion): Promise<Minecraf
   const res = versionList.versions.find((MinecraftVersion) => {
     return MinecraftVersion.id === version.id;
   });
-  if (res === undefined) throw new Error('Cannot resolve version from XMCL lib'); else return res;
+  if (res === undefined) throw new Error('Cannot resolve version from XMCL lib');
+  else return res;
 }

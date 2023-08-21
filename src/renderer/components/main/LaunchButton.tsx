@@ -142,9 +142,7 @@ export default function LaunchButton(props: LaunchButtonProps) {
         };
         lp = setLp();
         // @ts-ignore
-        let calculatedProgress: number = 100 * callback.progressing.stepId;
-        calculatedProgress += lp - 100;
-        calculatedProgress /= callback.progressing.stepCount;
+        let calculatedProgress: number = ((100 * callback.progressing.stepId) + lp - 100) / callback.progressing.stepCount;
         /*console.log(`((100 * ${callback.progressing.stepId}) - ${lp})/ ${callback.progressing.stepCount}
     = (${100 * callback.progressing.stepId} - ${lp})/ ${callback.progressing.stepCount})
     = (${(100 * callback.progressing.stepId) - lp})/ ${callback.progressing.stepCount})
@@ -210,7 +208,7 @@ export default function LaunchButton(props: LaunchButtonProps) {
             }));
             break;
           }
-          case ExitedReason.UnableToLaunch: {
+          case ExitedReason.Canceled: {
             toast.error(<CallbackMessage callback={callback as Callback} />, {
               autoClose: false, hideProgressBar: true, style: { width: 'auto' }
             });

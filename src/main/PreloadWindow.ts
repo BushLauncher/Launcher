@@ -31,21 +31,23 @@ export default class PreloadWindow extends Window {
     this.modifyMainText('Checking for update...');
     if (net.isOnline()) {
       //check for update
-      const update = await this.checkForUpdatesExist();
-      if (update === false) {
-        //get if download file exist in temp delete it
-        const tempPath = app.getPath('temp').replaceAll('\\', '/');
-        const downloadFilePath = tempPath + '\\bushLauncherUpdate.exe';
-        if (fs.existsSync(downloadFilePath)) {
-          console.log(prefix + 'Founded download file in temp, deleting it');
-          fs.unlinkSync(downloadFilePath);
-        }
-        return false;
-      } else return await Update(update, (text) => this.modifyMainText(text))
-        .catch(err => {
-          this.modifyMainText(err);
+      if (process.env.NODE_ENV !== 'development') {
+        const update = await this.checkForUpdatesExist();
+        if (update === false) {
+          //get if download file exist in temp delete it
+          const tempPath = app.getPath('temp').replaceAll('\\', '/');
+          const downloadFilePath = tempPath + '\\bushLauncherUpdate.exe';
+          if (fs.existsSync(downloadFilePath)) {
+            console.log(prefix + 'Founded download file in temp, deleting it');
+            fs.unlinkSync(downloadFilePath);
+          }
           return false;
-        });
+        } else return await Update(update, (text) => this.modifyMainText(text))
+          .catch(err => {
+            this.modifyMainText(err);
+            return false;
+          });
+      } else return false;
     } else {
       this.modifyMainText('Starting offline mode...');
       return false;
@@ -57,7 +59,7 @@ export default class PreloadWindow extends Window {
   private checkForUpdatesExist() {
     return new Promise<false | toDownloadData>((resolve, reject) => {
       console.log('Checking for updates...');
-      new Octokit().request('GET /repos/Gagafeee/BushLauncher/releases/latest')
+      new Octokit().request('GET /repos/BushLauncher/Launcher/releases/latest')
         .then((githubResponse) => {
           console.log('Got response from GitHub API');
           let res = githubResponse.data;
