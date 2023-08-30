@@ -36,7 +36,7 @@ import {
   StopGame,
   UnregisterRunningVersion
 } from './internal/Core';
-import { InstallGameFiles, UninstallGameFiles, VerifyGameFiles } from './internal/FileManager';
+import { UninstallGameFiles, VerifyVersionFile } from './internal/FileManager';
 import { KnownAuthErrorType } from '../public/ErrorPublic';
 import { installExtensions } from './extension-installer';
 import PreloadWindow from './PreloadWindow';
@@ -112,13 +112,13 @@ ipcMain.handle('VersionManager:Uninstall', async (event, args: { version: GameVe
 ipcMain.handle('VersionManager:Diagnose', async (event, args: { version: GameVersion, path?: string }) => {
   const path = args.path || '';
   //TODO: resolve in all instances
-  return await VerifyGameFiles(args.version, path);
+  return await VerifyVersionFile(args.version, path);
 });
 ipcMain.handle('VersionManager:Install', async (event, args: { version: GameVersion, path: string }) => {
   /**
    * @deprecated
    */
-  return await InstallGameFiles(args.version, args.path, (callback) => event.sender.send('VersionManager:Install', callback));
+  /*return await InstallGameFiles(args.version, args.path, (callback) => event.sender.send('VersionManager:Install', callback));*/
 });
 
 ipcMain.handle('Auth:Add', (event, args: { user: MinecraftAccount }) => {
@@ -239,6 +239,7 @@ ipcMain.on('App:setWinBar', (e, args: { percentage: number, options?: ProgressBa
 });
 ////////////////////////////////////////////////////////
 app.disableHardwareAcceleration();
+app.commandLine.appendSwitch('no-proxy-server');
 app
   .whenReady()
   .then(async () => {

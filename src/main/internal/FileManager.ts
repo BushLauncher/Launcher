@@ -1,100 +1,331 @@
-import { installAssets, installAssetsTask, installTask } from '@xmcl/installer';
-import { GameType, GameVersion, LaunchTaskState, SubLaunchTaskCallback } from '../../public/GameDataPublic';
-import { diagnose, MinecraftIssueReport } from '@xmcl/core';
-import { ResolveXmclVersion } from './PreLaunchEngine';
+import {
+  GameType,
+  GameVersion,
+  JsonVersionList,
+  LaunchTaskState,
+  SubLaunchTaskCallback
+} from '../../public/GameDataPublic';
+import {
+  diagnose,
+  diagnoseAssetIndex,
+  diagnoseAssets,
+  diagnoseJar,
+  diagnoseLibraries,
+  MinecraftFolder,
+  ResolvedLibrary,
+  ResolvedVersion,
+  Version
+} from '@xmcl/core';
 import fs, { existsSync } from 'fs';
 import { getLocationRoot } from './Core';
 import path from 'path';
 import ConsoleManager, { ProcessType } from '../../public/ConsoleManager';
-import { DownloadAgent, DefaultRangePolicy } from '@xmcl/file-transfer';
-import { getGlobalDispatcher } from 'undici';
-import { FileHandle } from 'fs/promises';
-import CachePolicy from 'http-cache-semantics';
-import { errors } from 'undici';
+import axios from 'axios';
+import { InstallLibraryTask } from '@xmcl/installer';
+import parse = Version.parse;
+
 
 const console = new ConsoleManager('GameFileManager', ProcessType.Internal);
 
-export async function VerifyGameFiles(version: GameVersion, path: string): Promise<boolean | MinecraftIssueReport> {
+
+type progressCallbackFunction = (localProgress: number | undefined, displayText?: string, subText?: string | undefined) => void;
+
+export async function InstallGame(version: GameVersion, dir: string, callback: (callback: SubLaunchTaskCallback) => void): Promise<SubLaunchTaskCallback> {
+  const sendError = (error: any) => {
+    console.raw.error(error);
+    return <SubLaunchTaskCallback>{ state: LaunchTaskState.error, data: { return: error } };
+  };
+  const sendProgress = (localProgress: number | undefined, step: number, displayText?: string, subText?: string | undefined) => {
+    const totalSteps = 5;
+    callback({
+      state: LaunchTaskState.processing, data: {
+        localProgress: localProgress === undefined ? undefined : (((step - 1) / totalSteps) * 100 + localProgress / totalSteps),
+        subDisplay: subText
+      }, displayText
+    });
+  };
+
+  callback({ state: LaunchTaskState.processing, displayText: 'Installing Minecraft...' });
+  //STEP 1
+  //verify paths
+  sendProgress(undefined, 1, 'Preparing for installation...');
+  if (!fs.existsSync(dir)) {
+    console.log('Create folder: ' + dir);
+    fs.mkdirSync(dir);
+  }
+
+  //parse version
+  const versionFolder = path.join(dir, 'versions', version.id);
+  if (!fs.existsSync(path.join(dir, 'versions'))) fs.mkdirSync(path.join(dir, 'versions'));
+  if (!fs.existsSync(versionFolder)) fs.mkdirSync(versionFolder);
+  const minecraftFolder = new MinecraftFolder(dir);
+
+  if (!fs.existsSync(path.join(dir, 'versions', version.id, version.id + '.json'))) await DownloadJSON(version, dir, (lp, d, s) => sendProgress(lp, 2, d, s), sendError);
+  const versionData = await parse(dir, version.id);
+  //STEP 2
+  sendProgress(undefined, 2, 'Checking Minecraft Client...');
+  const jsonReport = await diagnoseAssetIndex(versionData, minecraftFolder);
+  const jarReport = await diagnoseJar(versionData, minecraftFolder);
+  await DownloadVersion(version, versionData, dir, (lp, d, s) => sendProgress(lp, 3, d, s), sendError, {
+    jar: jarReport !== undefined, json: jsonReport !== undefined
+  });
+  //install assets
+  //STEP 3
+  sendProgress(undefined, 3, 'Checking Minecraft Assets...');
+  if (versionData.assetIndex?.url === undefined) throw new Error('assetIndex is undefined !');
+  else await DownloadAssets(version, versionData.assetIndex.url, dir, (lp, d, s) => sendProgress(lp, 4, d, s), sendError);
+  //STEP 4
+  //install libs
+  await DownloadLibs(version, versionData, dir, (lp, d, s) => sendProgress(lp, 5, d, s), sendError);
+
+  //verify install
+  console.log('Finished, verifying...');
+  callback({state: LaunchTaskState.processing, displayText: "Finishing Install..."})
+  let mainReport = await DiagnoseVersion(version, dir);
+  if (mainReport.issues.length > 0) {
+    console.raw.error('Following error occurred during install', mainReport.issues);
+    return { state: LaunchTaskState.error, data: { return: mainReport } };
+  } else {
+    console.log('Done.');
+    return { state: LaunchTaskState.finished };
+  }
+}
+
+async function DownloadVersion(version: GameVersion, versionData: ResolvedVersion | undefined, dir: string, sendProgress: progressCallbackFunction, onError: (e: any) => void, options?: {
+  json: boolean,
+  jar: boolean
+}): Promise<SubLaunchTaskCallback>
+{
+  const versionFolder = path.join(dir, 'versions', version.id);
+
+  if (!fs.existsSync(path.join(dir, 'versions'))) fs.mkdirSync(path.join(dir, 'versions'));
+  if (!fs.existsSync(versionFolder)) fs.mkdirSync(versionFolder);
+  //install json
+  if (options === undefined || options.json) {
+    await DownloadJSON(version, dir, sendProgress, onError);
+  }
+  if (options === undefined || options.jar) {
+    versionData = versionData || await parse(dir, version.id);
+    return await DownloadJar(version, versionData, dir, sendProgress, onError);
+  }
+  return { state: LaunchTaskState.finished };
+}
+
+async function DownloadJSON(version: GameVersion, dir: string, sendProgress: progressCallbackFunction, onError: (e: any) => void) {
+  const versionFolder = path.join(dir, 'versions', version.id);
+  const versionData = await parseVersionData(version.id);
+  console.log('Installing json...');
+  try {
+    sendProgress(undefined, 'Installing Minecraft Index...');
+    fs.writeFileSync(path.join(versionFolder, version.id + '.json'), JSON.stringify(versionData), 'utf8');
+  } catch (e) {
+    console.raw.error('Cannot write json file:');
+    onError(e);
+    return { state: LaunchTaskState.error, data: { return: e } };
+  }
+}
+
+async function DownloadJar(version: GameVersion, versionData: ResolvedVersion, dir: string, sendProgress: progressCallbackFunction, onError: (e: any) => void) {
+  //install jar
+  //STEP 3
+  const versionFolder = path.join(dir, 'versions', version.id);
+  console.log('Installing jar...');
+  try {
+    // noinspection ExceptionCaughtLocallyJS
+    if (versionData.downloads.client === undefined) throw new Error('Client download is undefined !');
+    const res = await axios.get(versionData.downloads.client.url, {
+      responseType: 'arraybuffer', onDownloadProgress: (progress) => {
+        const p = progress.progress === undefined ? undefined : Math.floor(progress.progress * 100);
+        sendProgress(p, 'Installing Minecraft Jar...', ('Jar: ' + p + '%'));
+      }
+    });
+    const data = Buffer.from(res.data, 'binary');
+    sendProgress(undefined, 'Writing Minecraft Jar...');
+
+    fs.writeFileSync(path.join(versionFolder, version.id + '.jar'), data);
+
+    console.log('Finish patch version');
+    return { state: LaunchTaskState.finished };
+  } catch (e) {
+    console.raw.error('Cannot write Jar:');
+    onError(e);
+    return { state: LaunchTaskState.error };
+  }
+
+}
+
+async function DownloadAssets(version: GameVersion, assetUrl: string, dir: string, sendProgress: progressCallbackFunction, onError: (e: any) => void, options?: {
+  force: boolean
+}): Promise<SubLaunchTaskCallback> {
+  //asset index
+  sendProgress(undefined, 'Getting Minecraft assets...');
+  let assetList: { [key: string]: { hash: string, size: number } } = {};
+  ///
+  console.log('Parsing asset list...');
+  try {
+    if (!fs.existsSync(path.join(dir, 'assets'))) fs.mkdirSync(path.join(dir, 'assets'));
+    if (!fs.existsSync(path.join(dir, 'assets/indexes'))) fs.mkdirSync(path.join(dir, 'assets/indexes'));
+    const response = await axios.get(assetUrl, { responseType: 'json' });
+    const fileName = assetUrl.slice(assetUrl.lastIndexOf('/') + 1, assetUrl.length);
+    console.log(fileName);
+    fs.writeFileSync(path.join(dir, 'assets/indexes', fileName), JSON.stringify(response.data), 'utf8');
+    assetList = response.data.objects;
+    if (assetList === undefined) return { state: LaunchTaskState.error, data: { return: 'Cannot get asset list' } };
+    if (options === undefined || !options.force) {
+      //filter by default, replacing all list by only missing assets
+      const assetReport = await diagnoseAssets(assetList, new MinecraftFolder(dir));
+      let newList: { [key: string]: { hash: string, size: number } } = {};
+      assetReport.forEach(report => Object.assign(newList, {
+          [report.asset.name]: {
+            hash: report.asset.hash,
+            size: report.asset.size
+          }
+        })
+      );
+      assetList = newList;
+    }
+  } catch (e) {
+    console.raw.error('Cannot write assets json index file:');
+    onError(e);
+  }
+  sendProgress(undefined, 'Installing Minecraft assets...');
+  //download assets
+  const ASSET_URL = 'https://resources.download.minecraft.net/';
+  const download_concurrency = 10;
+  const assetErrors: any[] = [];
+  let proceedAssetCount = 0;
+  const assetPath = path.join(dir, 'assets/objects');
+  if (!fs.existsSync(assetPath)) fs.mkdirSync(assetPath);
+  //Construct
+  const assetOperations: (() => Promise<void>)[] = Object.values(assetList)
+    .map((asset, assetIndex) => {
+      return () => new Promise<void>(async (resolve, reject) => {
+        try {
+          const downloadUrl = path.join(ASSET_URL, asset.hash.slice(0, 2), asset.hash);
+          const localPath = path.join(assetPath, asset.hash.slice(0, 2), asset.hash);
+          //Create folder
+          if (!fs.existsSync(path.join(assetPath, asset.hash.slice(0, 2)))) fs.mkdirSync(path.join(assetPath, asset.hash.slice(0, 2)));
+          //Download
+          const response = await axios.get(downloadUrl, { responseType: 'arraybuffer' });
+          //Write
+          fs.writeFileSync(localPath, Buffer.from(response.data));
+          //Done
+          sendProgress(((proceedAssetCount * 100) / assetCount), 'Installing Minecraft assets...', proceedAssetCount + '/' + assetCount);
+          proceedAssetCount++;
+          //console.log(`Downloaded asset [${assetIndex}]: ${Math.floor((proceedAssetCount * 100) / assetCount)}%`);
+          resolve();
+        } catch (e) {
+          //console.raw.error(assetIndex + ':  ', e);
+          assetErrors.push({ id: assetIndex, error: e });
+          reject(e);
+        }
+      });
+    });
+  //
+  const assetCount = Object.keys(assetOperations).length;
+  console.log('Downloading: ' + assetCount + ' assets, by group of ' + download_concurrency + '...');
+  //Start download
+  while (proceedAssetCount < assetCount) {
+    const currentGroup = assetOperations.slice(proceedAssetCount, proceedAssetCount + download_concurrency);
+    console.log('Downloading ' + proceedAssetCount + '->' + (proceedAssetCount + download_concurrency) + ' /' + assetCount + ' ' + ((proceedAssetCount * 100) / assetCount) + '%...');
+    await Promise.all(currentGroup.map(operation => operation().catch(err => {
+      assetErrors.push(err);
+      console.raw.error(err);
+    }))).catch(err => console.raw.error(err));
+    //proceedAssetCount += currentGroup.length;
+  }
+  console.log('All asset downloaded');
+  if (assetErrors.length > 0) console.raw.log('Following errors occurred during assets install (can be ignored):  ', assetErrors);
+  return { state: LaunchTaskState.finished };
+
+}
+
+async function DownloadLibs(version: GameVersion, versionData: ResolvedVersion, dir: string, sendProgress: progressCallbackFunction, onError: (e: any) => void, options?: {
+  force: boolean
+}): Promise<SubLaunchTaskCallback>
+{
+  sendProgress(undefined, 'Checking Minecraft Libs...');
+  const download_concurrency = 3;
+  if (!fs.existsSync(path.join(dir, 'libraries'))) fs.mkdirSync(path.join(dir, 'libraries'));
+  const libsErrors: any[] = [];
+  let proceedLibsCount = 0;
+  //Filter
+  let libsList = versionData.libraries;
+  if (options === undefined || !options.force) {
+    let newList: ResolvedLibrary[] = [];
+    const libReport = await diagnoseLibraries(versionData, new MinecraftFolder(dir));
+    libReport.forEach(report => newList.push(report.library));
+    libsList = newList;
+  }
+  const libsCount = libsList.length;
+  console.log('Parsing libs...');
+  //normal libs
+  const libsOperations: (() => Promise<void>)[] = Object.values(libsList).map((lib, libIndex) => {
+    return () => {
+      return new Promise<void>(async (resolve, reject) => {
+        try {
+          const task = new InstallLibraryTask(lib, new MinecraftFolder(dir), { skipPrevalidate: options && options.force });
+          // @ts-ignore
+          await task.startAndWait();
+          sendProgress(((proceedLibsCount * 100) / libsCount), 'Installing Minecraft libs...', proceedLibsCount + '/' + (libsCount - 1));
+          proceedLibsCount++;
+          console.log(`Downloaded lib [${libIndex}]: ${Math.floor((proceedLibsCount * 100) / libsCount)}%`);
+          resolve();
+
+        } catch (e) {
+          //console.raw.error(libIndex + ':  ', e);
+          libsErrors.push({ id: libIndex, error: e });
+          reject(e);
+        }
+      });
+    };
+  });
+  while (proceedLibsCount < libsCount) {
+    const currentGroup = libsOperations.slice(proceedLibsCount, proceedLibsCount + download_concurrency);
+    console.log('Downloading ' + proceedLibsCount + '->' + (proceedLibsCount + download_concurrency) + ' /' + (libsCount - 1) + ' ' + ((proceedLibsCount * 100) / libsCount) + '%...');
+    await Promise.all(currentGroup.map(operation => operation().catch(err => {
+      libsErrors.push(err);
+      console.raw.error(err);
+    }))).catch(err => console.raw.error(err));
+    //proceedAssetCount += currentGroup.length;
+  }
+
+
+  //
+  console.log('All libs downloaded');
+  if (libsErrors.length > 0) console.raw.log('Following errors occurred during libs install (can be ignored):  ', libsErrors);
+  return { state: LaunchTaskState.finished };
+}
+
+
+async function parseVersionData(versionId: string) {
+  const JSON_URL = 'https://piston-meta.mojang.com/mc/game/version_manifest_v2.json';
+  const response = await axios.get(JSON_URL, { responseType: 'json' });
+  const versionList: JsonVersionList = response.data;
+  const version = versionList.versions.find((v: {
+    id: string
+  }) => v.id === versionId);
+  if (version === undefined) throw new Error('Version: ' + versionId + ' is not found'); else return (await axios.get(version.url, { responseType: 'json' })).data as ResolvedVersion;
+}
+
+export async function DiagnoseVersion(version: GameVersion, path: string) {
+  const minecraftFolder = new MinecraftFolder(path);
+  let mainReport = await diagnose(version.id, minecraftFolder);
+  mainReport.issues = mainReport.issues.filter(issue => {
+    return issue.role !== 'assetIndex';
+  });
+  return mainReport;
+}
+
+export async function VerifyVersionFile(version: GameVersion, path: string): Promise<boolean> {
   if (!existsSync(path)) {
     console.raw.error('path don\' exist');
     return false;
   }
   console.log(`Diagnosing ${version.gameType} ${version.id}`);
-  const report = await diagnose(version.id, path);
-  return (report.issues.length === 0) ? true : report;
+  const { issues } = await DiagnoseVersion(version, path);
+  return issues.length === 0;
   //report can be analysed [https://github.com/Voxelum/minecraft-launcher-core-node/tree/master/packages/core#diagnose]
-}
-
-export async function InstallGameFiles(version: GameVersion, dir: string, callback: (callback: SubLaunchTaskCallback) => void): Promise<SubLaunchTaskCallback> {
-  console.log('Installing game file');
-  callback({ state: LaunchTaskState.processing, displayText: 'Installing Minecraft files...' });
-  switch (version.gameType) {
-    case GameType.VANILLA: {
-      return new Promise(async (resolve, reject): Promise<SubLaunchTaskCallback> => {
-          console.warn('Installing Minecraft ' + version.gameType + ' in: ' + dir);
-          const xmclVersion = await ResolveXmclVersion(version);
-          const mainTask = installTask(xmclVersion, dir, {
-            throwErrorImmediately: true,
-            agent: new DownloadAgent(
-              createDefaultRetryHandler(10),
-              new DefaultRangePolicy(2 * 1024 * 1024, 10),
-              getGlobalDispatcher(),
-              createInMemoryCheckpointHandler()
-            )
-          });
-          return mainTask.startAndWait({
-            onUpdate(task: any, chunkSize: number) {
-              //console.raw.log(task.path + ' ' + Math.floor((task.progress * 100) / task.total) + ' %');
-              if (task.path === 'install') console.log('Downloading ' + Math.floor((task.progress * 100) / task.total) + '% [' + chunkSize + ']');
-              const STEPCOUNT = 4;
-              const getPercentage = (step: number): number => {
-                return <number>(((100 * step) + Math.floor((task.progress * 100) / task.total) - 100) / STEPCOUNT);
-              };
-              if (task.path.startsWith('install.version.json')) {
-                callback({
-                  state: LaunchTaskState.processing,
-                  data: { localProgress: getPercentage(1) }
-                });
-              } else if (task.path.startsWith('install.version.jar')) {
-                callback({
-                  state: LaunchTaskState.processing,
-                  data: { localProgress: getPercentage(2) }
-                });
-              } else if (task.path.startsWith('install.dependencies.assets')) {
-                callback({
-                  state: LaunchTaskState.processing,
-                  data: { localProgress: getPercentage(3) }
-                });
-              } else if (task.path.startsWith('install.dependencies.libraries')) {
-                callback({
-                  state: LaunchTaskState.processing,
-                  data: { localProgress: getPercentage(4) }
-                });
-              }
-
-              if (task.path === 'install') {
-                const downloadPercentage = Math.floor((task.progress * 100) / task.total);
-                //console.log("Downloading: " + task.progress + " / " + task.total);
-                //https://github.com/Voxelum/minecraft-launcher-core-node/issues/275
-                console.log('Downloading: ' + downloadPercentage + '%');
-                callback({ state: LaunchTaskState.processing, data: { localProgress: downloadPercentage } });
-              }
-            }
-          }).then(() => {
-            console.log('finished download all');
-            resolve(<SubLaunchTaskCallback>{ state: LaunchTaskState.finished });
-          }).catch((err: any) => {
-            console.raw.error(err);
-            reject(<SubLaunchTaskCallback>{ state: LaunchTaskState.error, data: { return: err } });
-          });
-        }
-      )
-        ;
-    }
-    default:
-      throw new Error('Cannot install GameFile for GameType: ' + version.gameType);
-  }
-
 }
 
 export async function UninstallGameFiles(version: GameVersion, rootPath?: string, callback?: (callback: SubLaunchTaskCallback) => void): Promise<void> {
@@ -129,8 +360,7 @@ export function findFileRecursively(path: string, targetFileName: string): strin
       const filePath = `${currentPath}/${file}`;
       const stats = fs.statSync(filePath);
 
-      if (stats.isDirectory()) stack.push(filePath);
-      else if (file === targetFileName) return filePath;
+      if (stats.isDirectory()) stack.push(filePath); else if (file === targetFileName) return filePath;
     }
   }
   return undefined;
@@ -156,85 +386,4 @@ export function deleteFolderRecursive(path: string) {
       console.warn('Skipped folder: ' + path);
     }
   }
-}
-
-/**********************************************************************/
-interface DownloadCheckpoint {
-  ranges: Range[];
-  url: string;
-  contentLength: number;
-  policy: CachePolicy;
-}
-
-function createInMemoryCheckpointHandler(): any {
-  const storage: Record<string, DownloadCheckpoint | undefined> = {};
-  return {
-    async lookup(url: URL, handle: FileHandle, destination: string) {
-      const result = storage[destination];
-      delete storage[destination];
-      return result;
-    },
-    async put(url: URL, handle: FileHandle, destination: string, checkpoint: DownloadCheckpoint) {
-      storage[destination] = checkpoint;
-    },
-    async delete(url: any, handle: any, destination: string | number) {
-      delete storage[destination];
-    }
-  };
-}
-
-export class DownloadError extends Error {
-  constructor(
-    message: string,
-    public urls: string[],
-    readonly headers: Record<string, any>,
-    readonly destination: string,
-    options?: any
-  ) {
-    // @ts-ignore
-    super(message, options);
-    this.name = 'DownloadError';
-  }
-}
-
-export class ValidationError extends Error {
-  constructor(error: string, message?: string) {
-    super(message);
-    this.name = error;
-  }
-}
-
-interface RetryPolicy {
-  retry(url: URL, attempt: number, error: ValidationError): boolean | Promise<boolean>;
-
-  retry(url: URL, attempt: number, error: DownloadError): boolean | Promise<boolean>;
-
-  /**
-   * You should decide whether we should retry the download again?
-   *
-   * @param url The current downloading url
-   * @param attempt How many time it try to retry download? The first retry will be `1`.
-   * @param error The error object thrown during this download. It can be {@link DownloadError} or ${@link ValidationError}.
-   * @returns If we should retry and download it again.
-   */
-  retry(url: URL, attempt: number, error: any): boolean | Promise<boolean>;
-}
-
-function createDefaultRetryHandler(maxRetryCount = 3) {
-  const handler: RetryPolicy = {
-    async retry(url, attempt, error) {
-      if (attempt < maxRetryCount) {
-        if (error instanceof errors.HeadersTimeoutError ||
-          error instanceof errors.BodyTimeoutError ||
-          error instanceof (errors as any).ConnectTimeoutError ||
-          error instanceof errors.SocketError) {
-          setTimeout(() => {
-            return true;
-          }, attempt * 1000);
-        }
-      }
-      return false;
-    }
-  };
-  return handler;
 }

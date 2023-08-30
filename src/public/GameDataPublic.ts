@@ -163,8 +163,9 @@ export interface SubLaunchTaskCallback {
   state: LaunchTaskState,
   displayText?: string,
   data?: {
-    return?: any
-    localProgress?: number
+    return?: any,
+    localProgress?: number,
+    subDisplay?: string
   }
 }
 
@@ -214,4 +215,16 @@ export interface RunningVersion {
   Version: GameVersion,
   State: RunningVersionState,
   process?: ChildProcess
+}
+
+/***************************/
+
+
+export interface JsonVersionList {
+  versions: {
+    id: string,
+    type: 'snapshot' | 'release',
+    url: string,
+    sha1: string
+  }[];
 }

@@ -22,8 +22,7 @@ export async function getAllVersionList(methode?: getVersionMethode): Promise<Ga
   if (methode === undefined) methode = 'auto';
   let res: GameVersion[] = [];
   for (const versionType of Object.values(GameType)) {
-    if (net.isOnline() && (methode === 'auto' || methode === 'network')) res = res.concat(await getVersionList(versionType));
-    else res = res.concat(getLocalVersionList(versionType));
+    if (net.isOnline() && (methode === 'auto' || methode === 'network')) res = res.concat(await getVersionList(versionType)); else res = res.concat(getLocalVersionList(versionType));
   }
   return res;
 }
@@ -43,8 +42,7 @@ export async function getVersionList(gameType: GameType): Promise<GameVersion[]>
           //reindexing version list to get only releases
           if (version.type === 'release') {
             let newVersion: GameVersion = {
-              id: version.id,
-              gameType: gameType/*,
+              id: version.id, gameType: gameType/*,
               installed: versionExist(version.id)*/
               //TODO: Resolve version in all instances
             };
@@ -88,8 +86,8 @@ export function getLocalVersionList(gameType: GameType): GameVersion[] {
   }
 }
 
-export function versionExist(path: string, versionName: string): boolean {
-  if (existsSync(path)) return readdirSync(path).includes(versionName);
+export function versionExist(version: GameVersion, dir: string): boolean {
+  if (existsSync(dir) && existsSync(path.join(dir, "versions"))) return readdirSync(path.join(dir, "versions")).includes(version.id);
   else return false;
 }
 
@@ -113,7 +111,7 @@ export interface GroupedGameVersions {
   group: true,
   parent: GameVersion;
   children: GameVersion[]
-};
+}
 
 export function groupMinecraftVersions(versionsList: GameVersion[]): (GameVersion | GroupedGameVersions)[] {
   versionsList.sort((a, b) => {
@@ -134,9 +132,7 @@ export function groupMinecraftVersions(versionsList: GameVersion[]): (GameVersio
 
   const groups: GroupedGameVersions[] = [];
   let currentGroup: GroupedGameVersions = {
-    parent: versionsList[0],
-    children: [],
-    group: true
+    parent: versionsList[0], children: [], group: true
   };
 
   for (let i = 1; i < versionsList.length; i++) {
@@ -148,9 +144,7 @@ export function groupMinecraftVersions(versionsList: GameVersion[]): (GameVersio
     } else {
       groups.push(currentGroup);
       currentGroup = {
-        parent: version,
-        children: [],
-        group: true
+        parent: version, children: [], group: true
       };
     }
   }
@@ -172,3 +166,5 @@ function hasCommonParentVersion(version: GameVersion, parent: GameVersion): bool
 
   return true;
 }
+
+//@TODO: Use semver package

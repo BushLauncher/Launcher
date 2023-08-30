@@ -20,7 +20,7 @@ import {
   SubLaunchTaskCallback
 } from '../../public/GameDataPublic';
 import { getVersionList, MinecraftVersion } from '@xmcl/installer';
-import { InstallGameFiles, VerifyGameFiles } from './FileManager';
+import { InstallGame, VerifyVersionFile } from './FileManager';
 import { isSupported, versionExist } from './VersionManager';
 import { InstallJava, ResolveJavaPath } from './JavaEngine';
 import { net } from 'electron';
@@ -54,7 +54,8 @@ export abstract class ResolvedLaunchTask {
       displayText: processingCallback.displayText ? processingCallback.displayText : undefined,
       data: {
         return: processingCallback.data?.return ? processingCallback.data.return : undefined,
-        localProgress: processingCallback.data?.localProgress ? processingCallback.data.localProgress : undefined
+        localProgress: processingCallback.data?.localProgress ? processingCallback.data.localProgress : undefined,
+        subDisplay: processingCallback.data?.subDisplay ? processingCallback.data.subDisplay : undefined
       }
     };
   }
@@ -428,45 +429,24 @@ export function AnalyseLaunchProcess(rawProcess: RawLaunchProcess): Promise<Laun
 /************/
 
 
-function parseGameFile(version: GameVersion, dir: string, callback: (callback: SubLaunchTaskCallback) => void): Promise<void> {
+function parseGameFile(version: GameVersion, dir: string, callback: (callback: SubLaunchTaskCallback) => void): Promise<SubLaunchTaskCallback> {
   return new Promise(async (resolve, reject) => {
-    async function Install(operation: 'Install' | 'Repaire') {
-      console.raw.warn('install');
-      InstallGameFiles(version, dir, (c) => {
-        if (operation === 'Repaire') {
-          c.displayText = c.displayText?.replace('Installing', 'Repairing');
-          console.raw.log(c.displayText);
-        }
+    async function Install(operation: 'Install' | 'Complete') {
+      return await InstallGame(version, dir, (c) => {
+        if (operation === 'Complete') c.displayText = c.displayText?.replace('Installing', 'Completing');
         callback(c);
-      })
-        .then(async () => {
-          console.log('Installed Minecraft files !');
-          const report = await VerifyGameFiles(version, dir);
-          if (report === true) {
-            callback({ state: LaunchTaskState.finished });
-            resolve();
-          } else {
-            console.raw.error(report);
-            throw new Error('Cannot install Minecraft File, Minecraft\'s installed game files are corrupted');
-          }
-        })
-        .catch((err) => {
-          reject(err);
-          return;
-        });
+      });
     }
 
-    if (!versionExist(dir, version.id)) await Install('Install');
+    if (!versionExist(version, dir)) return await Install('Install');
     else {
       //check for corruption
       callback({ state: LaunchTaskState.processing, displayText: 'Checking Minecraft file...' });
-      const checkResult = await VerifyGameFiles(version, dir);
-      if (checkResult === true) {
-        callback({ state: LaunchTaskState.finished });
-        resolve();
-      } else {
+      const checkResult = await VerifyVersionFile(version, dir);
+      if (checkResult) resolve({ state: LaunchTaskState.finished });
+      else {
         callback({ state: LaunchTaskState.processing, displayText: 'Repairing Minecraft Files...' });
-        await Install('Repaire');
+        resolve(await Install('Complete'));
       }
     }
   });
