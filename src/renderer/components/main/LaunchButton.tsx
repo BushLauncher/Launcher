@@ -39,7 +39,7 @@ export enum LaunchButtonState {
 
 
 export type LoadingProgress = {
-  currentStep: number, stepCount: number, progressVal: number
+  currentStep: number, stepCount: number, progressVal: number, subText: string | undefined;
 }
 
 export interface LaunchButtonProps extends ComponentsPublic {
@@ -60,7 +60,12 @@ export default function LaunchButton(props: LaunchButtonProps) {
   const [isVersionSelectorOpened, setVersionSelector] = useState(false);
   const [state, setCurrentState] = useState(LaunchButtonState.Preparing);
   const [text, setDisplayText] = useState('Launch');
-  const [progress, setProgress] = useState<LoadingProgress>({ currentStep: -1, stepCount: 0, progressVal: 0 });
+  const [progress, setProgress] = useState<LoadingProgress>({
+    currentStep: -1,
+    stepCount: 0,
+    progressVal: 0,
+    subText: undefined
+  });
   let localStepPercentage: number = 0;
   const [storage, setStorage] = useState<undefined | GameVersion[]>(undefined);
   const [selectedVersion, Select] = useState<undefined | GameVersion>(undefined);
@@ -142,7 +147,10 @@ export default function LaunchButton(props: LaunchButtonProps) {
         };
         lp = setLp();
         // @ts-ignore
-        let calculatedProgress: number = ((100 * callback.progressing.stepId) + lp - 100) / callback.progressing.stepCount;
+        //let calculatedProgress: number = ((100 * callback.progressing.stepId) + lp - 100) / callback.progressing.stepCount;
+        const step = callback.progressing.stepId;
+        const stepCount = callback.progressing.stepCount;
+        let calculatedProgress: number = ((step - 1) / stepCount) * 100 + lp / stepCount;
         /*console.log(`((100 * ${callback.progressing.stepId}) - ${lp})/ ${callback.progressing.stepCount}
     = (${100 * callback.progressing.stepId} - ${lp})/ ${callback.progressing.stepCount})
     = (${(100 * callback.progressing.stepId) - lp})/ ${callback.progressing.stepCount})
@@ -156,7 +164,8 @@ export default function LaunchButton(props: LaunchButtonProps) {
         setProgress({
           progressVal: calculatedProgress,
           stepCount: callback.progressing.stepCount,
-          currentStep: callback.progressing.stepId
+          currentStep: callback.progressing.stepId,
+          subText: callback.task.data?.subDisplay
         });
         break;
       }
@@ -190,7 +199,7 @@ export default function LaunchButton(props: LaunchButtonProps) {
             setDisplayText('Launch');
             setCurrentState(LaunchButtonState.Normal);
             setProgress({
-              currentStep: -1, stepCount: 0, progressVal: 0
+              currentStep: -1, stepCount: 0, progressVal: 0, subText: undefined
             });
             console.log('Game Exited');
             break;
@@ -215,7 +224,7 @@ export default function LaunchButton(props: LaunchButtonProps) {
             setDisplayText('Launch');
             setCurrentState(LaunchButtonState.Normal);
             setProgress({
-              currentStep: -1, stepCount: 0, progressVal: 0
+              currentStep: -1, stepCount: 0, progressVal: 0, subText: undefined
             });
             console.log('Process Exited: ', callback.return.display);
             break;
@@ -381,12 +390,13 @@ export default function LaunchButton(props: LaunchButtonProps) {
           {props.versionSelector && <Divider className={styles.line} type={'vertical'} />}
         </div>
       </Popover>
-      {type === 'default' && (
-        <div className={styles.LoadingContent}>
+      {type === 'default' && <div className={styles.LoadingContent}>
           <p>{progress.currentStep + '/' + progress.stepCount}</p>
           <Progress percent={Math.floor(progress.progressVal)} type={'line'} status={'active'}
-                    strokeColor={'#39c457'} />
-        </div>)}
+                    strokeColor={'#39c457'} format={(p) => {
+            return (progress.subText === undefined ? ( p + '%') : ('[' + progress.subText + '] '));
+          }} />
+        </div>}
     </div>
   );
 }

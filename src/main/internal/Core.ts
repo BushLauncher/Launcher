@@ -194,19 +194,13 @@ export async function RunLaunchProcess(id: number, rawProcess: RawLaunchProcess,
         if (response.state === LaunchTaskState.error || !response.response.success) {
           //SetRunningVersionState(id, RunningVersionState.Error);
           resolve(<ExitedCallback>{
-            progressing: {
-              stepId: i, stepCount: process_stepsCount
-            },
+            progressing: { stepId: i, stepCount: process_stepsCount },
             type: CallbackType.Exited,
             return: { reason: ExitedReason.Error, display: response.data || response.response.error }
           });
           console.raw.log(response.response.error);
           break;
-        } else {
-          LaunchStorage.push({
-            task: task.baseTask, response: response.response
-          });
-        }
+        } else LaunchStorage.push({ task: task.baseTask, response: response.response });
       } catch (err: any) {
         resolve(<ExitedCallback>{
           progressing: {
@@ -264,10 +258,9 @@ export function StopGame(processId: string) {
 export function getLocationRoot(): string {
   const storageRes: string | null | undefined = userDataStorage.get('saved.rootPath');
   if (storageRes !== undefined && storageRes !== null) {
-    if(!fs.existsSync(storageRes)) fs.mkdirSync(storageRes);
+    if (!fs.existsSync(storageRes)) fs.mkdirSync(storageRes);
     return storageRes;
-  }
-  else return setLocalLocationRoot(getDefaultRootPath());
+  } else return setLocalLocationRoot(getDefaultRootPath());
 }
 
 export function getRuntimePath(): string {
