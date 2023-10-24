@@ -136,7 +136,7 @@
 }
 
 .LaunchButton.offlineStyle {
-  background-color: gray;
+  background-color: grey;
 }
 
 .LaunchButton.offlineStyle::before {

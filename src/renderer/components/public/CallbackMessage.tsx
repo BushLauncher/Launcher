@@ -49,10 +49,10 @@ export default function CallbackMessage({ callback }: { callback: Callback }) {
           <p>{callback.return}</p>
         </div>);
     }
-  } else if (callback.type === CallbackType.Error){
-    console.log(callback.return.display || callback.return);
-    return <div>{callback.return.display || callback.return}</div>
-  } else{
+  } else if (callback.type === CallbackType.Error) {
+    console.log(callback.return.display.message || callback.return.display || callback.return);
+    return <div>{callback.return.display.message || callback.return.display || callback.return}</div>;
+  } else {
     console.warn('Cannot display CallbackMessage from type ' + callback.type + ' (not implemented)\n', callback);
     return (<div>{callback.return}</div>);
   }

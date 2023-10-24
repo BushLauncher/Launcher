@@ -118,45 +118,6 @@ export default function VersionCard({ version, toolBox, settings, className, sty
     setRunning(true);
   }
 
-  /**
-   * @deprecated
-   */
-  async function requestInstall() {
-    const id = toast.loading(`Installing ${version.id}...`, {
-      toastId: 'installOperation' + version.id + version.gameType,
-      hideProgressBar: false
-    });
-    setLoading(true);
-    await window.electron.ipcRenderer.invoke('VersionManager:Install', { version: version })
-      .then(() => {
-        if (toolBox.install?.callback) toolBox.install.callback();
-        setLoading(false);
-        // @ts-ignore
-        toast.update(id, {
-          ...NotificationParam.success,
-          ...{ render: 'Successfully installed ' + version.id }
-        });
-      }).catch(err => {
-        console.error(err);
-        setLoading(false);
-        toast.update(id, {
-          isLoading: false,
-          render({ data }) {
-            return 'Error occurred during install ' + version.id + ':\n' + data;
-          }, type: 'error', closeButton: true
-        });
-      });
-    let localProgress: number = 0;
-    // @ts-ignore
-    window.electron.ipcRenderer.on('VersionManager:Install', (callback: SubLaunchTaskCallback) => {
-      if (callback.data?.localProgress !== undefined) localProgress = callback.data?.localProgress;
-      if (callback.displayText) toast.update(id, {
-        render: `Installing ${version.id}: ${callback.displayText}`,
-        progress: callback.data?.localProgress ? callback.data?.localProgress : localProgress
-      });
-    });
-  }
-
 
   return (
     <div className={[styles.VersionCard, className].join(' ')} style={style}

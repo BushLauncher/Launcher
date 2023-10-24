@@ -429,27 +429,25 @@ export function AnalyseLaunchProcess(rawProcess: RawLaunchProcess): Promise<Laun
 /************/
 
 
-function parseGameFile(version: GameVersion, dir: string, callback: (callback: SubLaunchTaskCallback) => void): Promise<SubLaunchTaskCallback> {
-  return new Promise(async (resolve, reject) => {
-    async function Install(operation: 'Install' | 'Complete') {
-      return await InstallGame(version, dir, (c) => {
-        if (operation === 'Complete') c.displayText = c.displayText?.replace('Installing', 'Completing');
-        callback(c);
-      });
-    }
+async function parseGameFile(version: GameVersion, dir: string, callback: (callback: SubLaunchTaskCallback) => void): Promise<SubLaunchTaskCallback> {
+  async function Install(operation: 'Install' | 'Complete') {
+    return await InstallGame(version, dir, (c) => {
+      if (operation === 'Complete') c.displayText = c.displayText?.replace('Installing', 'Completing');
+      callback(c);
+    });
+  }
 
-    if (!versionExist(version, dir)) return await Install('Install');
+  if (!versionExist(version, dir)) return await Install('Install');
+  else {
+    //check for corruption
+    callback({ state: LaunchTaskState.processing, displayText: 'Checking Minecraft file...' });
+    const checkResult = await VerifyVersionFile(version, dir);
+    if (checkResult) return { state: LaunchTaskState.finished };
     else {
-      //check for corruption
-      callback({ state: LaunchTaskState.processing, displayText: 'Checking Minecraft file...' });
-      const checkResult = await VerifyVersionFile(version, dir);
-      if (checkResult) resolve({ state: LaunchTaskState.finished });
-      else {
-        callback({ state: LaunchTaskState.processing, displayText: 'Repairing Minecraft Files...' });
-        resolve(await Install('Complete'));
-      }
+      callback({ state: LaunchTaskState.processing, displayText: 'Repairing Minecraft Files...' });
+      return await Install('Complete');
     }
-  });
+  }
 }
 
 /**

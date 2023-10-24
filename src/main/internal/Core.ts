@@ -193,20 +193,24 @@ export async function RunLaunchProcess(id: number, rawProcess: RawLaunchProcess,
         CreateProcessCallback(response, i);
         if (response.state === LaunchTaskState.error || !response.response.success) {
           //SetRunningVersionState(id, RunningVersionState.Error);
-          resolve(<ExitedCallback>{
+          const callback = <ExitedCallback>{
             progressing: { stepId: i, stepCount: process_stepsCount },
             type: CallbackType.Exited,
             return: { reason: ExitedReason.Error, display: response.data || response.response.error }
-          });
+          };
+          console.raw.error(callback);
+          resolve(callback);
           console.raw.log(response.response.error);
           break;
         } else LaunchStorage.push({ task: task.baseTask, response: response.response });
       } catch (err: any) {
-        resolve(<ExitedCallback>{
+        const callback = <ExitedCallback>{
           progressing: {
             stepId: i, stepCount: process_stepsCount
           }, type: CallbackType.Error, return: { reason: ExitedReason.Error, display: err }
-        });
+        };
+        console.raw.error(callback)
+        resolve(callback);
         return;
       }
     }
@@ -215,18 +219,21 @@ export async function RunLaunchProcess(id: number, rawProcess: RawLaunchProcess,
     const access_token = LaunchStorage[LaunchStorage.length - 1].response.data;
     if (java_path === undefined) throw new Error('Cannot get \'java_path\'');
     //access_token can be null (offline)
-    CreateProcessCallback({
-      state: LaunchTaskState.processing, displayText: 'Launching...', data: { localProgress: 100 }
-    }, process_stepsCount - 1);
     //The "[object]" in CheckCondition function result is normal
 
     //Create Runtime
+    CreateProcessCallback({
+      state: LaunchTaskState.processing, displayText: 'Compositing...', data: { localProgress: 100 }
+    }, process_stepsCount - 1);
     const runtime = new Runtime({ id: process.id, path: path });
-    const composRes = await runtime.Compose();
-    if (typeof composRes === 'object') {
-      resolve(composRes);
+    const ComposeCallback = await runtime.Compose();
+    if (typeof ComposeCallback === 'object') {
+      resolve(ComposeCallback);
       return;
     }
+    CreateProcessCallback({
+      state: LaunchTaskState.processing, displayText: 'Launching...', data: { localProgress: 100 }
+    }, process_stepsCount - 1);
     resolve(LaunchGameProcess(process.id, process.version, java_path, access_token, runtime.runPath, (callback: Callback) => Callback(callback)));
   });
 }
@@ -279,6 +286,11 @@ export function getInstancePath(): string {
     fs.mkdirSync(path);
   }
   return path;
+}
+
+export function getLibsPath():string {
+  //Libs ans assets will be installed at root path
+  return getLocationRoot();
 }
 
 export function getDefaultRootPath(): string {

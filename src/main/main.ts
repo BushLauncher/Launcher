@@ -114,12 +114,6 @@ ipcMain.handle('VersionManager:Diagnose', async (event, args: { version: GameVer
   //TODO: resolve in all instances
   return await VerifyVersionFile(args.version, path);
 });
-ipcMain.handle('VersionManager:Install', async (event, args: { version: GameVersion, path: string }) => {
-  /**
-   * @deprecated
-   */
-  /*return await InstallGameFiles(args.version, args.path, (callback) => event.sender.send('VersionManager:Install', callback));*/
-});
 
 ipcMain.handle('Auth:Add', (event, args: { user: MinecraftAccount }) => {
   return AddAccount(args.user);

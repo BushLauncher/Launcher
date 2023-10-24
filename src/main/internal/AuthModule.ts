@@ -199,6 +199,6 @@ export function resolveUserId(user: MinecraftAccount) {
 
 export async function getAccessToken(account: MinecraftAccount) {
   const authenticator = new MicrosoftAuthenticator();
-  const { xstsResponse, xboxGameProfile } = await authenticator.acquireXBoxToken(account.msToken.access_token);
-  return await authenticator.loginMinecraftWithXBox(xstsResponse.DisplayClaims.xui[0].uhs, xstsResponse.Token);
+  const { minecraftXstsResponse, liveXstsResponse } = await authenticator.acquireXBoxToken(account.msToken.access_token);
+  return await authenticator.loginMinecraftWithXBox(minecraftXstsResponse.DisplayClaims.xui[0].uhs, minecraftXstsResponse.Token);
 }

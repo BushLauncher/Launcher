@@ -27,9 +27,10 @@ import { ComponentsPublic } from '../ComponentsPublic';
 import { Button, Divider, Popover, Progress } from 'antd';
 import VersionCard, { CollapsableVersionCard } from '../public/VersionCard';
 import OutsideAlerter from '../public/OutsideAlerter';
-import { v4 as uuidv4 } from 'uuid';
 import { GroupedGameVersions } from '../../../main/internal/VersionManager';
 import RenderConsoleManager, { ProcessType } from '../../../public/RenderConsoleManager';
+// @ts-ignore
+import { v4 as uuidv4 } from 'uuid';
 
 const console = new RenderConsoleManager('LaunchButton', ProcessType.Render);
 
