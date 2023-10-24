@@ -11,13 +11,13 @@ import {
   diagnoseAssets,
   diagnoseJar,
   diagnoseLibraries,
-  MinecraftFolder,
+  MinecraftFolder, MinecraftIssueReport,
   ResolvedLibrary,
   ResolvedVersion,
   Version
 } from '@xmcl/core';
 import fs, { existsSync } from 'fs';
-import { getLocationRoot } from './Core';
+import { getLibsPath, getLocationRoot } from './Core';
 import path from 'path';
 import ConsoleManager, { ProcessType } from '../../public/ConsoleManager';
 import axios from 'axios';
@@ -72,19 +72,28 @@ export async function InstallGame(version: GameVersion, dir: string, callback: (
   //install assets
   //STEP 3
   sendProgress(undefined, 3, 'Checking Minecraft Assets...');
+  const libsPath = getLibsPath();
   if (versionData.assetIndex?.url === undefined) throw new Error('assetIndex is undefined !');
-  else await DownloadAssets(version, versionData.assetIndex.url, dir, (lp, d, s) => sendProgress(lp, 4, d, s), sendError);
+  else await DownloadAssets(version, versionData.assetIndex.url, libsPath, (lp, d, s) => sendProgress(lp, 4, d, s), sendError);
   //STEP 4
   //install libs
-  await DownloadLibs(version, versionData, dir, (lp, d, s) => sendProgress(lp, 5, d, s), sendError);
+  await DownloadLibs(version, versionData, libsPath, (lp, d, s) => sendProgress(lp, 5, d, s), sendError);
 
   //verify install
   console.log('Finished, verifying...');
   callback({state: LaunchTaskState.processing, displayText: "Finishing Install..."})
-  let mainReport = await DiagnoseVersion(version, dir);
-  if (mainReport.issues.length > 0) {
-    console.raw.error('Following error occurred during install', mainReport.issues);
-    return { state: LaunchTaskState.error, data: { return: mainReport } };
+  //independently verify libs/assets and version files
+  let versionReport = await DiagnoseVersion(version, dir);
+  //Remove all libs/assets warns from version report
+  console.log("Libs path: " + libsPath);
+  versionReport.issues = versionReport.issues.filter(issue=>issue.role !== "library" && issue.role !== "asset" && issue.role !== "assetIndex")
+  let libsReport = await DiagnoseVersion(version, libsPath);
+  //Remove all libs/assets warns from version report
+  libsReport.issues = libsReport.issues.filter(issue=>issue.role !== "minecraftJar" && issue.role !== "versionJson")
+  const globalReport: MinecraftIssueReport = {...versionReport, ...{issues: [...versionReport.issues,...libsReport.issues]}};
+  if (globalReport.issues.length > 0) {
+    console.raw.error('Following error occurred during install', globalReport.issues);
+    return { state: LaunchTaskState.error, data: { return: globalReport } };
   } else {
     console.log('Done.');
     return { state: LaunchTaskState.finished };
