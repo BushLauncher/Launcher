@@ -6,7 +6,7 @@ import admZip from 'adm-zip';
 import { knowErrorFormat, knowGameError } from '../../public/ErrorPublic';
 import { userDataStorage } from '../main';
 import { deleteFolderRecursive, findFileRecursively } from './FileManager';
-import { javaPath, tempDownloadDir } from './UserData';
+import { javaPath, tempDownloadDir } from './DataManager';
 import ConsoleManager, { ProcessType } from '../../public/ConsoleManager';
 
 const console = new ConsoleManager('JavaEngine', ProcessType.Internal);

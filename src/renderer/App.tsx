@@ -7,12 +7,9 @@ import { KnownAuthErrorType } from '../public/ErrorPublic';
 import React, { useState } from 'react';
 import { defaultTheme, globalStateContext } from './index';
 import { MinecraftAccount } from '../public/AuthPublic';
-import { ConfigProvider, Layout, Modal, Popover, Tabs } from 'antd';
+import { ConfigProvider, Empty, Layout, Modal, Popover, Tabs, TabsProps } from 'antd';
 import Icon from './components/public/Icons/Icon';
 import { StyleProvider } from '@ant-design/cssinjs';
-
-
-import dirtBlockIcon from '../assets/graphics/images/grass_block.png';
 import settingsIcon from '../assets/graphics/icons/settings.svg';
 import VanillaView from './components/views/vanillaView';
 import './css/Tabs-ant-override.css';
@@ -21,10 +18,11 @@ import CollapsableSider from './components/public/CollapsableSider';
 import { CapitalizeFirst } from '../public/Utils';
 import SettingsView from './components/views/SettingsViews/SettingsView';
 import './components/views/SettingsViews/css/SettingsModal-ant-override.css';
-import { RunningVersion, RunningVersionState } from '../public/GameDataPublic';
+import { Configuration, getConfigurationInfos, RunningVersion, RunningVersionState } from '../public/GameDataPublic';
 import loadingIcon from '../assets/graphics/icons/loading.svg';
 import playIcon from '../assets/graphics/icons/caret-right.svg';
 import RenderConsoleManager, { ProcessType } from '../public/RenderConsoleManager';
+
 
 const Sider = Layout.Sider;
 
@@ -153,20 +151,21 @@ function SettingsContext({ saveSelectedView, validateUser }: SettingsContextProp
     <Loader content={async () => {
       const interfaceData = await window.electron.ipcRenderer.invoke('getData', { dataPath: 'interface' });
       const selectedTab: string = interfaceData.selectedTab !== undefined ? interfaceData.selectedTab : 'vanilla';
-
-      return <Layout style={{ width: '100%', height: '100%' }}>
-        <Tabs
-          items={[{ key: 'vanilla', icon: dirtBlockIcon, content: VanillaView({ key: 'vanilla' }) }]
-            .map(tab => {
-              return {
-                key: tab.key, label: <Popover content={CapitalizeFirst(tab.key)} placement={'right'}>
+      const configs: Configuration[] = await window.electron.ipcRenderer.invoke('Configs:getAll', {});
+      console.log(configs);
+      function compileConfigurations(configList: Configuration[]): TabsProps['items'] {
+        const TabList: TabsProps['items'] = [];
+        configList.map((config) => {
+          TabList.push({
+            key: config.id, label: (
+              <Popover content={CapitalizeFirst(config.name)} placement={'right'}>
                     <span>
-                      <Icon icon={tab.icon} />
-                      <p>{CapitalizeFirst(tab.key)}</p>
+                      <Icon icon={config.icon} />
+                      <p>{CapitalizeFirst(config.name)}</p>
                       <Loader content={async (reload) => {
                         window.electron.ipcRenderer.once('UpdateMainTabsState', reload);
                         const list: RunningVersion[] = await window.electron.ipcRenderer.invoke('GameEngine:getRunningList', {});
-                        const version = list.find((rv) => rv.id === tab.key);
+                        const version = list.find((rv) => rv.id === config.id);
                         if (version === undefined) return <></>; else {
                           function getConfigurationStateIcon(versionState: RunningVersionState) {
                             switch (versionState) {
@@ -184,9 +183,21 @@ function SettingsContext({ saveSelectedView, validateUser }: SettingsContextProp
                         }
                       }} className={'State'} />
                     </span>
-                </Popover>, children: tab.content, type: 'card', closable: false
-              };
-            })}
+              </Popover>
+            ),
+            children: VanillaView({ key: config.id, versions: config.versions}), closable: false
+          });
+        });
+        return TabList;
+      }
+
+      return <Layout style={{ width: '100%', height: '100%' }}>
+        <Tabs
+          items={configs.length > 0 ? compileConfigurations(configs) : [{
+            key: "",
+            children: <Empty description={'Please create a Configuration to start.'} />,
+            label: ''
+          }]}
           tabPosition={'left'}
           type={'card'}
           tabBarGutter={5}

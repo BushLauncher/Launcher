@@ -1,17 +1,24 @@
 /* eslint global-require: off, no-console: off, promise/always-return: off */
 // noinspection JSUnusedLocalSymbols
 
-import * as userData from './internal/UserData';
-import { CleanUpCatch } from './internal/UserData';
+import * as userData from './internal/DataManager';
+import { CleanUpCatch } from './internal/DataManager';
 import { app, BrowserWindow, ipcMain, net } from 'electron';
 import * as versionManager from './internal/VersionManager';
 import {
   getAllVersionList,
-  getSelectedVersion,
+  getAllSelectedVersion,
   getVersionMethode,
-  groupMinecraftVersions
+  groupMinecraftVersions, getSelectedVersion
 } from './internal/VersionManager';
-import { Callback, CallbackType, GameType, GameVersion, RawLaunchProcess } from '../public/GameDataPublic';
+import {
+  Callback,
+  CallbackType, Configuration,
+  GameType,
+  GameVersion, getDefaultGameType,
+  getDefaultVersion,
+  RawLaunchProcess
+} from '../public/GameDataPublic';
 import {
   AddAccount,
   getAccountList,
@@ -44,6 +51,9 @@ import MainWindow from './MainWindow';
 import { DeleteJava } from './internal/JavaEngine';
 import ConsoleManager, { ProcessType } from '../public/ConsoleManager';
 import ProgressBarOptions = Electron.ProgressBarOptions;
+import { AddConfiguration, getConfiguration, getConfigurations, RemoveConfiguration } from './internal/ConfigsManager';
+import { Themes } from '../public/ThemePublic';
+import { defaultData } from '../public/Storage';
 
 const console = new ConsoleManager('Main', ProcessType.Internal);
 
@@ -99,11 +109,11 @@ ipcMain.handle('Version:getList', (event, { gameType, type, grouped = false }: {
 ipcMain.handle('Version:getTypeList', (event, args) => {
   return Object.keys(GameType);
 });
-ipcMain.handle('Version:get', (event, args) => {
-  return getSelectedVersion();
+ipcMain.handle('Version:getSelected', (event, args: {configId: string}) => {
+  return getSelectedVersion(args.configId);
 });
-ipcMain.on('Version:set', (event, args: { version: GameVersion }) => {
-  return userData.SelectVersion(args.version);
+ipcMain.on('Version:set', (event, args: { version: GameVersion, configuration: string }) => {
+  return userData.SelectVersion(args.version, args.configuration);
 });
 
 ipcMain.handle('VersionManager:Uninstall', async (event, args: { version: GameVersion, path?: string }) => {
@@ -194,8 +204,29 @@ ipcMain.handle('GameEngine:KillProcess', (event, args: { processId: string }) =>
 ipcMain.handle('Option:setRootPath', (event, args: { path: string }) => {
   return userData.SetRootPath(args.path);
 });
+ipcMain.handle('Configs:getAll', (event, args) => {
+  return getConfigurations();
+});
+ipcMain.handle('Configs:get', (event, args: {id: string}) => {
+  return getConfiguration(args.id);
+});
+ipcMain.handle('Configs:Add', (event, args: {configuration: Configuration}) => {
+  return AddConfiguration(args.configuration);
+});
+ipcMain.handle('Configs:Remove', (event, args: {configurationId: string}) => {
+  return RemoveConfiguration(args.configurationId);
+});
 ////////////////////////////////////////////////////////
-export const userDataStorage = new userData.Storage('user-preference');
+const defaultUserPreferences: defaultData = {
+  saved: {
+    javaPath: null, rootPath: null
+  }, auth: {
+    accountList: [], selectedAccount: null
+  }, version: {}, interface: {
+    selectedTab: 'vanilla', theme: Themes.Dark, isMenuCollapsed: true
+  }
+};
+export const userDataStorage = new userData.Storage('user-preference', defaultUserPreferences);
 ipcMain.on('saveData', (event, arg: { dataPath: string; value: any }) => {
   userDataStorage.set(arg.dataPath, arg.value);
 });

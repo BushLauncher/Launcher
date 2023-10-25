@@ -12,8 +12,7 @@ import {
   ExitedReason,
   GameType,
   GameVersion,
-  getDefaultGameType,
-  getDefaultVersion,
+  GroupedGameVersions,
   LaunchTaskState,
   PreloadCallback,
   ProgressCallback,
@@ -27,7 +26,6 @@ import { ComponentsPublic } from '../ComponentsPublic';
 import { Button, Divider, Popover, Progress } from 'antd';
 import VersionCard, { CollapsableVersionCard } from '../public/VersionCard';
 import OutsideAlerter from '../public/OutsideAlerter';
-import { GroupedGameVersions } from '../../../main/internal/VersionManager';
 import RenderConsoleManager, { ProcessType } from '../../../public/RenderConsoleManager';
 // @ts-ignore
 import { v4 as uuidv4 } from 'uuid';
@@ -45,7 +43,7 @@ export type LoadingProgress = {
 
 export interface LaunchButtonProps extends ComponentsPublic {
   id?: string,
-  versionSelector: boolean,
+  version: GameVersion[] | GameVersion,
   type?: 'square' | 'default',
   onRun?: (version: GameVersion) => any,
   onProgressCallback?: (callback: ProgressCallback) => any,
@@ -71,11 +69,22 @@ export default function LaunchButton(props: LaunchButtonProps) {
   const [storage, setStorage] = useState<undefined | GameVersion[]>(undefined);
   const [selectedVersion, Select] = useState<undefined | GameVersion>(undefined);
   const [tryingKill, setTryingKill] = useState(false);
+  const versionSelector = Array.isArray(props.version) && props.version.length > 1;
+
+  useEffect(() => setCurrentState(LaunchButtonState.Normal), []);
 
   async function getSelected() {
-    const s = await window.electron.ipcRenderer.invoke('Version:get', {});
-    Select(s);
-    return s;
+    const response: GameVersion | undefined = await window.electron.ipcRenderer.invoke('Version:getSelected', { configId: props.id });
+    if (response !== undefined) {
+      Select(response);
+      return response;
+    } else if (props.id !== undefined) {
+      //Select default
+      const versions = (await window.electron.ipcRenderer.invoke('Configs:get', { id: props.id })).versions;
+      const selected = Array.isArray(versions) ? versions[0] : versions;
+      Select(selected);
+      return selected;
+    } else throw new Error('Cannot select version without configuration');
   }
 
   function getIcon() {
@@ -246,12 +255,9 @@ export default function LaunchButton(props: LaunchButtonProps) {
   }
 
   async function versionSelectorInit(): Promise<JSX.Element> {
-    if (props.versionSelector) {
+    if (Array.isArray(props.version)) {
       async function generateList() {
-        const versionList: GameVersion[] = await window.electron.ipcRenderer.invoke('Version:getList', {
-          gameType: GameType.VANILLA,
-          grouped: true
-        })
+        let versionList: GameVersion[] = await window.electron.ipcRenderer.invoke('Version:getList', { gameType: GameType.VANILLA })
           .catch(async err => {
             const callback: ExitedCallback = {
               type: CallbackType.Error, return: {
@@ -273,6 +279,7 @@ export default function LaunchButton(props: LaunchButtonProps) {
             Select(localRes[0]);
             return localRes;
           });
+        versionList = versionList.filter(version => Array.isArray(props.version) ? props.version.find(v => v.id === version.id) !== undefined : version === props.version);
         setStorage(versionList);
         return versionList;
       }
@@ -282,7 +289,7 @@ export default function LaunchButton(props: LaunchButtonProps) {
 
       function handleCallback(version: GameVersion) {
         Select(version);
-        window.electron.ipcRenderer.sendMessage('Version:set', { version: version });
+        window.electron.ipcRenderer.sendMessage('Version:set', { version: version, configuration: props.id });
       }
 
       const toolBox = (v: GameVersion) => {
@@ -339,17 +346,16 @@ export default function LaunchButton(props: LaunchButtonProps) {
               </>
             </OutsideAlerter>}
         </div>);
-    } else return <div></div>;
 
+    } else throw new Error('Not supposed to render versionSelector');
   }
 
-  useEffect(() => setCurrentState(LaunchButtonState.Normal), []);
 
   return (
     <div
       className={[styles.LaunchButton, (!isOnline ? styles.offlineStyle : undefined), (type === 'square' ? styles.Square : undefined), styles[state]].join(' ')}
       style={props.style}
-      data-version-selector={props.versionSelector.toString()}
+      data-version-selector={versionSelector.toString()}
       data-version-selector-opened={isVersionSelectorOpened}
     >
       <Popover content={state === LaunchButtonState.Launched &&
@@ -368,11 +374,6 @@ export default function LaunchButton(props: LaunchButtonProps) {
                  onClick={async () => {
                    if (state === LaunchButtonState.Normal || state === LaunchButtonState.Error) {
                      let version = await getSelected();
-                     if (version === undefined) {
-                       const defaultVersion = getDefaultVersion(getDefaultGameType);
-                       window.electron.ipcRenderer.sendMessage('Version:set', { version: defaultVersion });
-                       version = defaultVersion;
-                     }
                      if (props.onRun) props.onRun(version);
                      requestLaunch(version);
                    } else {
@@ -387,17 +388,21 @@ export default function LaunchButton(props: LaunchButtonProps) {
               {type === 'default' && <p className={styles.text}>{text}</p>}
             </div>
           </Popover>
-          {props.versionSelector && <Loader content={versionSelectorInit} className={styles.versionSelectorLoader} />}
-          {props.versionSelector && <Divider className={styles.line} type={'vertical'} />}
+          {versionSelector ?
+            <Loader content={versionSelectorInit} className={styles.versionSelectorLoader} /> :
+            <p
+              className={styles.versionText}>{Array.isArray(props.version) ? props.version[0].id.toString() : props.version.id.toString()}</p>
+          }
+          {versionSelector && <Divider className={styles.line} type={'vertical'} />}
         </div>
       </Popover>
       {type === 'default' && <div className={styles.LoadingContent}>
-          <p>{progress.currentStep + '/' + progress.stepCount}</p>
-          <Progress percent={Math.floor(progress.progressVal)} type={'line'} status={'active'}
-                    strokeColor={'#39c457'} format={(p) => {
-            return (progress.subText === undefined ? ( p + '%') : ('[' + progress.subText + '] '));
-          }} />
-        </div>}
+        <p>{progress.currentStep + '/' + progress.stepCount}</p>
+        <Progress percent={Math.floor(progress.progressVal)} type={'line'} status={'active'}
+                  strokeColor={'#39c457'} format={(p) => {
+          return (progress.subText === undefined ? (p + '%') : ('[' + progress.subText + '] '));
+        }} />
+      </div>}
     </div>
   );
 }

@@ -1,14 +1,13 @@
-import { GameVersion, getDefaultGameType, getDefaultVersion } from '../../public/GameDataPublic';
+import { GameVersion } from '../../public/GameDataPublic';
 import { app, safeStorage } from 'electron';
 import fs, { readFileSync, writeFileSync } from 'fs';
 import { userDataStorage } from '../main';
-import { Xbox } from 'msmc';
-import { Themes } from '../../public/ThemePublic';
 import { deleteFolderRecursive } from './FileManager';
 import path from 'path';
 import ConsoleManager, { ProcessType } from '../../public/ConsoleManager';
+import { ConfigsStorage } from './ConfigsManager';
 
-const console = new ConsoleManager("UserData", ProcessType.Internal)
+const console = new ConsoleManager('UserData', ProcessType.Internal);
 
 const isDebug = process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
 if (isDebug) app.setPath('userData', path.resolve(app.getPath('userData'), '../' + app.getName() + '-DevEnv'));
@@ -20,13 +19,17 @@ if (!fs.existsSync(javaPath)) fs.mkdirSync(javaPath);
 if (!fs.existsSync(tempDownloadDir)) fs.mkdirSync(tempDownloadDir);
 
 export function loadData() {
-  const res: GameVersion | undefined = userDataStorage.get('version.selected');
-  if (res != undefined) SelectVersion(res);
 }
 
-export function SelectVersion(version: GameVersion): void {
-  userDataStorage.update('version.selected', version);
-  console.log(`Selecting for: [${version.gameType.toString().toLowerCase()}]: ${version.id}`);
+export function SelectVersion(version: GameVersion, configurationId: string): void {
+  //find index by confId
+  const list: { key: string, selected: GameVersion }[] | undefined = userDataStorage.get('version.selected');
+  if (list !== undefined) {
+    const index = list.findIndex(v=>v.key === configurationId);
+    if(index === -1) console.raw.error("Cannot find " + configurationId + "in selected list")
+    userDataStorage.updateArray('version.selected', index, version);
+    console.log(`Selecting for${configurationId}: [${version.gameType.toString().toLowerCase()}]: ${version.id}`);
+  }
 }
 
 export function SetRootPath(path: string): boolean {
@@ -36,56 +39,20 @@ export function SetRootPath(path: string): boolean {
   } else return false;
 }
 
-interface InterfaceData {
-  selectedTab: string;
-  theme: Themes;
-  isMenuCollapsed: boolean;
-}
-
-interface AuthData {
-  accountList: Xbox[];
-  selectedAccount: number | null;
-}
-
-interface SavedData {
-  javaPath: string | null;
-  rootPath: string | null;
-}
-
-export interface defaultData {
-  interface: InterfaceData;
-  version: {
-    selected: GameVersion;
-  };
-  auth: AuthData;
-  saved: SavedData;
-}
-
-export function createDefaultData(): defaultData {
-  return {
-    saved: {
-      javaPath: null, rootPath: null
-    }, auth: {
-      accountList: [], selectedAccount: null
-    }, version: { selected: getDefaultVersion(getDefaultGameType) }, interface: {
-      selectedTab: 'vanilla', theme: Themes.Dark, isMenuCollapsed: true
-    }
-  };
-}
-
 export class Storage {
+  private readonly defaultData!: object;
   private data: Record<string, unknown> = {};
   private readonly storageFilePath: string;
   private readonly devStorageFilePath: string;
 
-  constructor(private fileName: string) {
+  constructor(fileName: string, defaultData: object) {
     this.storageFilePath = path.join(app.getPath('userData'), fileName + '.json');
     this.devStorageFilePath = path.join(app.getPath('userData'), fileName + '-dev' + '.json');
+    this.defaultData = defaultData;
     app.whenReady().then(() => {
       this.loadData();
     });
   }
-
 
   public DeleteFile(): boolean {
     try {
@@ -120,6 +87,33 @@ export class Storage {
     this.saveData();
   }
 
+  addToArray<T>(arrayPath: string, value: T): void {
+    const [key, propertyObject] = this.findProperty(arrayPath);
+    if (Array.isArray(propertyObject[key])) {
+      // @ts-ignore
+      propertyObject[key] = [value, ...propertyObject[key]];
+      this.saveData();
+    } else console.raw.error(arrayPath + ' is not an array');
+  }
+
+  removeFromArray<T>(arrayPath: string, index: number): void {
+    const [key, propertyObject] = this.findProperty(arrayPath);
+    if (Array.isArray(propertyObject[key])) {
+      // @ts-ignore
+      propertyObject[key].splice(index, 1);
+      this.saveData();
+    } else console.raw.error(arrayPath + ' is not an array');
+  }
+
+  updateArray<T>(arrayPath: string, index: number, value: T) {
+    const [key, propertyObject] = this.findProperty(arrayPath);
+    if (Array.isArray(propertyObject[key])) {
+      // @ts-ignore
+      propertyObject[key][index] = value;
+      this.saveData();
+    } else console.raw.error(arrayPath + ' is not an array');
+  }
+
   private findProperty(propertyPath: string): [string, Record<string, unknown>] {
     const properties = propertyPath.split('.');
     let propertyObject = this.data;
@@ -138,13 +132,14 @@ export class Storage {
       this.data = JSON.parse(safeStorage.decryptString(encryptedData));
     } catch {
       console.log('Creating default configuration file...');
-      this.saveData(createDefaultData());
+      this.saveData(this.defaultData);
+      this.loadData();
     }
   }
 
   private saveData(customData?: Object): void {
     writeFileSync(this.storageFilePath, safeStorage.encryptString(JSON.stringify(customData ? customData : this.data)));
-    if(isDebug) writeFileSync(this.devStorageFilePath, JSON.stringify(customData ? customData : this.data));
+    if (isDebug) writeFileSync(this.devStorageFilePath, JSON.stringify(customData ? customData : this.data));
   }
 
 

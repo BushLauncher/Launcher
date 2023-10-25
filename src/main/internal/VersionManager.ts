@@ -1,4 +1,4 @@
-import { GameType, GameVersion, getDefaultGameType, getDefaultVersion } from '../../public/GameDataPublic';
+import { GameType, GameVersion, GroupedGameVersions } from '../../public/GameDataPublic';
 import { getVersionList as getXMCLVersionList, MinecraftVersionList } from '@xmcl/installer';
 import { existsSync, readdirSync } from 'fs';
 import path from 'path';
@@ -11,9 +11,19 @@ import ConsoleManager, { ProcessType } from '../../public/ConsoleManager';
 
 const console = new ConsoleManager('VersionManager', ProcessType.Internal);
 
-export function getSelectedVersion(): GameVersion | undefined {
-  const storageRes: GameVersion | undefined = userDataStorage.get('version.selected');
-  return (storageRes === undefined) ? getDefaultVersion(getDefaultGameType) : storageRes;
+/**
+ * @deprecated
+ */
+export function getAllSelectedVersion(): | undefined {
+  return userDataStorage.get('version.selected');
+}
+
+export function getSelectedVersion(configId: string) {
+  const list: { key: string, selected: GameVersion }[] | undefined = userDataStorage.get('version.selected');
+  if (list !== undefined) {
+    return list.find(s => s.key === configId)?.selected;
+
+  }
 }
 
 export type getVersionMethode = 'network' | 'local' | 'auto';
@@ -87,7 +97,7 @@ export function getLocalVersionList(gameType: GameType): GameVersion[] {
 }
 
 export function versionExist(version: GameVersion, dir: string): boolean {
-  if (existsSync(dir) && existsSync(path.join(dir, "versions"))) return readdirSync(path.join(dir, "versions")).includes(version.id);
+  if (existsSync(dir) && existsSync(path.join(dir, 'versions'))) return readdirSync(path.join(dir, 'versions')).includes(version.id);
   else return false;
 }
 
@@ -105,12 +115,6 @@ export async function isSupported(version: GameVersion) {
     default:
       return false;
   }
-}
-
-export interface GroupedGameVersions {
-  group: true,
-  parent: GameVersion;
-  children: GameVersion[]
 }
 
 export function groupMinecraftVersions(versionsList: GameVersion[]): (GameVersion | GroupedGameVersions)[] {

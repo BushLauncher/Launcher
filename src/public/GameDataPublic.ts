@@ -11,7 +11,20 @@ export type GameVersion = {
   gameType: GameType;
   installed?: boolean;
 };
+
+export interface GroupedGameVersions {
+  group: true,
+  parent: GameVersion;
+  children: GameVersion[]
+}
+
+/**
+ * @deprecated
+ */
 export const getDefaultGameType: GameType = GameType.VANILLA;
+/**
+ * @deprecated
+ */
 export const getDefaultVersion = (gameType: GameType): GameVersion => {
   switch (gameType) {
     case GameType.VANILLA:
@@ -228,3 +241,37 @@ export interface JsonVersionList {
     sha1: string
   }[];
 }
+
+
+/********************************/
+export interface Configuration {
+  id: string
+  name: string,
+  description: string,
+  icon: string,
+  backgroundImage: string,
+  isolated: boolean,
+  process: Omit<RawLaunchProcess, "version">,
+  versions: GameVersion[] | GameVersion
+}
+
+/**
+ * Possible given information by analysing process of configuration
+ * use getConfigurationData()
+ */
+export interface ConfigurationInfos {
+  modded: boolean,
+  modList: any[]
+  type: GameType
+}
+
+/*************/
+export function getConfigurationInfos(configuration: Configuration): ConfigurationInfos {
+  const type= Array.isArray(configuration.versions) ? configuration.versions[0].gameType : configuration.versions.gameType
+  return {
+    type: type,
+    modded: type !== GameType.VANILLA,
+    modList: ['UNIMPLEMENTED']
+  };
+}
+
