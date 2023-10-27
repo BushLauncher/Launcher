@@ -3,7 +3,7 @@ import App from './App';
 import React from 'react';
 import MainMenuBar from './components/main/MainMenu';
 import { getCurrentTheme } from '../global/ThemeManager';
-import themeStyle from './theme.module.css';
+import themeStyle from './Theme.module.css';
 import Loader from './components/public/Loader';
 import { Themes } from '../types/Theme';
 import { ConfigProvider, theme } from 'antd';

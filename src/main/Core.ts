@@ -16,14 +16,14 @@ import {
   RunningVersion,
   RunningVersionState,
   SubLaunchTaskCallback
-} from '../../types/Versions';
+} from '../types/Versions';
 import { AnalyseLaunchProcess, ResolvedLaunchTask } from './PreLaunchEngine';
 import { createMinecraftProcessWatcher, launch } from '@xmcl/core';
 import { ChildProcess } from 'child_process';
 import { getSelectedAccount, isAccountValid } from './AuthModule';
 import getAppDataPath from 'appdata-path';
-import { currentWindow, userDataStorage } from '../main';
-import ConsoleManager, { ProcessType } from '../../global/ConsoleManager';
+import { currentWindow, userDataStorage } from './main';
+import ConsoleManager, { ProcessType } from '../global/ConsoleManager';
 import * as Path from 'path';
 import fs from 'fs';
 import { Runtime } from './Composer';
@@ -289,7 +289,7 @@ export function getInstancePath(): string {
 }
 
 export function getLibsPath():string {
-  //Libs ans assets will be installed at root path
+  //Libs and assets will be installed at root path
   return getLocationRoot();
 }
 

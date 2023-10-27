@@ -1,19 +1,8 @@
-import { URL } from 'url';
-import path from 'path';
-
 export function CapitalizeFirst(word: string) {
   return word.charAt(0).toUpperCase() + word.slice(1);
 }
 
-export function resolveHtmlPath(htmlFileName: string) {
-  if (process.env.NODE_ENV === 'development') {
-    const port = process.env.PORT || 1212;
-    const url = new URL(`http://localhost:${port}`);
-    url.pathname = htmlFileName;
-    return url.href;
-  } else return path.join(__dirname, '../renderer/', htmlFileName);
-}
-
+//TODO: use semver parse
 export function compareVersion(_v1: string, _v2: string) {
   const v1 = _v1.split('.');
   const v2 = _v2.split('.');

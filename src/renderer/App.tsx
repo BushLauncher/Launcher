@@ -1,4 +1,4 @@
-import './defaultStyle.css';
+import './css/defaultStyle.css';
 import Loader from './components/public/Loader';
 import { toast, ToastContainer } from 'react-toastify';
 import AuthModule, { addAccount, getLogin } from './components/main/Auth/AuthModule';
@@ -13,7 +13,6 @@ import { StyleProvider } from '@ant-design/cssinjs';
 import settingsIcon from '../assets/graphics/icons/settings.svg';
 import './css/Tabs-ant-override.css';
 import CollapsableSider from './components/public/CollapsableSider';
-
 import { CapitalizeFirst } from '../global/Utils';
 import SettingsView from './components/views/SettingsView';
 import './css/SettingsModal-ant-override.css';

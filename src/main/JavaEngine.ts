@@ -1,13 +1,13 @@
-import { LaunchTaskState, SubLaunchTaskCallback } from '../../types/Versions';
+import { LaunchTaskState, SubLaunchTaskCallback } from '../types/Versions';
 import path from 'path';
 import fs from 'fs';
 import axios from 'axios';
 import admZip from 'adm-zip';
-import { knowErrorFormat, knowGameError } from '../../types/Errors';
-import { userDataStorage } from '../main';
+import { knowErrorFormat, knowGameError } from '../types/Errors';
+import { userDataStorage } from './main';
 import { deleteFolderRecursive, findFileRecursively } from './FileManager';
 import { javaPath, tempDownloadDir } from './DataManager';
-import ConsoleManager, { ProcessType } from '../../global/ConsoleManager';
+import ConsoleManager, { ProcessType } from '../global/ConsoleManager';
 
 const console = new ConsoleManager('JavaEngine', ProcessType.Internal);
 

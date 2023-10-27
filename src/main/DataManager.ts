@@ -1,10 +1,10 @@
-import { GameVersion } from '../../types/Versions';
+import { GameVersion } from '../types/Versions';
 import { app, safeStorage } from 'electron';
 import fs, { readFileSync, writeFileSync } from 'fs';
-import { userDataStorage } from '../main';
+import { userDataStorage } from './main';
 import { deleteFolderRecursive } from './FileManager';
 import path from 'path';
-import ConsoleManager, { ProcessType } from '../../global/ConsoleManager';
+import ConsoleManager, { ProcessType } from '../global/ConsoleManager';
 import { ConfigsStorage } from './ConfigsManager';
 
 const console = new ConsoleManager('UserData', ProcessType.Internal);

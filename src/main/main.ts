@@ -1,8 +1,8 @@
 /* eslint global-require: off, no-console: off, promise/always-return: off */
 // noinspection JSUnusedLocalSymbols
 
-import * as userData from './internal/DataManager';
-import { CleanUpCatch } from './internal/DataManager';
+import * as userData from './DataManager';
+import { CleanUpCatch } from './DataManager';
 import { app, BrowserWindow, ipcMain, net } from 'electron';
 import * as versionManager from './VersionManager';
 import {
@@ -22,7 +22,7 @@ import {
   ReplaceAccount,
   resolveUserId,
   SelectAccount
-} from './internal/AuthModule';
+} from './AuthModule';
 import { AuthProviderType, MinecraftAccount } from '../types/AuthPublic';
 import {
   getDefaultRootPath,
@@ -32,15 +32,15 @@ import {
   RunningVersionList,
   StopGame,
   UnregisterRunningVersion
-} from './internal/Core';
-import { UninstallGameFiles, VerifyVersionFile } from './internal/FileManager';
+} from './Core';
+import { UninstallGameFiles, VerifyVersionFile } from './FileManager';
 import { KnownAuthErrorType } from '../types/Errors';
 import { installExtensions } from './extension-installer';
 import PreloadWindow from './PreloadWindow';
 import MainWindow from './MainWindow';
-import { DeleteJava } from './internal/JavaEngine';
+import { DeleteJava } from './JavaEngine';
 import ConsoleManager, { ProcessType } from '../global/ConsoleManager';
-import { AddConfiguration, getConfiguration, getConfigurations, RemoveConfiguration } from './internal/ConfigsManager';
+import { AddConfiguration, getConfiguration, getConfigurations, RemoveConfiguration } from './ConfigsManager';
 import { Themes } from '../types/Theme';
 import { defaultData } from '../types/Storage';
 import { Configuration } from '../types/Configuration';
@@ -54,7 +54,7 @@ if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
   sourceMapSupport.install();
 }
-const isDebug = process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
+export const isDebug = process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
 
 if (isDebug) {
   require('electron-debug')();

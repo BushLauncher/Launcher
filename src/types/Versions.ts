@@ -1,6 +1,6 @@
 import { knowErrorFormat } from './Errors';
 import { ChildProcess } from 'child_process';
-import { ResolvedLaunchTask } from '../main/internal/PreLaunchEngine';
+import { ResolvedLaunchTask } from '../main/PreLaunchEngine';
 
 export enum GameType {
   VANILLA = 'VANILLA'
