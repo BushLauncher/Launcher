@@ -43,7 +43,7 @@ export type LoadingProgress = {
 
 export interface LaunchButtonProps extends ComponentsPublic {
   id?: string,
-  version: GameVersion[] | GameVersion,
+  version: GameVersion[] | GameVersion | { type: GameType, id: 'ALL' },
   type?: 'square' | 'default',
   onRun?: (version: GameVersion) => any,
   onProgressCallback?: (callback: ProgressCallback) => any,
@@ -69,7 +69,7 @@ export default function LaunchButton(props: LaunchButtonProps) {
   const [storage, setStorage] = useState<undefined | GameVersion[]>(undefined);
   const [selectedVersion, Select] = useState<undefined | GameVersion>(undefined);
   const [tryingKill, setTryingKill] = useState(false);
-  const versionSelector = Array.isArray(props.version) && props.version.length > 1;
+  const versionSelector = Array.isArray(props.version) && (props.version.length >= 2 || props.version.length === 0);
 
   useEffect(() => setCurrentState(LaunchButtonState.Normal), []);
 
@@ -78,10 +78,14 @@ export default function LaunchButton(props: LaunchButtonProps) {
     if (response !== undefined) {
       Select(response);
       return response;
+    } else if (props.id === 'vanilla') {
+      const version: GameVersion = { gameType: GameType.VANILLA, id: '1.20.2' };
+      Select(version);
+      return version;
     } else if (props.id !== undefined) {
       //Select default
       const versions = (await window.electron.ipcRenderer.invoke('Configs:get', { id: props.id })).versions;
-      const selected = Array.isArray(versions) ? versions[0] : versions;
+      const selected: GameVersion = Array.isArray(versions) ? versions[0] : versions;
       Select(selected);
       return selected;
     } else throw new Error('Cannot select version without configuration');
@@ -274,12 +278,14 @@ export default function LaunchButton(props: LaunchButtonProps) {
             };
             toast.warn(<CallbackMessage callback={callback as Callback} />, { toastId: 'Version:getListError' });
             const localRes = await window.electron.ipcRenderer.invoke('Version:getList', {
-              gameType: GameType.VANILLA, type: 'local'
+              gameType: GameType.VANILLA,
+              type: 'local',
+              grouped: Array.isArray(props.version) && props.version.length === 0
             });
             Select(localRes[0]);
             return localRes;
           });
-        versionList = versionList.filter(version => Array.isArray(props.version) ? props.version.find(v => v.id === version.id) !== undefined : version === props.version);
+        if (!Array.isArray(props.version) && props.version.id !== 'ALL') versionList = versionList.filter(version => Array.isArray(props.version) ? props.version.find(v => v.id === version.id) !== undefined : version === props.version);
         setStorage(versionList);
         return versionList;
       }

@@ -4,24 +4,27 @@ import { toast, ToastContainer } from 'react-toastify';
 import AuthModule, { addAccount, getLogin } from './components/main/Auth/AuthModule';
 import AuthModuleStyle from './components/main/Auth/css/AuthModuleStyle.module.css';
 import { KnownAuthErrorType } from '../public/ErrorPublic';
-import React, { useState } from 'react';
+import React, { ReactElement, useState } from 'react';
 import { defaultTheme, globalStateContext } from './index';
 import { MinecraftAccount } from '../public/AuthPublic';
 import { ConfigProvider, Empty, Layout, Modal, Popover, Tabs, TabsProps } from 'antd';
 import Icon from './components/public/Icons/Icon';
 import { StyleProvider } from '@ant-design/cssinjs';
 import settingsIcon from '../assets/graphics/icons/settings.svg';
-import VanillaView from './components/views/vanillaView';
 import './css/Tabs-ant-override.css';
 import CollapsableSider from './components/public/CollapsableSider';
 
 import { CapitalizeFirst } from '../public/Utils';
 import SettingsView from './components/views/SettingsViews/SettingsView';
 import './components/views/SettingsViews/css/SettingsModal-ant-override.css';
-import { Configuration, getConfigurationInfos, RunningVersion, RunningVersionState } from '../public/GameDataPublic';
+import { RunningVersion, RunningVersionState } from '../public/GameDataPublic';
 import loadingIcon from '../assets/graphics/icons/loading.svg';
 import playIcon from '../assets/graphics/icons/caret-right.svg';
 import RenderConsoleManager, { ProcessType } from '../public/RenderConsoleManager';
+import { Configuration, ConfigurationIcon, ConfigurationLocalIcon } from '../public/Configuration';
+import ConfigurationView from './components/views/ConfigurationView';
+import GameIcon from './components/public/Icons/GameIcon';
+import VanillaView from './components/views/vanillaView';
 
 
 const Sider = Layout.Sider;
@@ -152,20 +155,20 @@ function SettingsContext({ saveSelectedView, validateUser }: SettingsContextProp
       const interfaceData = await window.electron.ipcRenderer.invoke('getData', { dataPath: 'interface' });
       const selectedTab: string = interfaceData.selectedTab !== undefined ? interfaceData.selectedTab : 'vanilla';
       const configs: Configuration[] = await window.electron.ipcRenderer.invoke('Configs:getAll', {});
-      console.log(configs);
+
       function compileConfigurations(configList: Configuration[]): TabsProps['items'] {
         const TabList: TabsProps['items'] = [];
-        configList.map((config) => {
-          TabList.push({
-            key: config.id, label: (
-              <Popover content={CapitalizeFirst(config.name)} placement={'right'}>
+        function constructTab(id: string, name: string, icon: ConfigurationIcon, content: ReactElement | Configuration){
+          return {
+            key: id, label: (
+            <Popover content={CapitalizeFirst(name)} placement={'right'}>
                     <span>
-                      <Icon icon={config.icon} />
-                      <p>{CapitalizeFirst(config.name)}</p>
+                      <GameIcon icon={icon} />
+                      <p>{CapitalizeFirst(name)}</p>
                       <Loader content={async (reload) => {
                         window.electron.ipcRenderer.once('UpdateMainTabsState', reload);
                         const list: RunningVersion[] = await window.electron.ipcRenderer.invoke('GameEngine:getRunningList', {});
-                        const version = list.find((rv) => rv.id === config.id);
+                        const version = list.find((rv) => rv.id === id);
                         if (version === undefined) return <></>; else {
                           function getConfigurationStateIcon(versionState: RunningVersionState) {
                             switch (versionState) {
@@ -183,10 +186,16 @@ function SettingsContext({ saveSelectedView, validateUser }: SettingsContextProp
                         }
                       }} className={'State'} />
                     </span>
-              </Popover>
-            ),
-            children: VanillaView({ key: config.id, versions: config.versions}), closable: false
-          });
+            </Popover>
+          ),
+            children: React.isValidElement(content) ? content : ConfigurationView({ configuration: content as Configuration }), closable: false
+          }
+        }
+        //Add defaults Tabs
+        TabList.push(constructTab("vanilla", "Vanilla", {type: 'Local', data: ConfigurationLocalIcon.dirt}, VanillaView({key: 'vanilla' })))
+        //Add Tabs from registered configurations
+        configList.map((config) => {
+          TabList.push(constructTab(config.id, config.name, config.icon, config));
         });
         return TabList;
       }
@@ -194,7 +203,7 @@ function SettingsContext({ saveSelectedView, validateUser }: SettingsContextProp
       return <Layout style={{ width: '100%', height: '100%' }}>
         <Tabs
           items={configs.length > 0 ? compileConfigurations(configs) : [{
-            key: "",
+            key: '',
             children: <Empty description={'Please create a Configuration to start.'} />,
             label: ''
           }]}

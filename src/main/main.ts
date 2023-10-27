@@ -13,8 +13,7 @@ import {
 } from './internal/VersionManager';
 import {
   Callback,
-  CallbackType, Configuration,
-  GameType,
+  CallbackType, GameType,
   GameVersion, getDefaultGameType,
   getDefaultVersion,
   RawLaunchProcess
@@ -54,6 +53,7 @@ import ProgressBarOptions = Electron.ProgressBarOptions;
 import { AddConfiguration, getConfiguration, getConfigurations, RemoveConfiguration } from './internal/ConfigsManager';
 import { Themes } from '../public/ThemePublic';
 import { defaultData } from '../public/Storage';
+import { Configuration } from '../public/Configuration';
 
 const console = new ConsoleManager('Main', ProcessType.Internal);
 

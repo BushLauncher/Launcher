@@ -1,5 +1,6 @@
 import { Storage } from './DataManager';
-import { Configuration, GameType } from '../../public/GameDataPublic';
+import { GameType } from '../../public/GameDataPublic';
+import { Configuration, ConfigurationLocalBackground, ConfigurationLocalIcon } from '../../public/Configuration';
 
 const defaultData: Configuration = {
   name: 'Test configuration',
@@ -8,8 +9,8 @@ const defaultData: Configuration = {
   isolated: false,
   process: { process: [], allowCustomOperations: false, id: 'Test configuration process' },
   versions: [{ id: '1.20.2', gameType: GameType.VANILLA }],
-  icon: '',
-  backgroundImage: ''
+  icon: {type: 'Local', data: ConfigurationLocalIcon.dirt},
+  backgroundImage: {type: 'Local', data: ConfigurationLocalBackground.underwater}
 };
 const Data: Configuration = {
   name: 'Test configuration 2',
@@ -18,8 +19,8 @@ const Data: Configuration = {
   isolated: false,
   process: { process: [], allowCustomOperations: false, id: 'Test configuration process' },
   versions: [{ id: '1.20.2', gameType: GameType.VANILLA }, { id: '1.16.4', gameType: GameType.VANILLA }],
-  icon: '',
-  backgroundImage: ''
+  icon: {type: 'Local', data: ConfigurationLocalIcon.dirt},
+  backgroundImage: {type: 'Local', data: ConfigurationLocalBackground.cave}
 };
 
 
@@ -27,7 +28,6 @@ export const ConfigsStorage = new Storage('configs', { configs: [defaultData, Da
 
 export function getConfigurations(): Configuration[] {
   const data: Configuration[] | undefined = ConfigsStorage.get('configs');
-  console.log(data);
   return data || [];
 }
 

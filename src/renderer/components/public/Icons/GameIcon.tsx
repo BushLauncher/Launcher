@@ -1,26 +1,30 @@
-import styles from '../css/publicStyle.module.css';
-import JavaIcon from '../../../../assets/graphics/images/minecraft_java_logo.png';
 import { ComponentsPublic } from '../../ComponentsPublic';
+import { ConfigurationIcon, ConfigurationLocalIcon } from '../../../../public/Configuration';
+
+import JavaIcon from '../../../../assets/graphics/images/grass_block.png';
+import Icon from './Icon';
 
 interface GameIconProps extends ComponentsPublic {
-  type: 'vanilla';
+  icon: ConfigurationIcon;
 }
 
-export default function GameIcon({ type, style, className }: GameIconProps) {
-  const getIcon = () => {
-    switch (type) {
-      case 'vanilla':
-        return JavaIcon;
-      default:
-        console.warn('\'type\' of GameIcon is not valid !');
-    }
+/**
+ * Insert the icon of configuration
+ */
+export default function GameIcon(props: GameIconProps) {
+  const DecodeIcon = () => {
+    if (props.icon.type === 'Local') {
+      switch (props.icon.data) {
+        case ConfigurationLocalIcon.dirt:
+          return JavaIcon;
+        default: {
+          console.error('Icon \'' + props.icon.data + '\' is not registered');
+          return '';
+        }
+      }
+    } else return props.icon.data;
   };
   return (
-    <img
-      style={style}
-      src={getIcon()}
-      alt={'Minecraft' + type + 'icon'}
-      className={[styles.GameIcon, className].join(' ')}
-    />
+    <Icon icon={DecodeIcon()} style={props.style} className={props.className} />
   );
 }
