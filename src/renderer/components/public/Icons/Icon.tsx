@@ -1,8 +1,8 @@
-import { ComponentsPublic } from '../../ComponentsPublic';
+import { DefaultProps } from '../../../../types/DefaultProps';
 import React from 'react';
-import styles from '../css/publicStyle.module.css';
+import styles from '../../../css/publicStyle.module.css';
 
-export interface IconProps extends ComponentsPublic, React.HTMLAttributes<HTMLElement>{
+export interface IconProps extends DefaultProps, React.HTMLAttributes<HTMLElement>{
   icon: string | undefined;
   alt?: string;
 }

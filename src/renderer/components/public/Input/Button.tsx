@@ -1,12 +1,12 @@
-import styles from '../css/inputStyle.module.css';
+import styles from '../../../css/inputStyle.module.css';
 import React, { MouseEventHandler, ReactElement } from 'react';
-import { ComponentsPublic } from '../../ComponentsPublic';
+import { DefaultProps } from '../../../../types/DefaultProps';
 export enum ButtonType {
   Rectangle= "rectangle",
   Square= "square",
   StyleLess = "styleLess"
 }
-export interface ButtonProps extends ComponentsPublic {
+export interface ButtonProps extends DefaultProps {
   action: MouseEventHandler;
   content: string | ReactElement;
   type: ButtonType;

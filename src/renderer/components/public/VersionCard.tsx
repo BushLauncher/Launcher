@@ -1,8 +1,8 @@
-import { GameVersion, SubLaunchTaskCallback, RunningVersion } from '../../../public/GameDataPublic';
+import { GameVersion, SubLaunchTaskCallback, RunningVersion } from '../../../types/Versions';
 import Icon from './Icons/Icon';
-import { getGameTypeIcon, getInstalledIcon } from '../views/SettingsViews/VersionSettingsView';
-import styles from './css/publicStyle.module.css';
-import { ComponentsPublic } from '../ComponentsPublic';
+import { getGameTypeIcon, getInstalledIcon } from '../views/settings/VersionSettingsView';
+import styles from '../../css/publicStyle.module.css';
+import { DefaultProps } from '../../../types/DefaultProps';
 import { Button, Collapse, CollapseProps, Popover } from 'antd';
 import { DeleteOutlined, DownloadOutlined } from '@ant-design/icons';
 import hammerIcon from '../../../assets/graphics/icons/hammer.svg';
@@ -14,11 +14,11 @@ import loadIcon from '../../../assets/graphics/icons/loading.svg';
 import LaunchButton from '../main/LaunchButton';
 import { NotificationParam } from '../../App';
 import Loader from './Loader';
-import "./css/publicStyle-ant-override.css"
+import "../../css/publicStyle-ant-override.css"
 
 type activeAndCallback = { active: boolean, callback?: () => any }
 
-interface VersionCardProps extends ComponentsPublic {
+interface VersionCardProps extends DefaultProps {
   version: GameVersion,
   toolBox: {
     uninstall?: activeAndCallback,
@@ -158,7 +158,7 @@ export default function VersionCard({ version, toolBox, settings, className, sty
     </div>);
 }
 
-interface CollapsableVersionCardProps extends ComponentsPublic {
+interface CollapsableVersionCardProps extends DefaultProps {
   parentVersion: VersionCardProps | JSX.Element,
   children: VersionCardProps[] | JSX.Element[]
 }

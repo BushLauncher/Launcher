@@ -1,10 +1,10 @@
-import styles from './css/mainComponentsStyle.module.css';
+import styles from '../../css/mainComponentsStyle.module.css';
 import closeIcon from '../../../assets/graphics/icons/close.svg';
 import minimizeIcon from '../../../assets/graphics/icons/window-minimize.svg';
-import { ComponentsPublic } from '../ComponentsPublic';
+import { DefaultProps } from '../../../types/DefaultProps';
 
 
-interface FrameButtonProps extends ComponentsPublic {
+interface FrameButtonProps extends DefaultProps {
   type: 'close' | 'minimize',
 }
 

@@ -1,4 +1,4 @@
-import { Themes } from './ThemePublic';
+import { Themes } from '../types/Theme';
 
 export async function SetTheme(theme: Themes) {
   await window.electron.ipcRenderer.sendMessage('updateData', ({ dataPath: 'interface.theme', value: theme }));

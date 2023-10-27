@@ -1,9 +1,9 @@
-import { ConfigurationBackground, ConfigurationLocalBackground } from '../../../public/Configuration';
+import { ConfigurationBackground, ConfigurationLocalBackground } from '../../../types/Configuration';
 
-import vanillaBackground from '../../../assets/graphics/backgrounds/java.png';
-import caveBackground from '../../../assets/graphics/backgrounds/forge.png';
+import vanillaBackground from '../../../assets/graphics/backgrounds/vanilla.png';
+import caveBackground from '../../../assets/graphics/backgrounds/cave.png';
 import underwaterBackground from '../../../assets/graphics/backgrounds/underwater.png';
-import { ComponentsPublic } from '../ComponentsPublic';
+import { DefaultProps } from '../../../types/DefaultProps';
 
 
 export function DecodeBackground(background: ConfigurationBackground): string {
@@ -23,7 +23,7 @@ export function DecodeBackground(background: ConfigurationBackground): string {
   } else return background.data;
 }
 
-export interface BackgroundProps extends ComponentsPublic {
+export interface BackgroundProps extends DefaultProps {
   background: ConfigurationBackground;
 }
 

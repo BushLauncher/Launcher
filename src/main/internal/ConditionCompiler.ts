@@ -1,5 +1,5 @@
-import { CompileResult, Condition, PreloadVar, ServiceCondition } from '../../public/GameDataPublic';
-import ConsoleManager, { ProcessType } from '../../public/ConsoleManager';
+import { CompileResult, Condition, PreloadVar, ServiceCondition } from '../../types/Versions';
+import ConsoleManager, { ProcessType } from '../../global/ConsoleManager';
 import axios from 'axios';
 
 const console = new ConsoleManager('ConditionCompiler', ProcessType.Internal);

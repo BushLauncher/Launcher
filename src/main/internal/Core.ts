@@ -16,14 +16,14 @@ import {
   RunningVersion,
   RunningVersionState,
   SubLaunchTaskCallback
-} from '../../public/GameDataPublic';
+} from '../../types/Versions';
 import { AnalyseLaunchProcess, ResolvedLaunchTask } from './PreLaunchEngine';
 import { createMinecraftProcessWatcher, launch } from '@xmcl/core';
 import { ChildProcess } from 'child_process';
 import { getSelectedAccount, isAccountValid } from './AuthModule';
 import getAppDataPath from 'appdata-path';
 import { currentWindow, userDataStorage } from '../main';
-import ConsoleManager, { ProcessType } from '../../public/ConsoleManager';
+import ConsoleManager, { ProcessType } from '../../global/ConsoleManager';
 import * as Path from 'path';
 import fs from 'fs';
 import { Runtime } from './Composer';

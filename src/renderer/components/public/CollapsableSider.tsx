@@ -2,14 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { Button, SiderProps } from 'antd';
 import Icon from './Icons/Icon';
 import arrowIcon from '../../../assets/graphics/icons/caret-left.svg';
-import { ComponentsPublic } from '../ComponentsPublic';
+import { DefaultProps } from '../../../types/DefaultProps';
 import '../../css/Tabs-ant-override.css';
 import { StyleProvider } from '@ant-design/cssinjs';
 import Sider from 'antd/es/layout/Sider';
-import styles from "./css/publicStyle.module.css"
+import styles from "../../css/publicStyle.module.css"
 
 
-interface CollapsableMenuProps extends ComponentsPublic, Omit<SiderProps, 'content'> {
+interface CollapsableMenuProps extends DefaultProps, Omit<SiderProps, 'content'> {
   content: JSX.Element | ((collapsed: boolean)=> JSX.Element),
   defaultCollapsed?: boolean;
   onCollapse?: (isCollapsed: boolean) => any;

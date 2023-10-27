@@ -1,9 +1,9 @@
-import styles from './css/defaultViewStyle.module.css';
+import styles from '../../css/defaultViewStyle.module.css';
 import LaunchButton from '../main/LaunchButton';
-import { GameType, GameVersion } from '../../../public/GameDataPublic';
+import { GameType, GameVersion } from '../../../types/Versions';
 import GameImage from '../public/Icons/GameImage';
 import Background from '../public/BackgroundDecoder';
-import { ConfigurationLocalBackground } from '../../../public/Configuration';
+import { ConfigurationLocalBackground } from '../../../types/Configuration';
 
 
 export default function VanillaView({ key }: { key: string}) {

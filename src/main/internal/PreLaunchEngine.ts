@@ -18,13 +18,13 @@ import {
   ServerCondition,
   ServiceCondition,
   SubLaunchTaskCallback
-} from '../../public/GameDataPublic';
+} from '../../types/Versions';
 import { getVersionList, MinecraftVersion } from '@xmcl/installer';
 import { InstallGame, VerifyVersionFile } from './FileManager';
 import { isSupported, versionExist } from './VersionManager';
 import { InstallJava, ResolveJavaPath } from './JavaEngine';
 import { net } from 'electron';
-import ConsoleManager, { ProcessType } from '../../public/ConsoleManager';
+import ConsoleManager, { ProcessType } from '../../global/ConsoleManager';
 import { Compile, CompileService } from './ConditionCompiler';
 
 const console = new ConsoleManager('LaunchEngine', ProcessType.Internal);

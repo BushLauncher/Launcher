@@ -4,7 +4,7 @@ import {
   JsonVersionList,
   LaunchTaskState,
   SubLaunchTaskCallback
-} from '../../public/GameDataPublic';
+} from '../../types/Versions';
 import {
   diagnose,
   diagnoseAssetIndex,
@@ -19,7 +19,7 @@ import {
 import fs, { existsSync } from 'fs';
 import { getLocationRoot } from './Core';
 import path from 'path';
-import ConsoleManager, { ProcessType } from '../../public/ConsoleManager';
+import ConsoleManager, { ProcessType } from '../../global/ConsoleManager';
 import axios from 'axios';
 import { InstallLibraryTask } from '@xmcl/installer';
 import parse = Version.parse;

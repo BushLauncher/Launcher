@@ -1,17 +1,17 @@
 import React from 'react';
-import styles from './css/AuthModuleStyle.module.css';
+import styles from '../../../css/AuthModuleStyle.module.css';
 import MinecraftSkin from '../../public/MinecraftSkin';
-import { ComponentsPublic } from '../../ComponentsPublic';
+import { DefaultProps } from '../../../../types/DefaultProps';
 import Button, { ButtonType } from '../../public/Input/Button';
 import Icon from '../../public/Icons/Icon';
 import logoutIcon from '../../../../assets/graphics/icons/leave.svg';
 import { toast } from 'react-toastify';
-import { AuthProviderType, FakeMinecraftAccount, MinecraftAccount } from '../../../../public/AuthPublic';
+import { AuthProviderType, FakeMinecraftAccount, MinecraftAccount } from '../../../../types/AuthPublic';
 
 import msIcon from '../../../../assets/graphics/icons/microsoft.svg';
 import unknownIcon from '../../../../assets/graphics/icons/close.svg';
 import unknownPlayerIcon from '../../../../assets/graphics/images/steve.png';
-import RenderConsoleManager, { ProcessType } from '../../../../public/RenderConsoleManager';
+import RenderConsoleManager, { ProcessType } from '../../../../global/RenderConsoleManager';
 const console = new RenderConsoleManager("UserCard", ProcessType.Render)
 export interface UserAction {
   accountIndex: number;
@@ -22,7 +22,7 @@ export interface UserAction {
   };
 }
 
-export interface UserCardProps extends ComponentsPublic {
+export interface UserCardProps extends DefaultProps {
   user: MinecraftAccount | undefined;
   action: UserAction | false;
   displayAuthMethode?: boolean;

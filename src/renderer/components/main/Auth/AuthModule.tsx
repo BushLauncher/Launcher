@@ -1,4 +1,4 @@
-import styles from './css/AuthModuleStyle.module.css';
+import styles from '../../../css/AuthModuleStyle.module.css';
 import Button, { ButtonType } from '../../public/Input/Button';
 import Icon from '../../public/Icons/Icon';
 import arrowIcon from '../../../../assets/graphics/icons/arrow_down.svg';
@@ -10,15 +10,15 @@ import { toast } from 'react-toastify';
 import { createRoot } from 'react-dom/client';
 import LoginPanel from './LoginPanel';
 import { globalStateContext } from '../../../index';
-import { KnownAuthErrorType } from '../../../../public/ErrorPublic';
-import { MinecraftAccount } from '../../../../public/AuthPublic';
-import { ComponentsPublic } from '../../ComponentsPublic';
+import { KnownAuthErrorType } from '../../../../types/Errors';
+import { MinecraftAccount } from '../../../../types/AuthPublic';
+import { DefaultProps } from '../../../../types/DefaultProps';
 import OutsideAlerter from '../../public/OutsideAlerter';
-import RenderConsoleManager, { ProcessType } from '../../../../public/RenderConsoleManager';
+import RenderConsoleManager, { ProcessType } from '../../../../global/RenderConsoleManager';
 
 const console = new RenderConsoleManager("AuthModule", ProcessType.Render)
 
-interface AuthModuleProps extends ComponentsPublic {
+interface AuthModuleProps extends DefaultProps {
 }
 
 export async function getLogin({ closable }: {

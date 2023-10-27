@@ -1,7 +1,7 @@
 import Loader from './Loader';
-import { ComponentsPublic } from '../ComponentsPublic';
+import { DefaultProps } from '../../../types/DefaultProps';
 
-export interface DataTextComponentProps extends ComponentsPublic {
+export interface DataTextComponentProps extends DefaultProps {
   data: string;
 }
 

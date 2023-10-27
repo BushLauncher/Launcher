@@ -1,8 +1,8 @@
 import fs from 'fs';
-import ConsoleManager, { ProcessType } from '../../public/ConsoleManager';
+import ConsoleManager, { ProcessType } from '../../global/ConsoleManager';
 import { getRuntimePath } from './Core';
 import * as Path from 'path';
-import { CallbackType, ExitedCallback, ExitedReason } from '../../public/GameDataPublic';
+import { CallbackType, ExitedCallback, ExitedReason } from '../../types/Versions';
 
 /**
  * @param path instance folder path

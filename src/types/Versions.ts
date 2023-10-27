@@ -1,4 +1,4 @@
-import { knowErrorFormat } from './ErrorPublic';
+import { knowErrorFormat } from './Errors';
 import { ChildProcess } from 'child_process';
 import { ResolvedLaunchTask } from '../main/internal/PreLaunchEngine';
 

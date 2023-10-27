@@ -1,5 +1,5 @@
-@import 'react-toastify/dist/ReactToastify.css';
-@import './fonts.css';
+@import '../../../node_modules/react-toastify/dist/ReactToastify.css';
+@import 'fonts.css';
 
 body {
   margin: 0;

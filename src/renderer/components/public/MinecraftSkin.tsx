@@ -1,8 +1,8 @@
 import React from 'react';
-import styles from './css/publicStyle.module.css';
-import { ComponentsPublic } from '../ComponentsPublic';
+import styles from '../../css/publicStyle.module.css';
+import { DefaultProps } from '../../../types/DefaultProps';
 
-interface MCSkinProps extends ComponentsPublic {
+interface MCSkinProps extends DefaultProps {
   userMCName: string;
 }
 

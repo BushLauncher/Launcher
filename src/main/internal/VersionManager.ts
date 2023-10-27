@@ -1,4 +1,4 @@
-import { GameType, GameVersion, GroupedGameVersions } from '../../public/GameDataPublic';
+import { GameType, GameVersion, GroupedGameVersions } from '../../types/Versions';
 import { getVersionList as getXMCLVersionList, MinecraftVersionList } from '@xmcl/installer';
 import { existsSync, readdirSync } from 'fs';
 import path from 'path';
@@ -6,7 +6,7 @@ import { SortMinecraftVersion } from './Utils';
 import { userDataStorage } from '../main';
 import { getLocationRoot } from './Core';
 import { net } from 'electron';
-import ConsoleManager, { ProcessType } from '../../public/ConsoleManager';
+import ConsoleManager, { ProcessType } from '../../global/ConsoleManager';
 
 
 const console = new ConsoleManager('VersionManager', ProcessType.Internal);

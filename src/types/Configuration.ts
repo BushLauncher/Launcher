@@ -1,4 +1,4 @@
-import { GameType, GameVersion, RawLaunchProcess } from './GameDataPublic';
+import { GameType, GameVersion, RawLaunchProcess } from './Versions';
 
 
 type ConfigurationRessourceType = 'Local' | 'Link'

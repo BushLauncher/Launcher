@@ -1,14 +1,14 @@
 import Loader from '../../public/Loader';
-import styles from './css/LoginPanel.module.css';
+import styles from '../../../css/LoginPanel.module.css';
 import Button, { ButtonType } from '../../public/Input/Button';
 import Icon from '../../public/Icons/Icon';
 import closeIcon from '../../../../assets/graphics/icons/close.svg';
-import { AuthProviderType, MinecraftAccount } from '../../../../public/AuthPublic';
+import { AuthProviderType, MinecraftAccount } from '../../../../types/AuthPublic';
 import AuthProviderCard from './AuthProviderCard';
 import { toast } from 'react-toastify';
 import { globalStateContext } from '../../../index';
 import React from 'react';
-import { errorCode, KnownAuthErrorType } from '../../../../public/ErrorPublic';
+import { errorCode, KnownAuthErrorType } from '../../../../types/Errors';
 
 export interface loginInterface {
   resolve: (account: MinecraftAccount) => void;

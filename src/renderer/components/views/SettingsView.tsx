@@ -1,13 +1,13 @@
-import defaultStyle from '../css/defaultViewStyle.module.css';
-import styles from './css/settingsViewStyle.module.css';
-import background from '../../../../assets/graphics/backgrounds/underwater.png';
+import defaultStyle from '../../css/defaultViewStyle.module.css';
+import styles from '../../css/settingsViewStyle.module.css';
+import background from '../../../assets/graphics/backgrounds/underwater.png';
 import { Tabs } from 'antd';
 import React from 'react';
-import GeneralSettingsView from './GeneralSettingsView';
-import ProfileSettingsView from './ProfileSettingsView';
-import VersionSettingsView from './VersionSettingsView';
-import AboutView from './AboutView';
-import '../../../css/Tabs-ant-override.css';
+import GeneralSettingsView from './settings/GeneralSettingsView';
+import ProfileSettingsView from './settings/ProfileSettingsView';
+import VersionSettingsView from './settings/VersionSettingsView';
+import AboutView from './settings/AboutView';
+import '../../css/Tabs-ant-override.css';
 
 
 export default function SettingsView() {

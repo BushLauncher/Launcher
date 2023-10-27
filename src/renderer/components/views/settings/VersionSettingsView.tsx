@@ -1,9 +1,9 @@
 import LabeledInput from '../../public/Input/LabeledInput';
 import Loader from '../../public/Loader';
 import React, { useState } from 'react';
-import styles from './css/VersionSettingsViewStyle.module.css';
-import defaultStyle from './css/DefaultSettingsView.module.css';
-import { GameType, GameVersion } from '../../../../public/GameDataPublic';
+import styles from '../../../css/VersionSettingsViewStyle.module.css';
+import defaultStyle from '../../../css/DefaultSettingsView.module.css';
+import { GameType, GameVersion } from '../../../../types/Versions';
 import { AutoComplete, Tabs } from 'antd';
 import Icon from '../../public/Icons/Icon';
 import crossIcon from '../../../../assets/graphics/icons/close.svg';
@@ -14,7 +14,7 @@ import VersionCard from '../../public/VersionCard';
 import toDownloadIcon from '../../../../assets/graphics/icons/download.svg';
 import { Tab } from 'rc-tabs/lib/interface';
 import { JSX } from 'react/jsx-runtime';
-import RenderConsoleManager, { ProcessType } from '../../../../public/RenderConsoleManager';
+import RenderConsoleManager, { ProcessType } from '../../../../global/RenderConsoleManager';
 
 const console = new RenderConsoleManager("VersionSettingView", ProcessType.Render)
 

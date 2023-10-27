@@ -1,10 +1,10 @@
 import { currentWindow, userDataStorage } from '../main';
 import { Auth, Minecraft, Xbox } from 'msmc';
-import { AuthProviderType, MinecraftAccount } from '../../public/AuthPublic';
+import { AuthProviderType, MinecraftAccount } from '../../types/AuthPublic';
 import { MSAuthToken } from 'msmc/types/auth/auth';
-import { KnownAuthErrorType } from '../../public/ErrorPublic';
+import { KnownAuthErrorType } from '../../types/Errors';
 import { MicrosoftAuthenticator } from '@xmcl/user';
-import ConsoleManager, { ProcessType } from '../../public/ConsoleManager';
+import ConsoleManager, { ProcessType } from '../../global/ConsoleManager';
 
 const console = new ConsoleManager("AuthModule", ProcessType.Internal);
 

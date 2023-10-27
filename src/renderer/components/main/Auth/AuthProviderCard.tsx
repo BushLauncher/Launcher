@@ -1,4 +1,4 @@
-import styles from './css/AuthModuleStyle.module.css';
+import styles from '../../../css/AuthModuleStyle.module.css';
 import Icon from '../../public/Icons/Icon';
 
 import loadingIcon from '../../../../assets/graphics/icons/loading.svg';
@@ -8,9 +8,9 @@ import errorIcon from '../../../../assets/graphics/icons/close.svg';
 import msIcon from '../../../../assets/graphics/icons/microsoft.svg';
 import { useState } from 'react';
 import Button, { ButtonType } from '../../public/Input/Button';
-import { AuthProviderType, MinecraftAccount } from '../../../../public/AuthPublic';
+import { AuthProviderType, MinecraftAccount } from '../../../../types/AuthPublic';
 import { toast } from 'react-toastify';
-import { errorCode, KnownAuthErrorType } from '../../../../public/ErrorPublic';
+import { errorCode, KnownAuthErrorType } from '../../../../types/Errors';
 
 enum State {
   Normal,

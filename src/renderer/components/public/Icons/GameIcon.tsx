@@ -1,10 +1,10 @@
-import { ComponentsPublic } from '../../ComponentsPublic';
-import { ConfigurationIcon, ConfigurationLocalIcon } from '../../../../public/Configuration';
+import { DefaultProps } from '../../../../types/DefaultProps';
+import { ConfigurationIcon, ConfigurationLocalIcon } from '../../../../types/Configuration';
 
 import JavaIcon from '../../../../assets/graphics/images/grass_block.png';
 import Icon from './Icon';
 
-interface GameIconProps extends ComponentsPublic {
+interface GameIconProps extends DefaultProps {
   icon: ConfigurationIcon;
 }
 

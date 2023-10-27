@@ -1,9 +1,9 @@
-import styles from './css/publicStyle.module.css';
+import styles from '../../css/publicStyle.module.css';
 import icon from '../../../assets/graphics/icons/loading.svg';
 import { useEffect, useState } from 'react';
-import { ComponentsPublic } from '../ComponentsPublic';
+import { DefaultProps } from '../../../types/DefaultProps';
 
-interface LoaderProps extends ComponentsPublic {
+interface LoaderProps extends DefaultProps {
   content: (reload: () => void) => Promise<Element | JSX.Element>;
 }
 

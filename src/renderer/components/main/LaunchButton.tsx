@@ -1,4 +1,4 @@
-import styles from './css/LaunchButton.module.css';
+import styles from '../../css/LaunchButton.module.css';
 import Icon from '../public/Icons/Icon';
 import LaunchIcon from '../../../assets/graphics/icons/caret-right.svg';
 import LoadingIcon from '../../../assets/graphics/icons/loading.svg';
@@ -17,16 +17,16 @@ import {
   PreloadCallback,
   ProgressCallback,
   RawLaunchProcess
-} from '../../../public/GameDataPublic';
+} from '../../../types/Versions';
 import Loader from '../public/Loader';
 import { globalStateContext } from '../../index';
 import { toast } from 'react-toastify';
 import CallbackMessage from '../public/CallbackMessage';
-import { ComponentsPublic } from '../ComponentsPublic';
+import { DefaultProps } from '../../../types/DefaultProps';
 import { Button, Divider, Popover, Progress } from 'antd';
 import VersionCard, { CollapsableVersionCard } from '../public/VersionCard';
 import OutsideAlerter from '../public/OutsideAlerter';
-import RenderConsoleManager, { ProcessType } from '../../../public/RenderConsoleManager';
+import RenderConsoleManager, { ProcessType } from '../../../global/RenderConsoleManager';
 // @ts-ignore
 import { v4 as uuidv4 } from 'uuid';
 
@@ -41,7 +41,7 @@ export type LoadingProgress = {
   currentStep: number, stepCount: number, progressVal: number, subText: string | undefined;
 }
 
-export interface LaunchButtonProps extends ComponentsPublic {
+export interface LaunchButtonProps extends DefaultProps {
   id?: string,
   version: GameVersion[] | GameVersion | { type: GameType, id: 'ALL' },
   type?: 'square' | 'default',

@@ -1,10 +1,10 @@
-import { Callback, CallbackType, ExitedReason } from '../../../public/GameDataPublic';
-import styles from './css/publicStyle.module.css';
+import { Callback, CallbackType, ExitedReason } from '../../../types/Versions';
+import styles from '../../css/publicStyle.module.css';
 import Icon from './Icons/Icon';
 import arrowIcon from '../../../assets/graphics/icons/caret-left.svg';
 import Button, { ButtonType } from './Input/Button';
 import { useState } from 'react';
-import { knowErrorFormat } from '../../../public/ErrorPublic';
+import { knowErrorFormat } from '../../../types/Errors';
 
 export default function CallbackMessage({ callback }: { callback: Callback }) {
   const [extended, setExtended] = useState(false);

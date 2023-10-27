@@ -1,8 +1,8 @@
 import LabeledInput from '../../public/Input/LabeledInput';
 import Loader from '../../public/Loader';
-import { getAllTheme, getCurrentTheme, SetTheme } from '../../../../public/ThemeManager';
+import { getAllTheme, getCurrentTheme, SetTheme } from '../../../../global/ThemeManager';
 import React from 'react';
-import defaultStyle from './css/DefaultSettingsView.module.css';
+import defaultStyle from '../../../css/DefaultSettingsView.module.css';
 import { toast } from 'react-toastify';
 import { Button, Popover, Select } from 'antd';
 

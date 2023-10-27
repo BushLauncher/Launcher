@@ -1,5 +1,5 @@
-import { Themes } from './ThemePublic';
-import { GameVersion } from './GameDataPublic';
+import { Themes } from './Theme';
+import { GameVersion } from './Versions';
 import { Xbox } from 'msmc';
 
 interface InterfaceData {

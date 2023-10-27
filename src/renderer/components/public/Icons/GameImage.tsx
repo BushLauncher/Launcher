@@ -1,10 +1,10 @@
-import styles from '../css/publicStyle.module.css';
-import { ComponentsPublic } from '../../ComponentsPublic';
-import { GameType } from '../../../../public/GameDataPublic';
+import styles from '../../../css/publicStyle.module.css';
+import { DefaultProps } from '../../../../types/DefaultProps';
+import { GameType } from '../../../../types/Versions';
 
 import JavaIcon from '../../../../assets/graphics/images/minecraft_java_logo.png';
 
-interface GameImageProps extends ComponentsPublic {
+interface GameImageProps extends DefaultProps {
   type: GameType;
 }
 

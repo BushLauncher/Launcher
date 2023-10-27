@@ -6,18 +6,9 @@ import { CleanUpCatch } from './internal/DataManager';
 import { app, BrowserWindow, ipcMain, net } from 'electron';
 import * as versionManager from './internal/VersionManager';
 import {
-  getAllVersionList,
-  getAllSelectedVersion,
-  getVersionMethode,
-  groupMinecraftVersions, getSelectedVersion
+  getAllVersionList, getSelectedVersion, getVersionMethode, groupMinecraftVersions
 } from './internal/VersionManager';
-import {
-  Callback,
-  CallbackType, GameType,
-  GameVersion, getDefaultGameType,
-  getDefaultVersion,
-  RawLaunchProcess
-} from '../public/GameDataPublic';
+import { Callback, CallbackType, GameType, GameVersion, RawLaunchProcess } from '../types/Versions';
 import {
   AddAccount,
   getAccountList,
@@ -32,7 +23,7 @@ import {
   resolveUserId,
   SelectAccount
 } from './internal/AuthModule';
-import { AuthProviderType, MinecraftAccount } from '../public/AuthPublic';
+import { AuthProviderType, MinecraftAccount } from '../types/AuthPublic';
 import {
   getDefaultRootPath,
   getLocationRoot,
@@ -43,17 +34,17 @@ import {
   UnregisterRunningVersion
 } from './internal/Core';
 import { UninstallGameFiles, VerifyVersionFile } from './internal/FileManager';
-import { KnownAuthErrorType } from '../public/ErrorPublic';
+import { KnownAuthErrorType } from '../types/Errors';
 import { installExtensions } from './extension-installer';
 import PreloadWindow from './PreloadWindow';
 import MainWindow from './MainWindow';
 import { DeleteJava } from './internal/JavaEngine';
-import ConsoleManager, { ProcessType } from '../public/ConsoleManager';
-import ProgressBarOptions = Electron.ProgressBarOptions;
+import ConsoleManager, { ProcessType } from '../global/ConsoleManager';
 import { AddConfiguration, getConfiguration, getConfigurations, RemoveConfiguration } from './internal/ConfigsManager';
-import { Themes } from '../public/ThemePublic';
-import { defaultData } from '../public/Storage';
-import { Configuration } from '../public/Configuration';
+import { Themes } from '../types/Theme';
+import { defaultData } from '../types/Storage';
+import { Configuration } from '../types/Configuration';
+import ProgressBarOptions = Electron.ProgressBarOptions;
 
 const console = new ConsoleManager('Main', ProcessType.Internal);
 
@@ -63,8 +54,7 @@ if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
   sourceMapSupport.install();
 }
-const isDebug =
-  process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
+const isDebug = process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
 
 if (isDebug) {
   require('electron-debug')();
@@ -77,21 +67,19 @@ function quitApp() {
   app.quit();
 }
 
-ipcMain.on('App:Close', (event, args) => {
+ipcMain.on('App:Close', (_event) => {
 
   quitApp();
 });
-ipcMain.on('App:Minimize', (event, args) => BrowserWindow.getFocusedWindow()?.minimize());
-ipcMain.on('App:Relaunch', (event, args) => {
+ipcMain.on('App:Minimize', (_event) => BrowserWindow.getFocusedWindow()?.minimize());
+ipcMain.on('App:Relaunch', (_event) => {
   app.relaunch();
   quitApp();
 });
-ipcMain.handle('App:getVersion', (event, args) => app.getVersion());
+ipcMain.handle('App:getVersion', (_event) => app.getVersion());
 
-ipcMain.handle('Version:getList', (event, { gameType, type, grouped = false }: {
-  gameType: GameType | undefined,
-  type?: getVersionMethode,
-  grouped?: boolean,
+ipcMain.handle('Version:getList', (_event, { gameType, type, grouped = false }: {
+  gameType: GameType | undefined, type?: getVersionMethode, grouped?: boolean,
 }) => {
   return new Promise(async (resolve, reject) => {
     type = type || 'auto';
@@ -102,46 +90,45 @@ ipcMain.handle('Version:getList', (event, { gameType, type, grouped = false }: {
     if ((type === 'network' || type === 'auto') && net.isOnline()) resolve(grouped ? groupMinecraftVersions(await versionManager.getVersionList(gameType)) : await versionManager.getVersionList(gameType).catch((err) => {
       console.error(err);
       reject(err);
-    }));
-    else resolve(grouped ? groupMinecraftVersions(versionManager.getLocalVersionList(gameType)) : versionManager.getLocalVersionList(gameType));
+    })); else resolve(grouped ? groupMinecraftVersions(versionManager.getLocalVersionList(gameType)) : versionManager.getLocalVersionList(gameType));
   });
 });
-ipcMain.handle('Version:getTypeList', (event, args) => {
+ipcMain.handle('Version:getTypeList', (_event) => {
   return Object.keys(GameType);
 });
-ipcMain.handle('Version:getSelected', (event, args: {configId: string}) => {
+ipcMain.handle('Version:getSelected', (_event, args: { configId: string }) => {
   return getSelectedVersion(args.configId);
 });
-ipcMain.on('Version:set', (event, args: { version: GameVersion, configuration: string }) => {
+ipcMain.on('Version:set', (_event, args: { version: GameVersion, configuration: string }) => {
   return userData.SelectVersion(args.version, args.configuration);
 });
 
-ipcMain.handle('VersionManager:Uninstall', async (event, args: { version: GameVersion, path?: string }) => {
-  return await UninstallGameFiles(args.version, args.path, (callback) => event.sender.send('VersionManager:Uninstall', callback));
+ipcMain.handle('VersionManager:Uninstall', async (_event, args: { version: GameVersion, path?: string }) => {
+  return await UninstallGameFiles(args.version, args.path, (callback) => _event.sender.send('VersionManager:Uninstall', callback));
 });
-ipcMain.handle('VersionManager:Diagnose', async (event, args: { version: GameVersion, path?: string }) => {
+ipcMain.handle('VersionManager:Diagnose', async (_event, args: { version: GameVersion, path?: string }) => {
   const path = args.path || '';
   //TODO: resolve in all instances
   return await VerifyVersionFile(args.version, path);
 });
 
-ipcMain.handle('Auth:Add', (event, args: { user: MinecraftAccount }) => {
+ipcMain.handle('Auth:Add', (_event, args: { user: MinecraftAccount }) => {
   return AddAccount(args.user);
 });
-ipcMain.handle('Auth:checkAccount', (event, args: { user: MinecraftAccount }) => {
+ipcMain.handle('Auth:checkAccount', (_event, args: { user: MinecraftAccount }) => {
   return isAccountValid(args.user);
 });
-ipcMain.handle('Auth:refreshUser', async (event, args: { userId: number | MinecraftAccount }) => {
+ipcMain.handle('Auth:refreshUser', async (_event, args: { userId: number | MinecraftAccount }) => {
   const response = await RefreshAccount(args.userId);
   const id = (typeof args.userId === 'number') ? args.userId : resolveUserId(args.userId);
   if (response !== KnownAuthErrorType.CannotRefreshAccount) ReplaceAccount(id, response);
   //return response (can contain the Error)
   return response;
 });
-ipcMain.handle('Auth:LogOut', (event, args: { accountIndex: number }) => {
+ipcMain.handle('Auth:LogOut', (_event, args: { accountIndex: number }) => {
   return LogOutAccount(args.accountIndex);
 });
-ipcMain.handle('Auth:LogOutAll', (event, args: { accountIndex: number }) => {
+ipcMain.handle('Auth:LogOutAll', (_event, args: { accountIndex: number }) => {
   return LogOutAllAccount();
 });
 ipcMain.handle('Auth:getSelectedAccount', () => getSelectedAccount());
@@ -149,7 +136,7 @@ ipcMain.handle('Auth:getSelectedId', () => {
   return getSelectedAccountId();
 });
 ipcMain.handle('Auth:getAccountList', () => getAccountList());
-ipcMain.handle('Auth:Login', async (event, args: { type: AuthProviderType }) => {
+ipcMain.handle('Auth:Login', async (_event, args: { type: AuthProviderType }) => {
   return new Promise<MinecraftAccount>((resolve, reject) => {
     Login(args.type).then(res => resolve(res)).catch(err => {
       console.log(err);
@@ -159,14 +146,14 @@ ipcMain.handle('Auth:Login', async (event, args: { type: AuthProviderType }) => 
 
   });
 });
-ipcMain.on('Auth:SelectAccount', (event, args: { index: number }) => SelectAccount(args.index));
-ipcMain.handle('GameEngine:RequestLaunch', (event, request_args: { id: string }) => {
+ipcMain.on('Auth:SelectAccount', (_event, args: { index: number }) => SelectAccount(args.index));
+ipcMain.handle('GameEngine:RequestLaunch', (_event, request_args: { id: string }) => {
   //Register all IPC functions
-  ipcMain.handle('GameEngine:Launch:' + request_args.id, async (event, args: { LaunchProcess: RawLaunchProcess }) => {
+  ipcMain.handle('GameEngine:Launch:' + request_args.id, async (_event, args: { LaunchProcess: RawLaunchProcess }) => {
     try {
       const runningIndex = RegisterRunningVersion(args.LaunchProcess);
       const operation = Launch(args.LaunchProcess, (callback: Callback) => {
-        event.sender.send('GameLaunchCallback:' + args.LaunchProcess.id, callback);
+        _event.sender.send('GameLaunchCallback:' + args.LaunchProcess.id, callback);
         if (callback.type === CallbackType.Exited) {
           UnregisterRunningVersion(args.LaunchProcess.id);
           return;
@@ -186,34 +173,34 @@ ipcMain.handle('GameEngine:RequestLaunch', (event, request_args: { id: string })
   });
 });
 
-ipcMain.handle('GameEngine:getRootPath', (event, args) => {
+ipcMain.handle('GameEngine:getRootPath', (_event) => {
   return getLocationRoot();
 });
-ipcMain.handle('GameEngine:getDefaultRootPath', (event, args) => {
+ipcMain.handle('GameEngine:getDefaultRootPath', (_event) => {
   return getDefaultRootPath();
 });
-ipcMain.handle('GameEngine:getRunningList', (event, args) => {
+ipcMain.handle('GameEngine:getRunningList', (_event) => {
   //must reencode list because we cant pass process Class
   return RunningVersionList.map(rv => {
     return { ...rv, process: null };
   });
 });
-ipcMain.handle('GameEngine:KillProcess', (event, args: { processId: string }) => {
+ipcMain.handle('GameEngine:KillProcess', (_event, args: { processId: string }) => {
   return StopGame(args.processId);
 });
-ipcMain.handle('Option:setRootPath', (event, args: { path: string }) => {
+ipcMain.handle('Option:setRootPath', (_event, args: { path: string }) => {
   return userData.SetRootPath(args.path);
 });
-ipcMain.handle('Configs:getAll', (event, args) => {
+ipcMain.handle('Configs:getAll', (_event) => {
   return getConfigurations();
 });
-ipcMain.handle('Configs:get', (event, args: {id: string}) => {
+ipcMain.handle('Configs:get', (_event, args: { id: string }) => {
   return getConfiguration(args.id);
 });
-ipcMain.handle('Configs:Add', (event, args: {configuration: Configuration}) => {
+ipcMain.handle('Configs:Add', (_event, args: { configuration: Configuration }) => {
   return AddConfiguration(args.configuration);
 });
-ipcMain.handle('Configs:Remove', (event, args: {configurationId: string}) => {
+ipcMain.handle('Configs:Remove', (_event, args: { configurationId: string }) => {
   return RemoveConfiguration(args.configurationId);
 });
 ////////////////////////////////////////////////////////
@@ -227,19 +214,19 @@ const defaultUserPreferences: defaultData = {
   }
 };
 export const userDataStorage = new userData.Storage('user-preference', defaultUserPreferences);
-ipcMain.on('saveData', (event, arg: { dataPath: string; value: any }) => {
+ipcMain.on('saveData', (_event, arg: { dataPath: string; value: any }) => {
   userDataStorage.set(arg.dataPath, arg.value);
 });
-ipcMain.handle('getData', (event, args: { dataPath: string }) => {
+ipcMain.handle('getData', (_event, args: { dataPath: string }) => {
   return userDataStorage.get(args.dataPath);
 });
-ipcMain.on('updateData', (event, arg: { value: any; dataPath: any }) => {
+ipcMain.on('updateData', (_event, arg: { value: any; dataPath: any }) => {
   userDataStorage.update(arg.dataPath, arg.value);
 });
-ipcMain.handle('removeData', (event, arg: { dataPath: string }) => {
+ipcMain.handle('removeData', (_event, arg: { dataPath: string }) => {
   return userDataStorage.remove(arg.dataPath);
 });
-ipcMain.handle('Storage:DeleteAll', async (event) => {
+ipcMain.handle('Storage:DeleteAll', async (_event) => {
   DeleteJava();
   userDataStorage.DeleteFile();
   CleanUpCatch();
@@ -249,11 +236,11 @@ ipcMain.handle('Storage:DeleteAll', async (event) => {
     app.relaunch();
   });
 });
-ipcMain.handle('Storage:DeleteJava', (event) => {
+ipcMain.handle('Storage:DeleteJava', (_event) => {
   return DeleteJava();
 });
 
-ipcMain.handle('Storage:CleanCatch', (event) => {
+ipcMain.handle('Storage:CleanCatch', (_event) => {
   return CleanUpCatch();
 });
 
@@ -276,8 +263,7 @@ app
       preloadWindow?.show();
       preloadWindow?.Run()
         .then((mustRestart) => {
-          if (mustRestart) app.quit();
-          else {
+          if (mustRestart) app.quit(); else {
             preloadWindow?.modifyMainText('Loading data...');
             userData.loadData();
             preloadWindow?.modifyMainText('Launching...');

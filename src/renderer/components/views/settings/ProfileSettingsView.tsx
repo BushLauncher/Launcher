@@ -1,6 +1,6 @@
-import styles from './css/ProfileViewStyle.module.css';
+import styles from '../../../css/ProfileViewStyle.module.css';
 import Loader from '../../public/Loader';
-import defaultStyle from './css/DefaultSettingsView.module.css';
+import defaultStyle from '../../../css/DefaultSettingsView.module.css';
 import UserCard from '../../main/Auth/UserCard';
 import { Button } from 'antd';
 

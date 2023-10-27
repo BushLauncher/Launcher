@@ -1,5 +1,5 @@
 import { MinecraftIssues } from '@xmcl/core';
-import styles from './css/publicStyle.module.css';
+import styles from '../../css/publicStyle.module.css';
 
 import missingIcon from '../../../assets/graphics/icons/file-missing.svg';
 import corruptedIcon from '../../../assets/graphics/icons/file-corrupted.svg';

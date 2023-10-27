@@ -1,10 +1,10 @@
 import React, { useEffect, useRef } from 'react';
-import { ComponentsPublic } from '../ComponentsPublic';
+import { DefaultProps } from '../../../types/DefaultProps';
 
 //https://stackoverflow.com/a/42234988
 
 
-interface OutsideAlerterProps extends ComponentsPublic {
+interface OutsideAlerterProps extends DefaultProps {
   children: JSX.Element,
   onClickOutside: (event: MouseEvent) => any
   exceptElementClasses?: string[];

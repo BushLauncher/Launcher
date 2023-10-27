@@ -1,6 +1,6 @@
 import { Storage } from './DataManager';
-import { GameType } from '../../public/GameDataPublic';
-import { Configuration, ConfigurationLocalBackground, ConfigurationLocalIcon } from '../../public/Configuration';
+import { GameType } from '../../types/Versions';
+import { Configuration, ConfigurationLocalBackground, ConfigurationLocalIcon } from '../../types/Configuration';
 
 const defaultData: Configuration = {
   name: 'Test configuration',

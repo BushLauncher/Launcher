@@ -1,7 +1,7 @@
-import styles from '../css/inputStyle.module.css';
-import { ComponentsPublic } from '../../ComponentsPublic';
+import styles from '../../../css/inputStyle.module.css';
+import { DefaultProps } from '../../../../types/DefaultProps';
 
-export interface InputProps extends ComponentsPublic{
+export interface InputProps extends DefaultProps{
   label?: string | React.ReactNode;
   children: JSX.Element[] | JSX.Element
 }

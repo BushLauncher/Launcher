@@ -1,5 +1,5 @@
-import defaultStyle from './css/DefaultSettingsView.module.css';
-import styles from './css/AboutSettingViewStyle.module.css';
+import defaultStyle from '../../../css/DefaultSettingsView.module.css';
+import styles from '../../../css/AboutSettingViewStyle.module.css';
 
 
 export default function AboutView() {
