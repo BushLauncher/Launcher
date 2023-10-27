@@ -1,5 +1,6 @@
 import Window from './Window';
-import { resolveHtmlPath } from './utils';
+
+import { resolveHtmlPath } from '../global/Utils';
 
 export default class MainWindow extends Window{
   constructor() {

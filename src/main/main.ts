@@ -4,10 +4,10 @@
 import * as userData from './internal/DataManager';
 import { CleanUpCatch } from './internal/DataManager';
 import { app, BrowserWindow, ipcMain, net } from 'electron';
-import * as versionManager from './internal/VersionManager';
+import * as versionManager from './VersionManager';
 import {
   getAllVersionList, getSelectedVersion, getVersionMethode, groupMinecraftVersions
-} from './internal/VersionManager';
+} from './VersionManager';
 import { Callback, CallbackType, GameType, GameVersion, RawLaunchProcess } from '../types/Versions';
 import {
   AddAccount,

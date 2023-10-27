@@ -1,10 +1,10 @@
 import { app, net } from 'electron';
 import Window from './Window';
-import { compareVersion } from './utils';
 import { Octokit } from 'octokit';
 import { Update } from './downloader';
 import fs from 'fs';
 import path from 'path';
+import { compareVersion } from '../global/Utils';
 
 const prefix = '[PreLoadWindow]: ';
 
