@@ -6,15 +6,16 @@ export interface DataTextComponentProps extends DefaultProps {
 }
 
 export default function DataTextComponent({ data, className, style }: DataTextComponentProps) {
-  return <Loader content={async () => {
-    const getData = async () => {
-      switch (data) {
-        case 'app-version':
-          return await window.version.app();
-        default:
-          return 'wrong "data" value';
-      }
-    };
-    return <p className={className} style={style}>{await getData()}</p>;
-  }} className={className} style={style} />;
+  return <Loader className={className} style={style}>
+    {async () => {
+      const getData = async () => {
+        switch (data) {
+          case 'app-version':
+            return await window.version.app();
+          default:
+            return 'wrong "data" value';
+        }
+      };
+      return <p className={className} style={style}>{await getData()}</p>;
+    }}</Loader>;
 };

@@ -19,7 +19,7 @@ import {
   RawLaunchProcess
 } from '../../../types/Versions';
 import Loader from '../public/Loader';
-import { globalStateContext } from '../../index';
+import { globalContext } from '../../index';
 import { toast } from 'react-toastify';
 import CallbackMessage from '../public/CallbackMessage';
 import { DefaultProps } from '../../../types/DefaultProps';
@@ -54,7 +54,7 @@ export interface LaunchButtonProps extends DefaultProps {
 
 export default function LaunchButton(props: LaunchButtonProps) {
   const type = (props.type === undefined) ? 'default' : props.type;
-  const { isOnline } = React.useContext(globalStateContext);
+  const { isOnline } = React.useContext(globalContext);
 
   const [isVersionSelectorOpened, setVersionSelector] = useState(false);
   const [state, setCurrentState] = useState(LaunchButtonState.Preparing);

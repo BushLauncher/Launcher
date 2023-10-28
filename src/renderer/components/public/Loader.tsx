@@ -1,28 +1,28 @@
 import styles from '../../css/publicStyle.module.css';
 import icon from '../../../assets/graphics/icons/loading.svg';
-import { useEffect, useState } from 'react';
+import { ReactElement, useEffect, useState } from 'react';
 import { DefaultProps } from '../../../types/DefaultProps';
 
 interface LoaderProps extends DefaultProps {
-  content: (reload: () => void) => Promise<Element | JSX.Element>;
+  children: (reload: () => void) => Promise<ReactElement>;
 }
 
-export default function Loader({ content, className, style }: LoaderProps) {
+export default function Loader({ children, className, style }: LoaderProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [currentContent, setCurrentContent] = useState(null);
   useEffect(() => {
-    content(reload)
+    children(reload)
       .then((data) => {
         // @ts-ignore
         setCurrentContent(data);
         setIsLoading(false);
       })
       .catch(console.error);
-  }, [content]);
+  }, [children]);
 
   const reload = () => {
     setIsLoading(true);
-    content(reload)
+    children(reload)
       .then((data) => {
         // @ts-ignore
         setCurrentContent(data);
@@ -34,7 +34,7 @@ export default function Loader({ content, className, style }: LoaderProps) {
   };
 
   return (
-    <div className={[styles.LoadedContent, className].join(' ')} style={style}>
+    <div className={[className].join(' ')} style={style}>
       {isLoading && (
         <div
           className={styles.Loader}

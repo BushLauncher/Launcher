@@ -1,48 +1,71 @@
-import { Storage } from './DataManager';
 import { GameType } from '../types/Versions';
 import { Configuration, ConfigurationLocalBackground, ConfigurationLocalIcon } from '../types/Configuration';
+import { getConfigManager } from './main';
+import { Storage } from './DataManager';
 
-const defaultData: Configuration = {
+export const defaultConfigData: Configuration[] = [{
   name: 'Test configuration',
   id: 'test_config',
   description: 'Lorem ipsum dolor sit amet',
   isolated: false,
   process: { process: [], allowCustomOperations: false, id: 'Test configuration process' },
   versions: [{ id: '1.20.2', gameType: GameType.VANILLA }],
-  icon: {type: 'Local', data: ConfigurationLocalIcon.dirt},
-  backgroundImage: {type: 'Local', data: ConfigurationLocalBackground.underwater}
-};
-const Data: Configuration = {
+  icon: { type: 'Local', data: ConfigurationLocalIcon.dirt },
+  backgroundImage: { type: 'Local', data: ConfigurationLocalBackground.underwater }
+}, {
   name: 'Test configuration 2',
   id: 'test_config_2',
   description: 'Lorem ipsum dolor sit amet',
   isolated: false,
   process: { process: [], allowCustomOperations: false, id: 'Test configuration process' },
   versions: [{ id: '1.20.2', gameType: GameType.VANILLA }, { id: '1.16.4', gameType: GameType.VANILLA }],
-  icon: {type: 'Local', data: ConfigurationLocalIcon.dirt},
-  backgroundImage: {type: 'Local', data: ConfigurationLocalBackground.cave}
-};
+  icon: { type: 'Local', data: ConfigurationLocalIcon.dirt },
+  backgroundImage: { type: 'Local', data: ConfigurationLocalBackground.cave }
+}];
 
+export class ConfigurationManager {
+  public readonly storage!: Storage;
+  private localList!: Configuration[];
 
-export const ConfigsStorage = new Storage('configs', { configs: [defaultData, Data] });
+  constructor() {
+    //Init storage
+    this.storage = new Storage('configs', { configs: defaultConfigData });
+    this.load();
+  }
 
-export function getConfigurations(): Configuration[] {
-  const data: Configuration[] | undefined = ConfigsStorage.get('configs');
-  return data || [];
-}
+  public getAll(): Configuration[] {
+    return this.localList;
+  }
 
-export function AddConfiguration(configuration: Configuration) {
-  ConfigsStorage.addToArray('configs', configuration);
-}
+  public get(id: string) {
+    return this.localList[this.index(id)];
+  }
 
-export function RemoveConfiguration(id: string) {
-  const index = getConfigurations().findIndex(config => config.id === id);
-  if (index === -1) console.error('Cannot find configuration \'' + id + '\'');
-  else ConfigsStorage.removeFromArray('configs', index);
-}
+  public add(config: Configuration) {
+    this.localList.push(config);
+    this.save();
+  }
 
-export function getConfiguration(id: string): Configuration {
-  const res = getConfigurations().find(c => c.id === id);
-  if (res === undefined) throw new Error('Cannot find configuration ' + id);
-  else return res;
+  public remove(id: string) {
+    this.localList.slice(this.index(id), 1);
+    this.save();
+  }
+
+  private index(id: string): number {
+    const result = this.localList.findIndex(c => c.id === id);
+    if (result === -1) throw new Error('Cannot find configuration: ' + id);
+    else return result;
+  }
+
+  private load() {
+    const response: Configuration[] | undefined = this.storage.get('configs');
+    if (response === undefined) {
+      this.localList = [];
+      console.log('No configs found in storage');
+    } else this.localList = response;
+  }
+
+  private save(particularData?: Configuration[]) {
+    this.storage.set('configs', particularData || this.localList);
+  }
 }

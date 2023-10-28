@@ -1,43 +1,53 @@
 import { GameVersion } from '../types/Versions';
 import { app, safeStorage } from 'electron';
 import fs, { readFileSync, writeFileSync } from 'fs';
-import { userDataStorage } from './main';
 import { deleteFolderRecursive } from './FileManager';
 import path from 'path';
 import ConsoleManager, { ProcessType } from '../global/ConsoleManager';
-import { ConfigsStorage } from './ConfigsManager';
+import { defaultData } from '../types/Storage';
+import { Themes } from '../types/Theme';
+import { getDataStorage } from './main';
 
 const console = new ConsoleManager('UserData', ProcessType.Internal);
 
 const isDebug = process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
 if (isDebug) app.setPath('userData', path.resolve(app.getPath('userData'), '../' + app.getName() + '-DevEnv'));
-console.log(app.getPath('userData'));
+console.log('Running in: ' + app.getPath('userData'));
 
 export const tempDownloadDir = path.join(app.getPath('userData'), 'Download Cache\\');
 export const javaPath = path.join(app.getPath('userData'), 'Local Java\\');
 if (!fs.existsSync(javaPath)) fs.mkdirSync(javaPath);
 if (!fs.existsSync(tempDownloadDir)) fs.mkdirSync(tempDownloadDir);
 
-export function loadData() {
-}
+export const defaultUserPreferences: defaultData = {
+  saved: {
+    javaPath: null, rootPath: null
+  }, auth: {
+    accountList: [], selectedAccount: null
+  }, version: {}, interface: {
+    selectedTab: 'vanilla', theme: Themes.Dark, isMenuCollapsed: true
+  }
+};
+
 
 export function SelectVersion(version: GameVersion, configurationId: string): void {
   //find index by confId
-  const list: { key: string, selected: GameVersion }[] | undefined = userDataStorage.get('version.selected');
+  const list: { key: string, selected: GameVersion }[] | undefined = getDataStorage().get('version.selected');
   if (list !== undefined) {
-    const index = list.findIndex(v=>v.key === configurationId);
-    if(index === -1) console.raw.error("Cannot find " + configurationId + "in selected list")
-    userDataStorage.updateArray('version.selected', index, version);
+    const index = list.findIndex(v => v.key === configurationId);
+    if (index === -1) console.raw.error('Cannot find ' + configurationId + 'in selected list');
+    getDataStorage().updateArray('version.selected', index, version);
     console.log(`Selecting for${configurationId}: [${version.gameType.toString().toLowerCase()}]: ${version.id}`);
   }
 }
 
 export function SetRootPath(path: string): boolean {
   if (fs.existsSync(path)) {
-    userDataStorage.set('saved.rootPath', path);
+    getDataStorage().set('saved.rootPath', path);
     return true;
   } else return false;
 }
+
 
 export class Storage {
   private readonly defaultData!: object;
@@ -49,9 +59,7 @@ export class Storage {
     this.storageFilePath = path.join(app.getPath('userData'), fileName + '.json');
     this.devStorageFilePath = path.join(app.getPath('userData'), fileName + '-dev' + '.json');
     this.defaultData = defaultData;
-    app.whenReady().then(() => {
-      this.loadData();
-    });
+    this.loadData();
   }
 
   public DeleteFile(): boolean {
@@ -148,6 +156,3 @@ export class Storage {
 export function CleanUpCatch() {
   deleteFolderRecursive(tempDownloadDir);
 }
-
-
-//TODO: Add an encryption system

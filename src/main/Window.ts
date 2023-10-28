@@ -49,6 +49,7 @@ export default class Window {
     const loadingOperation = (contentPath.startsWith('http'))
       ? this.window.webContents.loadURL(resolvedHtmlPath)
       : this.window.loadFile(resolvedHtmlPath);
+    console.log("Loading React app...");
     loadingOperation.then(() => {
       return;
     });

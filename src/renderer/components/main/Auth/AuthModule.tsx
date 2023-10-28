@@ -9,7 +9,7 @@ import UserCard from './UserCard';
 import { toast } from 'react-toastify';
 import { createRoot } from 'react-dom/client';
 import LoginPanel from './LoginPanel';
-import { globalStateContext } from '../../../index';
+import { globalContext } from '../../../index';
 import { KnownAuthErrorType } from '../../../../types/Errors';
 import { MinecraftAccount } from '../../../../types/AuthPublic';
 import { DefaultProps } from '../../../../types/DefaultProps';
@@ -77,7 +77,7 @@ export default function AuthModule(props: AuthModuleProps) {
     setDropdown(false);
   }
 
-  let { isOnline } = React.useContext(globalStateContext);
+  let { isOnline } = React.useContext(globalContext);
 
   async function generateAccountList() {
     const accountList = await window.electron.ipcRenderer.invoke('Auth:getAccountList', {});

@@ -2,7 +2,7 @@ import { GameVersion, SubLaunchTaskCallback, RunningVersion } from '../../../typ
 import Icon from './Icons/Icon';
 import { getGameTypeIcon, getInstalledIcon } from '../views/settings/VersionSettingsView';
 import styles from '../../css/publicStyle.module.css';
-import { DefaultProps } from '../../../types/DefaultProps';
+import { DefaultProps, NotificationParam } from '../../../types/DefaultProps';
 import { Button, Collapse, CollapseProps, Popover } from 'antd';
 import { DeleteOutlined, DownloadOutlined } from '@ant-design/icons';
 import hammerIcon from '../../../assets/graphics/icons/hammer.svg';
@@ -12,7 +12,6 @@ import InstallReportCallbackMessage from './InstallReportCallbackMessage';
 import { useState } from 'react';
 import loadIcon from '../../../assets/graphics/icons/loading.svg';
 import LaunchButton from '../main/LaunchButton';
-import { NotificationParam } from '../../App';
 import Loader from './Loader';
 import "../../css/publicStyle-ant-override.css"
 

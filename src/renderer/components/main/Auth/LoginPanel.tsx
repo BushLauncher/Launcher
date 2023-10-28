@@ -6,7 +6,7 @@ import closeIcon from '../../../../assets/graphics/icons/close.svg';
 import { AuthProviderType, MinecraftAccount } from '../../../../types/AuthPublic';
 import AuthProviderCard from './AuthProviderCard';
 import { toast } from 'react-toastify';
-import { globalStateContext } from '../../../index';
+import { globalContext } from '../../../index';
 import React from 'react';
 import { errorCode, KnownAuthErrorType } from '../../../../types/Errors';
 
@@ -18,7 +18,7 @@ export interface loginInterface {
 export default function LoginPanel({ functions, closable }: {
   functions: loginInterface, closable?: boolean
 }) {
-  const { isOnline } = React.useContext(globalStateContext);
+  const { isOnline } = React.useContext(globalContext);
   const close = () => {
     if (closable === undefined || closable) functions.reject(KnownAuthErrorType.ClosedByUser);
   };

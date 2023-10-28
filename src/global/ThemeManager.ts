@@ -1,7 +1,7 @@
 import { Themes } from '../types/Theme';
 
 export async function SetTheme(theme: Themes) {
-  await window.electron.ipcRenderer.sendMessage('updateData', ({ dataPath: 'interface.theme', value: theme }));
+  await window.electron.ipcRenderer.invoke('Option:setTheme', ({ theme: theme }));
   window.location.reload();
 }
 

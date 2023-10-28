@@ -17,8 +17,14 @@ export interface MinecraftAccount {
   readonly true: true;
 }
 
+/**
+ * @deprecated
+ */
 export interface FakeMinecraftAccount {
   readonly profile: MCProfile;
   readonly true: false;
   readonly authType: AuthProviderType.Unknown;
 }
+
+
+export type AccountCheckOperationResponse = 'validating' | 'done' | 'mustLogin' | "couldntRevalidate";
