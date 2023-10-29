@@ -8,7 +8,7 @@ import * as versionManager from './VersionManager';
 import { getAllVersionList, getSelectedVersion, getVersionMethode, groupMinecraftVersions } from './VersionManager';
 import * as userData from './DataManager';
 import { CleanUpCatch } from './DataManager';
-import { UninstallGameFiles, VerifyVersionFile } from './FileManager';
+import { getDefaultRootPath, getLocationRoot, UninstallGameFiles, VerifyVersionFile } from './FileManager';
 import { AuthProviderType, MinecraftAccount } from '../types/AuthPublic';
 import {
   AddAccount,
@@ -26,8 +26,6 @@ import {
 } from './AuthModule';
 import { KnownAuthErrorType } from '../types/Errors';
 import {
-  getDefaultRootPath,
-  getLocationRoot,
   Launch,
   RegisterRunningVersion,
   RunningVersionList,
@@ -157,7 +155,7 @@ export default class MainWindow extends Window {
       });
     });
     ipcMain.handle('GameEngine:KillProcess', (_event, args: { processId: string }) => {
-      return StopGame(args.processId);
+      //return StopGame(args.processId);
     });
     ipcMain.handle('Option:setRootPath', (_event, args: { path: string }) => {
       return userData.SetRootPath(args.path);

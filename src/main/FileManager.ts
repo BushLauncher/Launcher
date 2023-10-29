@@ -17,16 +17,16 @@ import {
   Version
 } from '@xmcl/core';
 import fs, { existsSync } from 'fs';
-import { getLocationRoot } from './Core';
 import path from 'path';
-import ConsoleManager, { ProcessType } from '../global/ConsoleManager';
+import Path, { join } from 'path';
 import axios from 'axios';
 import { InstallLibraryTask } from '@xmcl/installer';
+import getAppDataPath from 'appdata-path';
 import parse = Version.parse;
-
+import ConsoleManager, { ProcessType } from '../global/ConsoleManager';
+import { getDataStorage } from './main';
 
 const console = new ConsoleManager('GameFileManager', ProcessType.Internal);
-
 
 type progressCallbackFunction = (localProgress: number | undefined, displayText?: string, subText?: string | undefined) => void;
 
@@ -72,15 +72,14 @@ export async function InstallGame(version: GameVersion, dir: string, callback: (
   //install assets
   //STEP 3
   sendProgress(undefined, 3, 'Checking Minecraft Assets...');
-  if (versionData.assetIndex?.url === undefined) throw new Error('assetIndex is undefined !');
-  else await DownloadAssets(version, versionData.assetIndex.url, dir, (lp, d, s) => sendProgress(lp, 4, d, s), sendError);
+  if (versionData.assetIndex?.url === undefined) throw new Error('assetIndex is undefined !'); else await DownloadAssets(version, versionData.assetIndex.url, dir, (lp, d, s) => sendProgress(lp, 4, d, s), sendError);
   //STEP 4
   //install libs
   await DownloadLibs(version, versionData, dir, (lp, d, s) => sendProgress(lp, 5, d, s), sendError);
 
   //verify install
   console.log('Finished, verifying...');
-  callback({state: LaunchTaskState.processing, displayText: "Finishing Install..."})
+  callback({ state: LaunchTaskState.processing, displayText: 'Finishing Install...' });
   let mainReport = await DiagnoseVersion(version, dir);
   if (mainReport.issues.length > 0) {
     console.raw.error('Following error occurred during install', mainReport.issues);
@@ -92,10 +91,8 @@ export async function InstallGame(version: GameVersion, dir: string, callback: (
 }
 
 async function DownloadVersion(version: GameVersion, versionData: ResolvedVersion | undefined, dir: string, sendProgress: progressCallbackFunction, onError: (e: any) => void, options?: {
-  json: boolean,
-  jar: boolean
-}): Promise<SubLaunchTaskCallback>
-{
+  json: boolean, jar: boolean
+}): Promise<SubLaunchTaskCallback> {
   const versionFolder = path.join(dir, 'versions', version.id);
 
   if (!fs.existsSync(path.join(dir, 'versions'))) fs.mkdirSync(path.join(dir, 'versions'));
@@ -176,12 +173,10 @@ async function DownloadAssets(version: GameVersion, assetUrl: string, dir: strin
       const assetReport = await diagnoseAssets(assetList, new MinecraftFolder(dir));
       let newList: { [key: string]: { hash: string, size: number } } = {};
       assetReport.forEach(report => Object.assign(newList, {
-          [report.asset.name]: {
-            hash: report.asset.hash,
-            size: report.asset.size
-          }
-        })
-      );
+        [report.asset.name]: {
+          hash: report.asset.hash, size: report.asset.size
+        }
+      }));
       assetList = newList;
     }
   } catch (e) {
@@ -242,8 +237,7 @@ async function DownloadAssets(version: GameVersion, assetUrl: string, dir: strin
 
 async function DownloadLibs(version: GameVersion, versionData: ResolvedVersion, dir: string, sendProgress: progressCallbackFunction, onError: (e: any) => void, options?: {
   force: boolean
-}): Promise<SubLaunchTaskCallback>
-{
+}): Promise<SubLaunchTaskCallback> {
   sendProgress(undefined, 'Checking Minecraft Libs...');
   const download_concurrency = 3;
   if (!fs.existsSync(path.join(dir, 'libraries'))) fs.mkdirSync(path.join(dir, 'libraries'));
@@ -366,24 +360,76 @@ export function findFileRecursively(path: string, targetFileName: string): strin
   return undefined;
 }
 
-export function deleteFolderRecursive(path: string) {
+export function deleteFolderRecursive(path: string, deleteParent?: boolean) {
+  deleteParent = deleteParent || true;
   if (fs.existsSync(path)) {
-    fs.readdirSync(path).forEach(function(file) {
-      const curPath = path + '/' + file;
-      if (fs.lstatSync(curPath).isDirectory()) { // recurse
-        deleteFolderRecursive(curPath);
-      } else { // delete file
+    try {
+      fs.readdirSync(path).forEach(function(file) {
+        const curPath = join(path, file);
+        if (fs.lstatSync(curPath).isDirectory()) { // recurse
+          deleteFolderRecursive(curPath);
+        } else { // delete file
+          try {
+            fs.unlinkSync(curPath);
+          } catch (e) {
+            console.warn('Skipped file: ' + curPath, e);
+          }
+        }
+      });
+      if (deleteParent) {
         try {
-          fs.unlinkSync(curPath);
+          fs.rmdirSync(path);
         } catch (e) {
-          console.warn('Skipped file: ' + curPath);
+          console.warn('Skipped folder: ' + path, e);
         }
       }
-    });
-    try {
-      fs.rmdirSync(path);
     } catch (e) {
-      console.warn('Skipped folder: ' + path);
+      console.log('');
     }
   }
+}
+
+/****/
+export function getLocationRoot(): string {
+  const storageRes: string | null | undefined = getDataStorage().get('saved.rootPath');
+  if (storageRes !== undefined && storageRes !== null) {
+    if (!fs.existsSync(storageRes)) fs.mkdirSync(storageRes);
+    return storageRes;
+  } else return setLocalLocationRoot(getDefaultRootPath());
+}
+
+export function getRuntimePath(): string {
+  const path = Path.join(getLocationRoot(), '/runtime/');
+  if (!fs.existsSync(path)) {
+    console.log('Creating runtime folder');
+    fs.mkdirSync(path);
+  }
+  return path;
+}
+
+export function getInstancePath(): string {
+  const path = Path.join(getLocationRoot(), '/instances/');
+  if (!fs.existsSync(path)) {
+    console.log('Creating instance folder');
+    fs.mkdirSync(path);
+  }
+  return path;
+}
+
+export function getPermaPath(): string {
+  const path = Path.join(getLocationRoot(), '/permanent/');
+  if (!fs.existsSync(path)) {
+    console.log('Creating permanent folder');
+    fs.mkdirSync(path);
+  }
+  return path;
+}
+
+export function getDefaultRootPath(): string {
+  return getAppDataPath() + '\\.minecraft';
+}
+
+function setLocalLocationRoot(path: string) {
+  getDataStorage().set('saved.rootPath', path);
+  return path;
 }

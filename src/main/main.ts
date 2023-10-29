@@ -1,4 +1,6 @@
 /* eslint global-require: off, no-console: off, promise/always-return: off */
+// noinspection JSUnusedLocalSymbols
+
 import { app, BrowserWindow, ipcMain } from 'electron';
 import { installExtensions } from './extension-installer';
 import MainWindow from './MainWindow';
@@ -20,13 +22,11 @@ let DataStorage: Storage | null = null;
 let ConfigManager: ConfigurationManager | null = null;
 
 export function getDataStorage(): Storage {
-  if (DataStorage === null) throw new Error('Storage not initialized');
-  else return DataStorage;
+  if (DataStorage === null) throw new Error('Storage not initialized'); else return DataStorage;
 }
 
 export function getConfigManager(): ConfigurationManager {
-  if (ConfigManager === null) throw new Error('Config manager isn\'t initialized');
-  else return ConfigManager;
+  if (ConfigManager === null) throw new Error('Config manager isn\'t initialized'); else return ConfigManager;
 }
 
 if (process.env.NODE_ENV === 'production') {
@@ -120,19 +120,15 @@ async function _Start() {
     console.log('Loading web-related content...');
     //Check account
     const potentialAccount: MinecraftAccount | null = getSelectedAccount();
-    if (potentialAccount === null) SendWhenLoaded('Starting:AccountCheckOperation', 'mustLogin');
-    else {
-      if (isAccountValid(potentialAccount)) SendWhenLoaded('Starting:AccountCheckOperation', 'done');
-      else {
+    if (potentialAccount === null) SendWhenLoaded('Starting:AccountCheckOperation', 'mustLogin'); else {
+      if (isAccountValid(potentialAccount)) SendWhenLoaded('Starting:AccountCheckOperation', 'done'); else {
         //trying to validate
         console.log('Refreshing account ' + potentialAccount.profile.name + '...');
         SendWhenLoaded('Starting:AccountCheckOperation', 'validating');
         RefreshAccount(potentialAccount).then(response => {
-          if (response === KnownAuthErrorType.CannotRefreshAccount) SendWhenLoaded('Starting:AccountCheckOperation', 'couldntRevalidate');
-          else {
+          if (response === KnownAuthErrorType.CannotRefreshAccount) SendWhenLoaded('Starting:AccountCheckOperation', 'couldntRevalidate'); else {
             const index = getAccountList().findIndex(a => a === potentialAccount);
-            if (index === -1) throw new Error('Cannot find account to replace');
-            else {
+            if (index === -1) throw new Error('Cannot find account to replace'); else {
               ReplaceAccount(index, response);
               SendWhenLoaded('Starting:AccountCheckOperation', 'done');
             }

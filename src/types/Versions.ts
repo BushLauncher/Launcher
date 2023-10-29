@@ -7,9 +7,7 @@ export enum GameType {
 }
 
 export type GameVersion = {
-  id: string;
-  gameType: GameType;
-  installed?: boolean;
+  id: string; gameType: GameType; installed?: boolean;
 };
 
 export interface GroupedGameVersions {
@@ -39,18 +37,12 @@ export const getDefaultVersion = (gameType: GameType): GameVersion => {
  */
 export enum LaunchOperationClass {
   //Preload: Assign some variables before the launch
-  Preload,
-  //Verify: Check some value before the launch (can cancel process)
-  Verify,
-  //Private internal functions
-  Private,
-  //Test and diagnose files, (like "install if not exist")
-  Parse,
-  //Install Files not locally present.
-  Install,
-  //Execute some file, setup Program, etc...
-  Setup,
-  //Install some special configurations file, like in: "config" folder...
+  Preload, //Verify: Check some value before the launch (can cancel process)
+  Verify, //Private internal functions
+  Private, //Test and diagnose files, (like "install if not exist")
+  Parse, //Install Files not locally present.
+  Install, //Execute some file, setup Program, etc...
+  Setup, //Install some special configurations file, like in: "config" folder...
   PostInstall
 }
 
@@ -58,22 +50,28 @@ export type RawLaunchTask = { key: string, type: LaunchOperationClass, params?: 
 /**
  * @link Documentation https://docs.google.com/document/d/1qbFN9mUhHqPQ5Pp8L_7p3sf6C6kwzn6ldTO5pg2u3Hw/edit#heading=h.xqpjlolg2avj
  */
-export const RawLaunchOperationList: RawLaunchTask[] = [
-  { key: 'InstallExternal', type: LaunchOperationClass.Install },
-  { key: 'ParseBootstrap', type: LaunchOperationClass.Parse },
-  { key: 'ParseMods', type: LaunchOperationClass.Parse },
-  { key: 'ParseOptifine', type: LaunchOperationClass.Parse },
-  { key: 'ParseResources', type: LaunchOperationClass.Parse },
-  { key: 'ParseAccount', type: LaunchOperationClass.Private },
-  { key: 'ParseGameFile', type: LaunchOperationClass.Parse },
-  { key: 'ParseJava', type: LaunchOperationClass.Parse },
-  { key: 'Launch', type: LaunchOperationClass.Parse },
-  { key: 'CheckCondition', type: LaunchOperationClass.Verify },
-  { key: 'CheckService', type: LaunchOperationClass.Verify },
-  { key: 'PingServer', type: LaunchOperationClass.Verify },
-  { key: 'RunFile', type: LaunchOperationClass.Setup },
-  { key: 'SetConfig', type: LaunchOperationClass.PostInstall }
-];
+export const RawLaunchOperationList: RawLaunchTask[] = [{
+  key: 'InstallExternal',
+  type: LaunchOperationClass.Install
+}, { key: 'ParseBootstrap', type: LaunchOperationClass.Parse }, {
+  key: 'ParseMods',
+  type: LaunchOperationClass.Parse
+}, { key: 'ParseOptifine', type: LaunchOperationClass.Parse }, {
+  key: 'ParseResources',
+  type: LaunchOperationClass.Parse
+}, { key: 'ParseAccount', type: LaunchOperationClass.Private }, {
+  key: 'ParseGameFile',
+  type: LaunchOperationClass.Parse
+}, { key: 'ParseJava', type: LaunchOperationClass.Parse }, {
+  key: 'Launch',
+  type: LaunchOperationClass.Parse
+}, { key: 'CheckCondition', type: LaunchOperationClass.Verify }, {
+  key: 'CheckService',
+  type: LaunchOperationClass.Verify
+}, { key: 'PingServer', type: LaunchOperationClass.Verify }, {
+  key: 'RunFile',
+  type: LaunchOperationClass.Setup
+}, { key: 'SetConfig', type: LaunchOperationClass.PostInstall }];
 
 export const LaunchOperationKit: { [f: string]: RawLaunchTask } = {
   InstallExternal: { key: 'InstallExternal', type: LaunchOperationClass.Install },
@@ -122,17 +120,12 @@ export interface CompileResult {
 
 /*************/
 export enum CallbackType {
-  Preparing = 'Preparing',
-  Error = 'Error',
-  Progress = 'Progress',
-  Success = 'Success',
-  Exited = 'Exited',
+  Preparing = 'Preparing', Error = 'Error', Progress = 'Progress', Success = 'Success', Exited = 'Exited',
 }
 
 export interface Callback {
   progressing: {
-    stepId: number,
-    stepCount: number
+    stepId: number, stepCount: number
   }
   return?: any | Error,
   type: CallbackType,
@@ -151,24 +144,18 @@ export interface ProgressCallback extends Callback {
 export interface ExitedCallback extends Omit<Callback, 'return' | 'progressing'> {
   type: CallbackType.Exited | CallbackType.Error;
   progressing?: {
-    stepId?: number,
-    stepCount?: number
+    stepId?: number, stepCount?: number
   };
   return: { reason: ExitedReason, display?: string | knowErrorFormat };
 }
 
 export enum ExitedReason {
-  Exited,
-  //Some verification doesn't pass
-  Canceled,
-  Error
+  Exited, //Some verification doesn't pass
+  Canceled, Error
 }
 
 export enum LaunchTaskState {
-  starting,
-  processing,
-  finished,
-  error
+  starting, processing, finished, error
 }
 
 export interface SubLaunchTaskCallback {
@@ -176,9 +163,7 @@ export interface SubLaunchTaskCallback {
   state: LaunchTaskState,
   displayText?: string,
   data?: {
-    return?: any,
-    localProgress?: number,
-    subDisplay?: string
+    return?: any, localProgress?: number, subDisplay?: string
   }
 }
 
@@ -219,8 +204,7 @@ export interface PreLaunchResponse {
 /*************/
 
 export enum RunningVersionState {
-  Launching,
-  Running
+  Launching, Running
 }
 
 export interface RunningVersion {
@@ -235,10 +219,7 @@ export interface RunningVersion {
 
 export interface JsonVersionList {
   versions: {
-    id: string,
-    type: 'snapshot' | 'release',
-    url: string,
-    sha1: string
+    id: string, type: 'snapshot' | 'release', url: string, sha1: string
   }[];
 }
 

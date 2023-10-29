@@ -4,10 +4,10 @@ import fs from 'fs';
 import axios from 'axios';
 import admZip from 'adm-zip';
 import { knowErrorFormat, knowGameError } from '../types/Errors';
-import { userDataStorage } from './main';
 import { deleteFolderRecursive, findFileRecursively } from './FileManager';
 import { javaPath, tempDownloadDir } from './DataManager';
 import ConsoleManager, { ProcessType } from '../global/ConsoleManager';
+import { getDataStorage } from './main';
 
 const console = new ConsoleManager('JavaEngine', ProcessType.Internal);
 
@@ -67,7 +67,7 @@ export async function InstallJava(callback: (c: SubLaunchTaskCallback) => void):
         console.log('Extraction completed');
         const finalPath = findFileRecursively(destPath, 'javaw.exe');
         if (finalPath === undefined) throw new Error(finalPath);
-        userDataStorage.set('saved.javaPath', finalPath);
+        getDataStorage().set('saved.javaPath', finalPath);
         resolve(finalPath);
       })
       .catch(err => {
@@ -119,10 +119,10 @@ export async function ResolveJavaPath(): Promise<string | undefined> {
 
 export function DeleteJava() {
   deleteFolderRecursive(javaPath);
-  userDataStorage.remove('saved.javaPath');
+  getDataStorage().remove('saved.javaPath');
 }
 
 export function getSavedJavaPath(): string | undefined {
-  const path: string | null | undefined = userDataStorage.get('saved.javaPath');
+  const path: string | null | undefined = getDataStorage().get('saved.javaPath');
   return (path != null && fs.existsSync(path)) ? path : undefined;
 }

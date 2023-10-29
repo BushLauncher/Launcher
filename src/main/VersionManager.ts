@@ -3,10 +3,10 @@ import { getVersionList as getXMCLVersionList, MinecraftVersionList } from '@xmc
 import { existsSync, readdirSync } from 'fs';
 import path from 'path';
 import { SortMinecraftVersion } from './Utils';
-import { userDataStorage } from './main';
-import { getLocationRoot } from './Core';
 import { net } from 'electron';
+import { getLocationRoot } from './FileManager';
 import ConsoleManager, { ProcessType } from '../global/ConsoleManager';
+import { getDataStorage } from './main';
 
 
 const console = new ConsoleManager('VersionManager', ProcessType.Internal);
@@ -15,11 +15,11 @@ const console = new ConsoleManager('VersionManager', ProcessType.Internal);
  * @deprecated
  */
 export function getAllSelectedVersion(): | undefined {
-  return userDataStorage.get('version.selected');
+  return getDataStorage().get('version.selected');
 }
 
 export function getSelectedVersion(configId: string) {
-  const list: { key: string, selected: GameVersion }[] | undefined = userDataStorage.get('version.selected');
+  const list: { key: string, selected: GameVersion }[] | undefined = getDataStorage().get('version.selected');
   if (list !== undefined) {
     return list.find(s => s.key === configId)?.selected;
 
