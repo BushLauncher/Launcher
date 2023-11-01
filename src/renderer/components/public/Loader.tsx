@@ -4,7 +4,7 @@ import { ReactElement, useEffect, useState } from 'react';
 import { DefaultProps } from '../../../types/DefaultProps';
 
 interface LoaderProps extends DefaultProps {
-  children: (reload: () => void) => Promise<ReactElement>;
+  children: (reload: () => void) => Promise<JSX.Element>;
 }
 
 export default function Loader({ children, className, style }: LoaderProps) {

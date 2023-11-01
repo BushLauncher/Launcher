@@ -16,7 +16,7 @@ import { DefaultProps } from '../../../../types/DefaultProps';
 import OutsideAlerter from '../../public/OutsideAlerter';
 import RenderConsoleManager, { ProcessType } from '../../../../global/RenderConsoleManager';
 
-const console = new RenderConsoleManager("AuthModule", ProcessType.Render)
+const console = new RenderConsoleManager('AuthModule', ProcessType.Render);
 
 interface AuthModuleProps extends DefaultProps {
 }
@@ -51,8 +51,7 @@ export async function getLogin({ closable }: {
           }} />
       </>
     );
-    const themeContainer = document.querySelector('#Theme-container');
-    if (themeContainer === null) throw new Error('Cannot find \'#Theme-container\'');
+    const themeContainer = document.body;
     themeContainer.appendChild(container);
   });
 }
@@ -77,7 +76,7 @@ export default function AuthModule(props: AuthModuleProps) {
     setDropdown(false);
   }
 
-  let { isOnline } = React.useContext(globalContext);
+  let { offlineMode } = React.useContext(globalContext);
 
   async function generateAccountList() {
     const accountList = await window.electron.ipcRenderer.invoke('Auth:getAccountList', {});
@@ -85,16 +84,15 @@ export default function AuthModule(props: AuthModuleProps) {
   }
 
   return (
-    <Loader content={async (reload) => {
-      return (<OutsideAlerter children={<div className={styles.loadedContent}>
+    <div className={styles.loadedContent}>
+      <OutsideAlerter children={<div className={styles.loadedContent}>
         <div className={styles.selectedContent}>
           <Loader
             className={styles.selectedContent}
-            content={async () => {
-              const user = await window.electron.ipcRenderer.invoke('Auth:getSelectedAccount', {}).catch(console.error);
-              return (<UserCard className={styles.user} user={user} action={false} />);
-            }}
-          />
+          >{async () => {
+            const user = await window.electron.ipcRenderer.invoke('Auth:getSelectedAccount', {}).catch(console.error);
+            return (<UserCard className={styles.user} user={user} action={false} />);
+          }}</Loader>
           <Button
             className={styles.button}
             content={<Icon icon={arrowIcon} className={styles.dropdownIcon} />}
@@ -104,7 +102,7 @@ export default function AuthModule(props: AuthModuleProps) {
         </div>
         <div
           className={[styles.dropdown, !dropdownOpened ? styles.closed : undefined].join(' ')}>
-          <Loader content={async () => {
+          <Loader> {async (reload) => {
             if (accountList.length === 0) await generateAccountList();
             const selectedAccountId = await window.electron.ipcRenderer.invoke('Auth:getSelectedId', {});
 
@@ -117,7 +115,7 @@ export default function AuthModule(props: AuthModuleProps) {
                       key={index}
                       action={{
                         accountIndex: index,
-                        reloadFunc: ()=>setAccountList([]),
+                        reloadFunc: () => setAccountList([]),
                         action: {
                           canLogOut: selectedAccountId !== index,
                           canSelect: selectedAccountId !== index
@@ -130,7 +128,7 @@ export default function AuthModule(props: AuthModuleProps) {
                     />
                   );
                 })}
-                {isOnline && <Button
+                {!offlineMode && <Button
                   className={styles.addButton}
                   action={() => {
                     getLogin({ closable: true })
@@ -138,7 +136,7 @@ export default function AuthModule(props: AuthModuleProps) {
                         //check if response is not an knownAuthError
                         if (!Object.keys(KnownAuthErrorType).includes(response.toString())) {
                           response = response as MinecraftAccount;
-                          if (isOnline) {
+                          if (!offlineMode) {
                             const operation = addAccount(response);
                             toast.promise(operation, {
                               pending:
@@ -148,7 +146,7 @@ export default function AuthModule(props: AuthModuleProps) {
                               error: 'We could add account'
                             });
                             operation.then(() => {
-                              setAccountList([])
+                              setAccountList([]);
                             });
                             operation.catch((err) => {
                               toast.error(err.toString());
@@ -165,10 +163,9 @@ export default function AuthModule(props: AuthModuleProps) {
             );
 
 
-          }} />
+          }}</Loader>
         </div>
-      </div>} onClickOutside={closeDropDown} />);
-    }} className={styles.loadedContent} />
+      </div>} onClickOutside={closeDropDown} /></div>
   );
 
 }

@@ -137,12 +137,6 @@ async function _Start() {
         });
       }
     }
-    const mustLogin: boolean = potentialAccount ? !isAccountValid(potentialAccount) : true;
-    //wait for frontend listeners registered
-    currentWindow?.window.webContents.on('did-finish-load', () => {
-      currentWindow?.window.webContents.send('Starting:AccountCheckOperation', mustLogin);
-    });
-
     //parse configs
     const configList = getConfigManager().getAll();
     //wait for frontend listeners registered

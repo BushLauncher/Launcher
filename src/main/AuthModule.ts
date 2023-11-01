@@ -6,14 +6,13 @@ import { KnownAuthErrorType } from '../types/Errors';
 import { MicrosoftAuthenticator } from '@xmcl/user';
 import ConsoleManager, { ProcessType } from '../global/ConsoleManager';
 
-const console = new ConsoleManager("AuthModule", ProcessType.Internal);
+const console = new ConsoleManager('AuthModule', ProcessType.Internal);
 
 
 const auth = new Auth('login');
 auth.on('load', (asset, message) =>
   console.log(`[Auth Provider (msmc)] ${asset}: ${message}`)
 );
-
 
 
 export function AddAccount(user: MinecraftAccount) {
@@ -36,18 +35,18 @@ export async function RefreshAccount(id: number | MinecraftAccount): Promise<Min
 }
 
 export async function Login(providerType: AuthProviderType): Promise<MinecraftAccount> {
-  return new Promise<MinecraftAccount>((resolve, reject) => {
+  return new Promise<MinecraftAccount>(async (resolve, reject) => {
     switch (providerType) {
       case AuthProviderType.Microsoft: {
         console.log(`Logging-in a new User with: ${providerType}`);
-        return auth.launch('electron')
-          .then(async (res: Xbox) => {
-            resolve(await xboxToUser(res));
-          })
-          .catch((err: string) => {
-            if (err == 'error.gui.closed') reject(KnownAuthErrorType.ClosedByUser);
-            else reject(err);
-          });
+        try {
+          const res = await auth.launch('electron');
+          resolve(await xboxToUser(res));
+        } catch (err) {
+          if (err == 'error.gui.closed') reject(KnownAuthErrorType.ClosedByUser);
+          else reject(err);
+        }
+        break;
       }
       default :
         throw new Error(`The ${providerType} auth provider is not implemented`);
@@ -199,6 +198,9 @@ export function resolveUserId(user: MinecraftAccount) {
 
 export async function getAccessToken(account: MinecraftAccount) {
   const authenticator = new MicrosoftAuthenticator();
-  const { minecraftXstsResponse, liveXstsResponse } = await authenticator.acquireXBoxToken(account.msToken.access_token);
+  const {
+    minecraftXstsResponse,
+    liveXstsResponse
+  } = await authenticator.acquireXBoxToken(account.msToken.access_token);
   return await authenticator.loginMinecraftWithXBox(minecraftXstsResponse.DisplayClaims.xui[0].uhs, minecraftXstsResponse.Token);
 }

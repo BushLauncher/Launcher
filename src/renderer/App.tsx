@@ -7,6 +7,8 @@ import RenderConsoleManager, { ProcessType } from '../global/RenderConsoleManage
 import { Configuration } from '../types/Configuration';
 import { toast } from 'react-toastify';
 import { AccountCheckOperationResponse, MinecraftAccount } from '../types/AuthPublic';
+import LoginPanel from './components/main/Auth/LoginPanel';
+import AuthModule, { getLogin } from './components/main/Auth/AuthModule';
 
 
 const console = new RenderConsoleManager('app', ProcessType.Render);
@@ -222,18 +224,28 @@ export default function App() {
   //Check for update frontend listener
 
   //Account frontend listener
-  const accountValidateOperation = toast.loading('Checking account...', {toastId: "accountValidateOperationToast"});
-  // @ts-ignore
+  const accountValidateOperation = toast.loading('Checking account...', { toastId: 'accountValidateOperationToast' });
+  //@ts-ignore
   window.electron.ipcRenderer.on('Starting:AccountCheckOperation', async (response: AccountCheckOperationResponse) => {
     switch (response) {
+
       case 'mustLogin': {
-        console.log('Must login...');
-        toast.update(accountValidateOperation, { render: 'Hi, Please login an account', type: 'info', isLoading: false })
+        console.log('User must login...');
+        toast.update(accountValidateOperation, {
+          render: 'Hi, Please login an account',
+          type: 'info',
+          isLoading: false
+        });
+        await getLogin({ closable: false })
         break;
       }
       case 'couldntRevalidate': {
         console.error('Couldn\'t revalidate user');
-        toast.update(accountValidateOperation, { render: 'We couldn\'t refresh you account, please re-connect it', type: 'warning', isLoading: false })
+        toast.update(accountValidateOperation, {
+          render: 'We couldn\'t refresh you account, please re-connect it',
+          type: 'warning',
+          isLoading: false
+        });
         break;
       }
       case 'validating': {
@@ -246,7 +258,13 @@ export default function App() {
         if (account === null) throw new Error('Cannot render null account');
         else {
           console.log('Logged as  ' + account.profile.name);
-          toast.update(accountValidateOperation, { render: 'Hi ' + account.profile.name + ' !', isLoading: false, type: 'success', autoClose: 3000, hideProgressBar: true  });
+          toast.update(accountValidateOperation, {
+            render: 'Hi ' + account.profile.name + ' !',
+            isLoading: false,
+            type: 'success',
+            autoClose: 3000,
+            hideProgressBar: true
+          });
         }
         break;
       }
