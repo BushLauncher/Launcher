@@ -1,171 +1,82 @@
-import styles from '../../../css/AuthModuleStyle.module.css';
-import Button, { ButtonType } from '../../public/Input/Button';
-import Icon from '../../public/Icons/Icon';
-import arrowIcon from '../../../../assets/graphics/icons/arrow_down.svg';
-import addIcon from '../../../../assets/graphics/icons/plus.svg';
-import React, { useState } from 'react';
-import Loader from '../../public/Loader';
-import UserCard from './UserCard';
-import { toast } from 'react-toastify';
-import { createRoot } from 'react-dom/client';
-import LoginPanel from './LoginPanel';
-import { globalContext } from '../../../index';
-import { KnownAuthErrorType } from '../../../../types/Errors';
-import { MinecraftAccount } from '../../../../types/AuthPublic';
-import { DefaultProps } from '../../../../types/DefaultProps';
-import OutsideAlerter from '../../public/OutsideAlerter';
 import RenderConsoleManager, { ProcessType } from '../../../../global/RenderConsoleManager';
+import { Account } from '../../../../types/AuthPublic';
+import LoginPanel, { LoginPanelProps } from './LoginPanel';
+import { AuthData } from '../../../../types/Storage';
+import { createRoot } from 'react-dom/client';
+import { errorCode, isError, KnowGameErrorType } from '../../../../types/Errors';
 
 const console = new RenderConsoleManager('AuthModule', ProcessType.Render);
 
-interface AuthModuleProps extends DefaultProps {
-}
+export default class RenderAuthModule {
+  accountList!: Account[];
+  selected!: number | null;
 
-export async function getLogin({ closable }: {
-  closable?: boolean
-}): Promise<MinecraftAccount | KnownAuthErrorType> {
-  return new Promise((resolve) => {
-    const container = document.createElement('div');
-    // noinspection JSCheckFunctionSignatures
-    const root = createRoot(container);
-    root.render(
-      <>
-        <LoginPanel
-          closable={closable}
-          functions={{
-            resolve: (loggedUser) => {
-              resolve(loggedUser);
-              root.unmount();
-            }, reject: (err) => {
-              if (err in KnownAuthErrorType) {
-                switch (err) {
-                  case KnownAuthErrorType.ClosedByUser: {
-                    console.log('Login Panel closed by user');
-                    root.unmount();
-                    resolve(err);
-                    break;
-                  }
-                }
-              } else console.error(err);
-            }
-          }} />
-      </>
-    );
-    const themeContainer = document.body;
-    themeContainer.appendChild(container);
-  });
-}
-
-export function addAccount(account: MinecraftAccount) {
-  return new Promise<void>((resolve, reject) => {
-    window.electron.ipcRenderer.invoke('Auth:Add', { user: account })
-      .then(() => resolve())
-      .catch(() => {
-        console.log('Error occurred');
-        reject();
-      });
-  });
-}
-
-export default function AuthModule(props: AuthModuleProps) {
-  const [dropdownOpened, setDropdown] = useState(false);
-  const [accountList, setAccountList] = useState<MinecraftAccount[]>([]);
-
-
-  function closeDropDown() {
-    setDropdown(false);
+  constructor() {
+    //init var
+    this.getData();
   }
 
-  let { offlineMode } = React.useContext(globalContext);
-
-  async function generateAccountList() {
-    const accountList = await window.electron.ipcRenderer.invoke('Auth:getAccountList', {});
-    setAccountList(accountList);
+  public async getSelected(): Promise<Account | null> {
+    //update content
+    await this.getData();
+    //return
+    return this.selected !== null ? this.accountList[this.selected] : null;
   }
 
-  return (
-    <div className={styles.loadedContent}>
-      <OutsideAlerter children={<div className={styles.loadedContent}>
-        <div className={styles.selectedContent}>
-          <Loader
-            className={styles.selectedContent}
-          >{async () => {
-            const user = await window.electron.ipcRenderer.invoke('Auth:getSelectedAccount', {}).catch(console.error);
-            return (<UserCard className={styles.user} user={user} action={false} />);
-          }}</Loader>
-          <Button
-            className={styles.button}
-            content={<Icon icon={arrowIcon} className={styles.dropdownIcon} />}
-            type={ButtonType.Square}
-            action={() => setDropdown(!dropdownOpened)}
-          />
-        </div>
-        <div
-          className={[styles.dropdown, !dropdownOpened ? styles.closed : undefined].join(' ')}>
-          <Loader> {async (reload) => {
-            if (accountList.length === 0) await generateAccountList();
-            const selectedAccountId = await window.electron.ipcRenderer.invoke('Auth:getSelectedId', {});
+  async LoginNew() {
+    return new Promise<Account>(async (resolve, reject) => {
+      //Open login panel
+      const response = await this.getLogin({ closable: false });
+      if (isError(response)) {
+        console.error(response);
+        reject(response);
+      } else {
+        const account = response as Account;
+        //register it + select it
+        await this.requestAdd(account);
+        //return it
+        console.log('User is: ' + account.name);
+        resolve(account);
+      }
+    });
+  }
 
-            return (
-              <div className={styles.UserListContainer}>
-                {accountList.map((account: MinecraftAccount, index: number) => {
-                  return (
-                    <UserCard
-                      user={account}
-                      key={index}
-                      action={{
-                        accountIndex: index,
-                        reloadFunc: () => setAccountList([]),
-                        action: {
-                          canLogOut: selectedAccountId !== index,
-                          canSelect: selectedAccountId !== index
-                        }
-                      }}
-                      className={[
-                        styles.User,
-                        selectedAccountId === index && styles.selected
-                      ].join(' ')}
-                    />
-                  );
-                })}
-                {!offlineMode && <Button
-                  className={styles.addButton}
-                  action={() => {
-                    getLogin({ closable: true })
-                      .then((response) => {
-                        //check if response is not an knownAuthError
-                        if (!Object.keys(KnownAuthErrorType).includes(response.toString())) {
-                          response = response as MinecraftAccount;
-                          if (!offlineMode) {
-                            const operation = addAccount(response);
-                            toast.promise(operation, {
-                              pending:
-                                'Adding account ' + response.profile.name,
-                              success:
-                                'Added Account ' + response.profile.name,
-                              error: 'We could add account'
-                            });
-                            operation.then(() => {
-                              setAccountList([]);
-                            });
-                            operation.catch((err) => {
-                              toast.error(err.toString());
-                            });
-                          }
-                        }
-                      });
-                  }
-                  }
-                  content={<Icon icon={addIcon} className={styles.icon} />}
-                  type={ButtonType.Rectangle}
-                />}
-              </div>
-            );
+  private async getLogin(props: Omit<LoginPanelProps, 'resolve'>) {
+    return new Promise<Account | errorCode>((resolve) => {
+      const container = document.createElement('div');
+      const loginPanelRoot = createRoot(container);
+      loginPanelRoot.render(<LoginPanel {...props} resolve={resolve} />);
+      const app = document.getElementById('App');
+      if (app === null) throw new Error('Cannot get App container');
+      else app.appendChild(container);
+    });
+  }
 
+  private async requestAdd(account: Account) {
+    await window.electron.ipcRenderer.invoke('Auth:Add', { user: account });
+  }
 
-          }}</Loader>
-        </div>
-      </div>} onClickOutside={closeDropDown} /></div>
-  );
+  private async requestSelect(toSelect: Account): Promise<void>;
+  private async requestSelect(toSelect: number): Promise<void>;
+  private async requestSelect(toSelect: number | Account) {
+    //resolve account
+    const index = typeof toSelect === 'object' ? this.findIndex(toSelect) : toSelect;
+    return await window.electron.ipcRenderer.invoke('Auth:SelectAccount', { index: index });
+  }
 
+  private findIndex(account: Account): number {
+    const index = this.accountList.indexOf(account);
+    if (index === -1) throw new Error('Cannot find this account in storage: \n' + account);
+    else return index;
+  }
+
+  private async getData() {
+    const response: AuthData | undefined = await window.electron.ipcRenderer.invoke('Auth:getData', {});
+    if (response === undefined) throw new Error('Cannot get auth data');
+    else {
+      this.accountList = response.accountList;
+      this.selected = response.selectedAccount;
+    }
+
+  }
 }

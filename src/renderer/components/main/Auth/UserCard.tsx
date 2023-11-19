@@ -6,7 +6,7 @@ import Button, { ButtonType } from '../../public/Input/Button';
 import Icon from '../../public/Icons/Icon';
 import logoutIcon from '../../../../assets/graphics/icons/leave.svg';
 import { toast } from 'react-toastify';
-import { AuthProviderType, FakeMinecraftAccount, MinecraftAccount } from '../../../../types/AuthPublic';
+import { AuthProvider, FakeMinecraftAccount, MSAccount } from '../../../../types/AuthPublic';
 
 import msIcon from '../../../../assets/graphics/icons/microsoft.svg';
 import unknownIcon from '../../../../assets/graphics/icons/close.svg';
@@ -23,7 +23,7 @@ export interface UserAction {
 }
 
 export interface UserCardProps extends DefaultProps {
-  user: MinecraftAccount | undefined;
+  user: MSAccount | undefined;
   action: UserAction | false;
   displayAuthMethode?: boolean;
 }
@@ -40,10 +40,10 @@ export default class UserCard extends React.Component<UserCardProps, {}> {
   }
 
   render() {
-    const user: MinecraftAccount | FakeMinecraftAccount = !(this.props.user === undefined) ? this.props.user : {
+    const user: MSAccount | FakeMinecraftAccount = !(this.props.user === undefined) ? this.props.user : {
       profile: { id: 'not_logged_account', name: 'User' },
       true: false,
-      authType: AuthProviderType.Unknown
+      authType: AuthProvider.Unknown
     };
 
     if (user.profile == undefined)
@@ -95,11 +95,11 @@ export default class UserCard extends React.Component<UserCardProps, {}> {
 
   }
 
-  private getIconFromAuth(authType: AuthProviderType) {
+  private getIconFromAuth(authType: AuthProvider) {
     switch (authType) {
-      case AuthProviderType.Microsoft:
+      case AuthProvider.Microsoft:
         return msIcon;
-      case AuthProviderType.Unknown:
+      case AuthProvider.Unknown:
         return unknownIcon;
     }
   }

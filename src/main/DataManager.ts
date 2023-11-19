@@ -22,9 +22,13 @@ if (!fs.existsSync(tempDownloadDir)) fs.mkdirSync(tempDownloadDir);
 export const defaultUserPreferences: defaultData = {
   saved: {
     javaPath: null, rootPath: null
-  }, auth: {
-    accountList: [], selectedAccount: null
-  }, version: {}, interface: {
+  },
+  auth: {
+    accountList: [],
+    selectedAccount: null
+  },
+  version: {},
+  interface: {
     selectedTab: 'vanilla', theme: Themes.Dark, isMenuCollapsed: true
   }
 };
@@ -139,7 +143,7 @@ export class Storage {
       const encryptedData: Buffer = Buffer.from(readFileSync(this.storageFilePath));
       this.data = JSON.parse(safeStorage.decryptString(encryptedData));
     } catch {
-      console.log('Creating default configuration file...');
+      console.log('Creating default file...');
       this.saveData(this.defaultData);
       this.loadData();
     }

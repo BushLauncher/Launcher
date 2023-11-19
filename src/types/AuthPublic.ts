@@ -1,30 +1,27 @@
 import { MCProfile } from 'msmc/types/assets';
 import { MSAuthToken } from 'msmc/types/auth/auth';
+import { Xbox } from 'msmc';
 
-export enum AuthProviderType {
-  Microsoft = 'Microsoft',
-  Unknown = 'Unknown'
+export enum AuthProvider {
+  Microsoft = 'Microsoft'
 }
 
-export interface MinecraftAccount {
+export interface Account<Provider = keyof AuthProvider> {
+  provider: AuthProvider,
+  name: string
+  data: Provider
+}
+
+export interface MSAccount {
   readonly mcToken: string;
   readonly profile: MCProfile;
   readonly xuid: string;
   readonly exp: number;
   readonly createdDate: number;
-  readonly authType: AuthProviderType;
   readonly msToken: MSAuthToken;
-  readonly true: true;
-}
-
-/**
- * @deprecated
- */
-export interface FakeMinecraftAccount {
-  readonly profile: MCProfile;
-  readonly true: false;
-  readonly authType: AuthProviderType.Unknown;
 }
 
 
-export type AccountCheckOperationResponse = 'validating' | 'done' | 'mustLogin' | "couldntRevalidate";
+export type AccountCheckOperationResponse = 'validating' | 'done' | 'mustLogin' | 'couldntRevalidate';
+
+

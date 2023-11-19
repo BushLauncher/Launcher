@@ -8,9 +8,10 @@ import errorIcon from '../../../../assets/graphics/icons/close.svg';
 import msIcon from '../../../../assets/graphics/icons/microsoft.svg';
 import { useState } from 'react';
 import Button, { ButtonType } from '../../public/Input/Button';
-import { AuthProviderType, MinecraftAccount } from '../../../../types/AuthPublic';
+import { Account, AuthProvider, MSAccount } from '../../../../types/AuthPublic';
 import { toast } from 'react-toastify';
-import { errorCode, KnownAuthErrorType } from '../../../../types/Errors';
+import { errorCode, isError, KnownAuthErrorType } from '../../../../types/Errors';
+import { DefaultProps } from '../../../../types/DefaultProps';
 
 enum State {
   Normal,
@@ -26,25 +27,22 @@ interface ProviderDataPattern {
   className: string
 }
 
-//ProviderData shouldn't implement AuthProviderType.unknown
-// @ts-ignore
-const ProviderData: { [key in AuthProviderType]: ProviderDataPattern } = {
-  [AuthProviderType.Microsoft]: {
+const ProviderData: { [key in AuthProvider]: ProviderDataPattern } = {
+  [AuthProvider.Microsoft]: {
     icon: msIcon,
     label: 'Microsoft',
     className: styles.Microsoft
   }
 };
 
-interface authProviderCard {
-  resolve: (account: MinecraftAccount) => void;
+interface AuthProviderCardProps extends DefaultProps {
+  resolve: (account: Account) => void;
   reject: (code: errorCode) => void;
-  type: AuthProviderType;
+  type: AuthProvider;
 }
 
-function AuthProviderCard(props: authProviderCard): JSX.Element {
+function AuthProviderCard(props: AuthProviderCardProps): JSX.Element {
   const [state, setState] = useState(State.Normal);
-  if (props.type === AuthProviderType.Unknown) throw new Error('Cannot create Auth provider Card from Unknown AuthProviderType');
 
   function getStateIcon() {
     switch (state) {
@@ -59,10 +57,10 @@ function AuthProviderCard(props: authProviderCard): JSX.Element {
     }
   }
 
-  const LogIn = async (provider: AuthProviderType) => {
+  const LogIn = async (provider: AuthProvider) => {
     setState(State.Pending);
-    let response: MinecraftAccount | KnownAuthErrorType | string = await window.electron.ipcRenderer.invoke('Auth:Login', { type: provider });
-    if (Object.keys(KnownAuthErrorType).includes(response.toString()) || typeof response === 'string') {
+    let response: Account | KnownAuthErrorType | string = await window.electron.ipcRenderer.invoke('Auth:Login', { type: provider });
+    if (isError(response)) {
       //error
       response = response as KnownAuthErrorType | string;
       setState(State.Error);
@@ -79,7 +77,7 @@ function AuthProviderCard(props: authProviderCard): JSX.Element {
     } else {
       //no error
       setState(State.Success);
-      setTimeout(() => props.resolve(response as MinecraftAccount), 1000);
+      setTimeout(() => props.resolve(response as Account), 1000);
     }
 
   };
@@ -87,7 +85,7 @@ function AuthProviderCard(props: authProviderCard): JSX.Element {
 
   return (
     <Button
-      className={[styles.AuthProviderCard, data.className].join(' ')}
+      className={[styles.AuthProviderCard, data.className, props.className].join(' ')} style={props.style}
       action={() => LogIn(props.type)}
       content={
         <div className={styles.content}>

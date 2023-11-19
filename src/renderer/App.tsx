@@ -6,9 +6,11 @@ import './css/SettingsModal-ant-override.css';
 import RenderConsoleManager, { ProcessType } from '../global/RenderConsoleManager';
 import { Configuration } from '../types/Configuration';
 import { toast } from 'react-toastify';
-import { AccountCheckOperationResponse, MinecraftAccount } from '../types/AuthPublic';
+import { Account, AccountCheckOperationResponse, MSAccount } from '../types/AuthPublic';
 import LoginPanel from './components/main/Auth/LoginPanel';
-import AuthModule, { getLogin } from './components/main/Auth/AuthModule';
+import AuthModule from './components/main/Auth/AuthModule';
+import RenderAuthModule from './components/main/Auth/AuthModule';
+import { App as AntdApp } from 'antd';
 
 
 const console = new RenderConsoleManager('app', ProcessType.Render);
@@ -224,47 +226,58 @@ export default function App() {
   //Check for update frontend listener
 
   //Account frontend listener
+  const AuthManager = new RenderAuthModule();
   const accountValidateOperation = toast.loading('Checking account...', { toastId: 'accountValidateOperationToast' });
   //@ts-ignore
   window.electron.ipcRenderer.on('Starting:AccountCheckOperation', async (response: AccountCheckOperationResponse) => {
     switch (response) {
-
       case 'mustLogin': {
         console.log('User must login...');
-        toast.update(accountValidateOperation, {
-          render: 'Hi, Please login an account',
-          type: 'info',
-          isLoading: false
-        });
-        await getLogin({ closable: false })
+        setTimeout(() =>
+          toast.update(accountValidateOperation, {
+            render: 'Hi, Please log in an account',
+            type: 'info',
+            isLoading: false
+          }), 1000);
+        AuthManager.LoginNew()
+          .then((account: Account)=>{
+            toast.update(accountValidateOperation, {
+              render: 'Hi ' + account.name + ' !',
+              isLoading: false,
+              type: 'success',
+              autoClose: 3000,
+              hideProgressBar: true
+            })
+          })
         break;
       }
       case 'couldntRevalidate': {
         console.error('Couldn\'t revalidate user');
-        toast.update(accountValidateOperation, {
-          render: 'We couldn\'t refresh you account, please re-connect it',
-          type: 'warning',
-          isLoading: false
-        });
+        setTimeout(() =>
+          toast.update(accountValidateOperation, {
+            render: 'We couldn\'t refresh you account, please re-connect it',
+            type: 'warning',
+            isLoading: false
+          }), 1000);
         break;
       }
       case 'validating': {
         console.log('Validating user...');
-        toast.update(accountValidateOperation, { render: 'Refreshing account...' });
+        setTimeout(() => toast.update(accountValidateOperation, { render: 'Refreshing account...' }), 1000);
         break;
       }
       case 'done': {
-        const account: MinecraftAccount | null = await window.electron.ipcRenderer.invoke('Auth:getSelectedAccount', {});
+        const account = await AuthManager.getSelected();
         if (account === null) throw new Error('Cannot render null account');
         else {
-          console.log('Logged as  ' + account.profile.name);
-          toast.update(accountValidateOperation, {
-            render: 'Hi ' + account.profile.name + ' !',
+          console.log('Logged as  ' + account.name);
+          setTimeout(() => toast.update(accountValidateOperation, {
+            render: 'Hi ' + account.name + ' !',
             isLoading: false,
             type: 'success',
             autoClose: 3000,
             hideProgressBar: true
-          });
+          }), 1000);
         }
         break;
       }
@@ -272,21 +285,23 @@ export default function App() {
   });
   //
   return (
-    <Loader /*Load all configurations*/>
-      {async (reload) =>
-        new Promise((resolve, reject) => {
-          // @ts-ignore
-          window.electron.ipcRenderer.on('Starting:ConfigurationsReceive', (configurationList: Configuration[]) => {
-            resolve(
-              <div>
-                {configurationList.map(c => {
-                  return <div>{c.name}</div>;
-                })}
-              </div>
-            );
-          });
-        })
-      }
-    </Loader>
+    <div id={"App"}>
+      <Loader /*Load all configurations*/>
+        {async (reload) =>
+          new Promise((resolve, reject) => {
+            // @ts-ignore
+            window.electron.ipcRenderer.on('Starting:ConfigurationsReceive', (configurationList: Configuration[]) => {
+              resolve(
+                <div>
+                  {configurationList.map(c => {
+                    return <div key={c.id}>{c.name}</div>;
+                  })}
+                </div>
+              );
+            });
+          })
+        }
+      </Loader>
+    </div>
   );
 }
