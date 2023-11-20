@@ -8,9 +8,9 @@ import errorIcon from '../../../../assets/graphics/icons/close.svg';
 import msIcon from '../../../../assets/graphics/icons/microsoft.svg';
 import { useState } from 'react';
 import Button, { ButtonType } from '../../public/Input/Button';
-import { Account, AuthProvider, MSAccount } from '../../../../types/AuthPublic';
+import { Account, AuthProvider } from '../../../../types/AuthPublic';
 import { toast } from 'react-toastify';
-import { errorCode, isError, KnownAuthErrorType } from '../../../../types/Errors';
+import { AuthError, GenericError, isError, KnownAuthErrorType } from '../../../../types/Errors';
 import { DefaultProps } from '../../../../types/DefaultProps';
 
 enum State {
@@ -37,7 +37,7 @@ const ProviderData: { [key in AuthProvider]: ProviderDataPattern } = {
 
 interface AuthProviderCardProps extends DefaultProps {
   resolve: (account: Account) => void;
-  reject: (code: errorCode) => void;
+  reject: (code: GenericError) => void;
   type: AuthProvider;
 }
 
@@ -57,22 +57,29 @@ function AuthProviderCard(props: AuthProviderCardProps): JSX.Element {
     }
   }
 
-  const LogIn = async (provider: AuthProvider) => {
+  async function LogIn(provider: AuthProvider) {
     setState(State.Pending);
-    let response: Account | KnownAuthErrorType | string = await window.electron.ipcRenderer.invoke('Auth:Login', { type: provider });
+    let response: Account<any> | AuthError = await window.electron.ipcRenderer.invoke('Auth:Login', { type: provider });
     if (isError(response)) {
       //error
-      response = response as KnownAuthErrorType | string;
+      const error = response as AuthError;
+      //Avoid error on popup close
+      if(error === KnownAuthErrorType.ClosedByUser) {
+        setState(State.Normal);
+        return
+      }
       setState(State.Error);
       setTimeout(() => setState(State.Normal), 5000);
-      if (Object.keys(KnownAuthErrorType).includes(response)) {
+      console.error('Cannot login: ', error);
+      if (typeof error === 'string') {
+        toast.error('Unexpected Error: ' + error);
+      } else if ('errno' in error) {
+        toast.error('Unexpected Error: ' + error.errno);
+      } else if (Object.keys(KnownAuthErrorType).includes(error)) {
         //format response
-        response = response as KnownAuthErrorType;
-        if (response == KnownAuthErrorType.UserDontHasGame) toast.error('The logged Account don\'t has Minecraft Game !');
-        else if (response !== KnownAuthErrorType.ClosedByUser) props.reject(response);
-      } else {
-        response = response as string;
-        toast.error('Unexpected Error: ' + response);
+        if (error == KnownAuthErrorType.UserDontHasGame) {
+          toast.error('The logged Account don\'t has Minecraft Game !');
+        } else if (response !== KnownAuthErrorType.ClosedByUser) props.reject(error);
       }
     } else {
       //no error

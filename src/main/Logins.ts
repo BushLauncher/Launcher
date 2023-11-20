@@ -1,5 +1,5 @@
 import { Account, AuthProvider, MSAccount } from '../types/AuthPublic';
-import { KnownAuthErrorType } from '../types/Errors';
+import { AuthError, KnownAuthErrorType } from '../types/Errors';
 import { Auth, Minecraft, Xbox } from 'msmc';
 import { getAccount } from './AuthModule';
 import ConsoleManager, { ProcessType } from '../global/ConsoleManager';
@@ -57,12 +57,12 @@ export function xboxToUser(xbox: Xbox): Promise<Account<MSAccount>> {
   });
 }
 
-export async function RefreshMSAccount(account: Account<MSAccount>): Promise<Account<MSAccount> | KnownAuthErrorType.CannotRefreshAccount> {
+export async function RefreshMSAccount(account: Account<MSAccount>): Promise<Account<MSAccount> | AuthError> {
   const refresh_token = account.data.msToken.refresh_token;
   return msmc.refresh(refresh_token)
     .then(async res => await xboxToUser(res))
     .catch(err => {
       console.log('We couldn\'t refresh account, ', err);
-      return KnownAuthErrorType.CannotRefreshAccount;
+      return err;
     });
 }

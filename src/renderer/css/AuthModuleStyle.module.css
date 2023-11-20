@@ -238,7 +238,6 @@
 .AuthProviderCard .icon {
   height: 5vw;
   width: 5vw;
-  background-color: var(--third-background-color);
   border-radius: 5px;
 }
 

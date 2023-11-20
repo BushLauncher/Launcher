@@ -23,7 +23,7 @@ import {
   resolveUserId,
   SelectAccount
 } from './AuthModule';
-import { KnownAuthErrorType } from '../types/Errors';
+import { isError, KnownAuthErrorType } from '../types/Errors';
 import {
   Launch,
   RegisterRunningVersion,
@@ -79,16 +79,16 @@ export default class MainWindow extends Window {
       return await VerifyVersionFile(args.version, path);
     });
     ipcMain.handle('Auth:getData', (_event, args) => getDataStorage().get('auth'));
-    ipcMain.handle('Auth:Add', (_event, args: { user: Account }) => {
+    ipcMain.handle('Auth:Add', (_event, args: { user: Account<any> }) => {
       return AddAccount(args.user);
     });
-    ipcMain.handle('Auth:checkAccount', (_event, args: { user: Account }) => {
+    ipcMain.handle('Auth:checkAccount', (_event, args: { user: Account<any> }) => {
       return isAccountValid(args.user);
     });
-    ipcMain.handle('Auth:refreshUser', async (_event, args: { userId: number | Account }) => {
+    ipcMain.handle('Auth:refreshUser', async (_event, args: { userId: number | Account<any> }) => {
       const response = await RefreshAccount(args.userId);
       const id = (typeof args.userId === 'number') ? args.userId : resolveUserId(args.userId);
-      if (response !== KnownAuthErrorType.CannotRefreshAccount) ReplaceAccount(id, response);
+      if (!isError(response)) ReplaceAccount(id, response);
       //return response (can contain the Error)
       return response;
     });
@@ -99,7 +99,7 @@ export default class MainWindow extends Window {
       return LogOutAllAccount();
     });
     ipcMain.handle('Auth:Login', async (_event, args: { type: AuthProvider }) => {
-      return new Promise<Account>((resolve, reject) => {
+      return new Promise<Account<any>>((resolve, reject) => {
         Login(args.type)
           .then(res => resolve(res))
           .catch(err => {

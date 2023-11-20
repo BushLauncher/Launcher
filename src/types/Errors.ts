@@ -1,4 +1,6 @@
-export type errorCode = KnownAuthErrorType | string;
+import { Lexcodes } from 'msmc/types/assets';
+
+export type GenericError = AuthError | string;
 
 export enum KnowGameErrorType {
   AccountNotValidError = 'AccountNotValidError',
@@ -7,8 +9,8 @@ export enum KnowGameErrorType {
   GameFileCannotInstallError = 'GameFileCannotInstallError',
 }
 
-export function isError(error: any) {
-  return Object.keys(KnownAuthErrorType).includes(error.toString()) || typeof error === 'string'
+export function isError(error: any): error is GenericError {
+  return typeof error === 'string' || Object.values(KnownAuthErrorType).includes(error) || typeof error === 'object' && 'errno' in error;
 }
 
 export type knowErrorFormat = {
@@ -17,8 +19,11 @@ export type knowErrorFormat = {
 
 //Auth Errors
 export enum KnownAuthErrorType {
-  ClosedByUser = 'ClosedByUser', UserDontHasGame = 'UserDontHasGame', CannotRefreshAccount = 'CannotRefreshAccount'
+  ClosedByUser = 'ClosedByUser',
+  UserDontHasGame = 'UserDontHasGame'
 }
+
+export type AuthError = KnownAuthErrorType | Lexcodes | { errno: string } | string;
 
 //Game Errors
 export const knowGameError: { [key in keyof typeof KnowGameErrorType]: knowErrorFormat } = {

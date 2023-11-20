@@ -10,7 +10,7 @@ import { defaultUserPreferences, Storage } from './DataManager';
 import { getAccountList, getSelectedAccount, isAccountValid, RefreshAccount, ReplaceAccount } from './AuthModule';
 import { Account, MSAccount } from '../types/AuthPublic';
 import { ConfigurationManager } from './ConfigsManager';
-import { KnownAuthErrorType } from '../types/Errors';
+import { isError, KnownAuthErrorType } from '../types/Errors';
 import ProgressBarOptions = Electron.ProgressBarOptions;
 import { RefreshMSAccount } from './Logins';
 
@@ -128,7 +128,8 @@ async function _Start() {
         console.log('Refreshing account ' + potentialAccount.name + '...');
         SendWhenLoaded('Starting:AccountCheckOperation', 'validating');
         RefreshAccount(potentialAccount).then(response => {
-          if (response === KnownAuthErrorType.CannotRefreshAccount) SendWhenLoaded('Starting:AccountCheckOperation', 'couldntRevalidate'); else {
+          if (isError(response)) SendWhenLoaded('Starting:AccountCheckOperation', 'couldntRevalidate');
+          else {
             const index = getAccountList().findIndex(a => a === potentialAccount);
             if (index === -1) throw new Error('Cannot find account to replace'); else {
               ReplaceAccount(index, response);

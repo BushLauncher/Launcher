@@ -62,7 +62,7 @@ import Icon from '../../public/Icons/Icon';
 import { ButtonType } from '../../public/Input/Button';
 import { Account, AuthProvider, MSAccount } from '../../../../types/AuthPublic';
 import AuthProviderCard from './AuthProviderCard';
-import { errorCode } from '../../../../types/Errors';
+import { GenericError } from '../../../../types/Errors';
 import { toast } from 'react-toastify';
 import { functions } from 'electron-log';
 import { defaultTheme } from '../../../index';
@@ -71,7 +71,7 @@ import { useState } from 'react';
 
 export interface LoginPanelProps extends DefaultProps {
   closable?: boolean;
-  resolve: (response: Account | errorCode) => any;
+  resolve: (response: Account | GenericError) => any;
 }
 
 /**
@@ -85,7 +85,7 @@ export default function LoginPanel(props: LoginPanelProps) {
     props.resolve(account);
   }
 
-  function reject(errorCode: errorCode) {
+  function reject(errorCode: GenericError) {
     setOpen(false);
     console.error('Cannot login : ' + errorCode);
     props.resolve(errorCode);
@@ -104,9 +104,11 @@ export default function LoginPanel(props: LoginPanelProps) {
              open={isOpen}
              title={'Connectez vous'}
       >
-        {Object.values(AuthProvider).map(provider => (
-          <AuthProviderCard resolve={resolve} reject={reject} type={provider} key={provider} />
-        ))}
+        <div className={styles.LoginPanel}>
+          {Object.values(AuthProvider).map(provider => (
+            <AuthProviderCard resolve={resolve} reject={reject} type={provider} key={provider} />
+          ))}
+        </div>
       </Modal>
     </ConfigProvider>
   );

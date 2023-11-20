@@ -7,10 +7,9 @@ import RenderConsoleManager, { ProcessType } from '../global/RenderConsoleManage
 import { Configuration } from '../types/Configuration';
 import { toast } from 'react-toastify';
 import { Account, AccountCheckOperationResponse, MSAccount } from '../types/AuthPublic';
-import LoginPanel from './components/main/Auth/LoginPanel';
-import AuthModule from './components/main/Auth/AuthModule';
-import RenderAuthModule from './components/main/Auth/AuthModule';
 import { App as AntdApp } from 'antd';
+import AuthManager from './components/main/Auth/AuthManager';
+import AuthModule from './components/main/Auth/AuthModule';
 
 
 const console = new RenderConsoleManager('app', ProcessType.Render);
@@ -226,10 +225,9 @@ export default function App() {
   //Check for update frontend listener
 
   //Account frontend listener
-  const AuthManager = new RenderAuthModule();
+  const authManager = new AuthManager();
   const accountValidateOperation = toast.loading('Checking account...', { toastId: 'accountValidateOperationToast' });
-  //@ts-ignore
-  window.electron.ipcRenderer.on('Starting:AccountCheckOperation', async (response: AccountCheckOperationResponse) => {
+  const handleAccountCheckOperationCallback = async (response: AccountCheckOperationResponse) => {
     switch (response) {
       case 'mustLogin': {
         console.log('User must login...');
@@ -239,16 +237,11 @@ export default function App() {
             type: 'info',
             isLoading: false
           }), 1000);
-        AuthManager.LoginNew()
-          .then((account: Account)=>{
-            toast.update(accountValidateOperation, {
-              render: 'Hi ' + account.name + ' !',
-              isLoading: false,
-              type: 'success',
-              autoClose: 3000,
-              hideProgressBar: true
-            })
-          })
+        authManager.LoginNew()
+          .then((account: Account) => {
+            //local returned account is re-fetched
+            handleAccountCheckOperationCallback('done');
+          }).catch(() => handleAccountCheckOperationCallback('couldntRevalidate'));
         break;
       }
       case 'couldntRevalidate': {
@@ -259,6 +252,10 @@ export default function App() {
             type: 'warning',
             isLoading: false
           }), 1000);
+        authManager.LoginNew().then((account: Account) => {
+          //local returned account is re-fetched
+          handleAccountCheckOperationCallback('done');
+        }).catch(() => handleAccountCheckOperationCallback('couldntRevalidate'));
         break;
       }
       case 'validating': {
@@ -267,7 +264,9 @@ export default function App() {
         break;
       }
       case 'done': {
-        const account = await AuthManager.getSelected();
+        //refresh in case of re login
+        await authManager.refreshData();
+        const account = authManager.getSelected();
         if (account === null) throw new Error('Cannot render null account');
         else {
           console.log('Logged as  ' + account.name);
@@ -282,10 +281,13 @@ export default function App() {
         break;
       }
     }
-  });
+  };
+  //@ts-ignore
+  window.electron.ipcRenderer.on('Starting:AccountCheckOperation', handleAccountCheckOperationCallback);
   //
   return (
-    <div id={"App"}>
+    <div id={'App'}>
+      <AuthModule authManager={authManager} />
       <Loader /*Load all configurations*/>
         {async (reload) =>
           new Promise((resolve, reject) => {
