@@ -141,7 +141,7 @@ export class Storage {
   private loadData(): void {
     try {
       const encryptedData: Buffer = Buffer.from(readFileSync(this.storageFilePath));
-      this.data = JSON.parse(Buffer.from(readFileSync(this.devStorageFilePath)).toString());
+      this.data = JSON.parse(safeStorage.decryptString(encryptedData));
     } catch {
       console.log('Creating default file...');
       this.saveData(this.defaultData);
