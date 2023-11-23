@@ -4,8 +4,8 @@ import { ConfigProvider, Modal } from 'antd';
 import { Account, AuthProvider } from '../../../../types/AuthPublic';
 import AuthProviderCard from './AuthProviderCard';
 import { GenericError, KnownAuthErrorType } from '../../../../types/Errors';
-import { defaultTheme } from '../../../index';
-import { useState } from 'react';
+import { defaultTheme, globalContext } from '../../../index';
+import { useContext, useState } from 'react';
 
 
 export interface LoginPanelProps extends DefaultProps {
@@ -18,6 +18,7 @@ export interface LoginPanelProps extends DefaultProps {
  */
 export default function LoginPanel(props: LoginPanelProps) {
   const [isOpen, setOpen] = useState(true);
+  const { offlineMode } = useContext(globalContext);
 
   function resolve(account: Account) {
     setOpen(false);
@@ -38,15 +39,16 @@ export default function LoginPanel(props: LoginPanelProps) {
 
   const closable = props.closable !== undefined && props.closable;
   return (<ConfigProvider theme={defaultTheme}>
-      <Modal onCancel={close} destroyOnClose maskClosable={closable}
-             footer={null} closeIcon={closable ? undefined : false}
-             open={isOpen}
-             title={'Connectez vous'}
-      >
-        <div className={styles.LoginPanel}>
-          {Object.values(AuthProvider).map(provider => (
+    <Modal onCancel={close} destroyOnClose maskClosable={closable}
+           footer={null} closeIcon={closable ? undefined : false}
+           open={isOpen}
+           title={'Connectez vous'}
+    >
+      <div className={styles.LoginPanel}>
+        {offlineMode ? <p>You are offline</p>
+          : Object.values(AuthProvider).map(provider => (
             <AuthProviderCard resolve={resolve} reject={reject} type={provider} key={provider} />))}
-        </div>
-      </Modal>
-    </ConfigProvider>);
+      </div>
+    </Modal>
+  </ConfigProvider>);
 }

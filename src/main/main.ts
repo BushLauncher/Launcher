@@ -1,18 +1,17 @@
 /* eslint global-require: off, no-console: off, promise/always-return: off */
 // noinspection JSUnusedLocalSymbols
 
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, net } from 'electron';
 import { installExtensions } from './extension-installer';
 import MainWindow from './MainWindow';
 import ConsoleManager, { ProcessType } from '../global/ConsoleManager';
 import * as userData from './DataManager';
 import { defaultUserPreferences, Storage } from './DataManager';
 import { getAccountList, getSelectedAccount, isAccountValid, RefreshAccount, ReplaceAccount } from './AuthModule';
-import { Account, MSAccount } from '../types/AuthPublic';
+import { Account } from '../types/AuthPublic';
 import { ConfigurationManager } from './ConfigsManager';
-import { isError, KnownAuthErrorType } from '../types/Errors';
+import { isError } from '../types/Errors';
 import ProgressBarOptions = Electron.ProgressBarOptions;
-import { RefreshMSAccount } from './Logins';
 
 
 const console = new ConsoleManager('Main', ProcessType.Internal);
@@ -122,8 +121,10 @@ async function _Start() {
     console.log('Loading web-related content...');
     //Check account
     const potentialAccount: Account | null = getSelectedAccount();
-    if (potentialAccount === null) SendWhenLoaded('Starting:AccountCheckOperation', 'mustLogin'); else {
-      if (isAccountValid(potentialAccount)) SendWhenLoaded('Starting:AccountCheckOperation', 'done'); else {
+    if (potentialAccount === null) SendWhenLoaded('Starting:AccountCheckOperation', 'mustLogin');
+    else if (isAccountValid(potentialAccount)) SendWhenLoaded('Starting:AccountCheckOperation', 'done');
+    else {
+      if (net.isOnline()) {
         //trying to validate
         console.log('Refreshing account ' + potentialAccount.name + '...');
         SendWhenLoaded('Starting:AccountCheckOperation', 'validating');
@@ -136,8 +137,10 @@ async function _Start() {
               SendWhenLoaded('Starting:AccountCheckOperation', 'done');
             }
           }
-
         });
+      } else {
+        console.warn('Cannot revalidate account, no network');
+        SendWhenLoaded('Starting:AccountCheckOperation', 'couldntRevalidate');
       }
     }
     //parse configs

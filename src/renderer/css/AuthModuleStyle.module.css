@@ -32,8 +32,6 @@
 }
 
 .Dropdown .AddButton .icon {
-  width: 50%;
-  height: 70%;
   object-fit: contain;
   transition: all 0.2s ease-in-out;
 }

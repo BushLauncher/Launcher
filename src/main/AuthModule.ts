@@ -2,7 +2,7 @@ import { currentWindow, getDataStorage } from './main';
 import { Account, AuthProvider } from '../types/AuthPublic';
 import { MicrosoftAuthenticator } from '@xmcl/user';
 import ConsoleManager, { ProcessType } from '../global/ConsoleManager';
-import { MSLogin, RefreshMSAccount } from './Logins';
+import { MSLogin, RefreshMSAccount } from "./Logins"
 import { AuthError } from '../types/Errors';
 
 const console = new ConsoleManager('AuthModule', ProcessType.Internal);
