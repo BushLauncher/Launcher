@@ -20,7 +20,7 @@ type SelectItem = { label: React.ReactElement, value: string }
 export default function AuthModule(props: AuthModuleProps) {
   const [isLoading, setLoading] = useState(false);
   const loader = useRef<LoaderRefType>(null);
-  const select = useRef<RefSelectProps>(null)
+  const select = useRef<RefSelectProps>(null);
   const refresh = async () => {
     await props.authManager.refreshData();
     loader.current?.refresh();
@@ -35,8 +35,7 @@ export default function AuthModule(props: AuthModuleProps) {
     };
   }, []);
 
-  return (
-    <div className={[styles.AuthModule, props.className].join(' ')} style={props.style}>
+  return (<div className={[styles.AuthModule, props.className].join(' ')} style={props.style}>
       <Loader ref={loader}>
         {(refresh) => new Promise(async (resolve, reject) => {
           ////
@@ -51,12 +50,9 @@ export default function AuthModule(props: AuthModuleProps) {
               //create item
               const isSelected = account.name === currentAccount.name;
               return {
-                value: account.name,
-                label: (
-                  <UserCard user={account} key={account.name} displayAuthProvider
-                            onLogout={!isSelected ? () => props.authManager.requestLogout(account) : undefined}
-                            className={isSelected ? styles.SelectedUser : styles.User} />
-                )
+                value: account.name, label: (<UserCard user={account} key={account.name} displayAuthProvider
+                                                       onLogout={!isSelected ? () => props.authManager.requestLogout(account) : undefined}
+                                                       className={isSelected ? styles.SelectedUser : styles.User} />)
               };
             });
             //construct onClick function (select the account)
@@ -76,8 +72,7 @@ export default function AuthModule(props: AuthModuleProps) {
                   setLoading(false);
                 })
                 .catch((error: AuthError) => {
-                  if (error === KnownAuthErrorType.ClosedByUser) console.log('Popup closed by user');
-                  else if (error === KnownAuthErrorType.UserAlreadyRegistered) {
+                  if (error === KnownAuthErrorType.ClosedByUser) console.log('Popup closed by user'); else if (error === KnownAuthErrorType.UserAlreadyRegistered) {
                     toast.warn('This account already exist');
                   } else {
                     toast.error('Cannot add new account: ' + error);
@@ -87,25 +82,22 @@ export default function AuthModule(props: AuthModuleProps) {
                 });
             };
             //
-            resolve(
-              <Select ref={select} onChange={onClick} loading={isLoading} options={dropdownItems} bordered={false} popupMatchSelectWidth={false}
-                      value={currentAccount.name} popupClassName={styles.Dropdown} listHeight={165} className={styles.AuthModule}
-                      dropdownRender={(dropdown) => (
-                        <>
-                          {dropdown}
-                          <Button onClick={add} className={styles.AddButton}>
-                            <Icon icon={addIcon} className={styles.icon} />
-                          </Button>
-                        </>
-                      )}
-              />
-            );
+            resolve(<Select ref={select} onChange={onClick} loading={isLoading} options={dropdownItems} bordered={false}
+                            popupMatchSelectWidth={false}
+                            value={currentAccount.name} popupClassName={styles.Dropdown} listHeight={165}
+                            className={styles.AuthModule}
+                            dropdownRender={(dropdown) => (<>
+                                {dropdown}
+                                <Button onClick={add} className={styles.AddButton}>
+                                  <Icon icon={addIcon} className={styles.icon} />
+                                </Button>
+                              </>)}
+            />);
           } else {
             console.warn('Rendering null selected account');
             resolve(<div className={styles.AuthModule}></div>);
           }
         })}
       </Loader>
-    </div>
-  );
+    </div>);
 }
