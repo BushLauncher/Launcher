@@ -7,7 +7,6 @@ import GeneralSettingsView from './settings/GeneralSettingsView';
 import ProfileSettingsView from './settings/ProfileSettingsView';
 import VersionSettingsView from './settings/VersionSettingsView';
 import AboutView from './settings/AboutView';
-import '../../css/Tabs-ant-override.css';
 
 
 export default function SettingsView() {

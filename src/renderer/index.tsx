@@ -11,40 +11,44 @@ import { NotificationParam } from '../types/DefaultProps';
 const container = document.getElementById('root')!;
 const root = createRoot(container);
 
+export const defaultTheme = darkDefault;
+
 declare global {
   interface Window {
     electron: ElectronHandler;
     version: typeof versionHandler;
   }
 }
+
 interface globalState {
-  offlineMode: boolean
+  offlineMode: boolean;
 }
+
 const globalState: globalState = {
   offlineMode: !navigator.onLine
-}
+};
 
 export const globalContext = React.createContext(globalState);
 
 
 root.render(
-    <globalContext.Provider value={globalState}>
-      <ConfigProvider theme={darkDefault}>
-        <MainMenuBar />
-        <App />
-        <ToastContainer
-          position="bottom-center"
-          autoClose={5000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick={false}
-          pauseOnFocusLoss
-          draggable={false}
-          pauseOnHover
-          theme="dark"
-        />
-      </ConfigProvider>
-    </globalContext.Provider>
+  <globalContext.Provider value={globalState}>
+    <ConfigProvider theme={defaultTheme}>
+      <MainMenuBar />
+      <App />
+      <ToastContainer
+        position='bottom-center'
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick={false}
+        pauseOnFocusLoss
+        draggable={false}
+        pauseOnHover
+        theme='dark'
+      />
+    </ConfigProvider>
+  </globalContext.Provider>
 );
 
 

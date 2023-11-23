@@ -9,7 +9,7 @@ import { getAllVersionList, getSelectedVersion, getVersionMethode, groupMinecraf
 import * as userData from './DataManager';
 import { CleanUpCatch } from './DataManager';
 import { getDefaultRootPath, getLocationRoot, UninstallGameFiles, VerifyVersionFile } from './FileManager';
-import { AuthProviderType, MinecraftAccount } from '../types/AuthPublic';
+import { MSAccount, AuthProvider, Account } from '../types/AuthPublic';
 import {
   AddAccount,
   getAccountList,
@@ -18,13 +18,12 @@ import {
   isAccountValid,
   Login,
   LogOutAccount,
-  LogOutAllAccount,
-  RefreshAccount,
+  LogOutAllAccount, RefreshAccount,
   ReplaceAccount,
   resolveUserId,
   SelectAccount
 } from './AuthModule';
-import { KnownAuthErrorType } from '../types/Errors';
+import { isError, KnownAuthErrorType } from '../types/Errors';
 import {
   Launch,
   RegisterRunningVersion,
@@ -37,6 +36,7 @@ import { defaultData } from '../types/Storage';
 import { Themes } from '../types/Theme';
 import { DeleteJava } from './JavaEngine';
 import ConsoleManager, { ProcessType } from '../global/ConsoleManager';
+
 
 
 export default class MainWindow extends Window {
@@ -78,42 +78,40 @@ export default class MainWindow extends Window {
       //TODO: resolve in all instances
       return await VerifyVersionFile(args.version, path);
     });
-
-    ipcMain.handle('Auth:Add', (_event, args: { user: MinecraftAccount }) => {
+    ipcMain.handle('Auth:getData', (_event, args) => getDataStorage().get('auth'));
+    ipcMain.handle('Auth:Add', (_event, args: { user: Account<any> }) => {
       return AddAccount(args.user);
     });
-    ipcMain.handle('Auth:checkAccount', (_event, args: { user: MinecraftAccount }) => {
+    ipcMain.handle('Auth:checkAccount', (_event, args: { user: Account<any> }) => {
       return isAccountValid(args.user);
     });
-    ipcMain.handle('Auth:refreshUser', async (_event, args: { userId: number | MinecraftAccount }) => {
+    ipcMain.handle('Auth:refreshUser', async (_event, args: { userId: number | Account<any> }) => {
       const response = await RefreshAccount(args.userId);
       const id = (typeof args.userId === 'number') ? args.userId : resolveUserId(args.userId);
-      if (response !== KnownAuthErrorType.CannotRefreshAccount) ReplaceAccount(id, response);
+      if (!isError(response)) ReplaceAccount(id, response);
       //return response (can contain the Error)
       return response;
     });
-    ipcMain.handle('Auth:LogOut', (_event, args: { accountIndex: number }) => {
-      return LogOutAccount(args.accountIndex);
+    ipcMain.handle('Auth:LogOut', (_event, args: { index: number }) => {
+      return LogOutAccount(args.index);
     });
     ipcMain.handle('Auth:LogOutAll', (_event, args: { accountIndex: number }) => {
       return LogOutAllAccount();
     });
-    ipcMain.handle('Auth:getSelectedAccount', () => getSelectedAccount());
-    ipcMain.handle('Auth:getSelectedId', () => {
-      return getSelectedAccountId();
-    });
-    ipcMain.handle('Auth:getAccountList', () => getAccountList());
-    ipcMain.handle('Auth:Login', async (_event, args: { type: AuthProviderType }) => {
-      return new Promise<MinecraftAccount>((resolve, reject) => {
-        Login(args.type).then(res => resolve(res)).catch(err => {
-          console.log(err);
-          resolve(err);
-        });
+    ipcMain.handle('Auth:Login', async (_event, args: { type: AuthProvider }) => {
+      return new Promise<Account<any>>((resolve, reject) => {
+        Login(args.type)
+          .then(res => resolve(res))
+          .catch(err => {
+            console.log(err);
+            resolve(err);
+          });
         //reject will not pass err and return string [Object object]
 
       });
     });
-    ipcMain.on('Auth:SelectAccount', (_event, args: { index: number }) => SelectAccount(args.index));
+    ipcMain.handle('Auth:SelectAccount', (_event, args: { index: number }) => SelectAccount(args.index));
+    /////
     ipcMain.handle('GameEngine:RequestLaunch', (_event, request_args: { id: string }) => {
       //Register all IPC functions
       ipcMain.handle('GameEngine:Launch:' + request_args.id, async (_event, args: {
@@ -161,7 +159,7 @@ export default class MainWindow extends Window {
       return userData.SetRootPath(args.path);
     });
     ipcMain.handle('Option:setTheme', (_event, arg: { theme: Themes }) => {
-      getDataStorage().update("interface.theme", arg.theme);
+      getDataStorage().update('interface.theme', arg.theme);
     });
     ipcMain.handle('Configs:Add', (_event, args: { configuration: Configuration }) => {
       return getConfigManager().add(args.configuration);

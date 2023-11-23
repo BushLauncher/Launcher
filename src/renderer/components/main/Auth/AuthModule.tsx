@@ -1,171 +1,103 @@
 import styles from '../../../css/AuthModuleStyle.module.css';
-import Button, { ButtonType } from '../../public/Input/Button';
-import Icon from '../../public/Icons/Icon';
-import arrowIcon from '../../../../assets/graphics/icons/arrow_down.svg';
-import addIcon from '../../../../assets/graphics/icons/plus.svg';
-import React, { useState } from 'react';
-import Loader from '../../public/Loader';
-import UserCard from './UserCard';
-import { toast } from 'react-toastify';
-import { createRoot } from 'react-dom/client';
-import LoginPanel from './LoginPanel';
-import { globalContext } from '../../../index';
-import { KnownAuthErrorType } from '../../../../types/Errors';
-import { MinecraftAccount } from '../../../../types/AuthPublic';
 import { DefaultProps } from '../../../../types/DefaultProps';
-import OutsideAlerter from '../../public/OutsideAlerter';
-import RenderConsoleManager, { ProcessType } from '../../../../global/RenderConsoleManager';
+import AuthManager from './AuthManager';
+import UserCard from './UserCard';
+import Loader, { LoaderRefType } from '../../public/Loader';
+import { Button, RefSelectProps, Select } from 'antd';
+import React, { useEffect, useRef, useState } from 'react';
+import Icon from '../../public/Icons/Icon';
+import addIcon from '../../../../assets/graphics/icons/plus.svg';
+import { AuthError, KnownAuthErrorType } from '../../../../types/Errors';
+import { toast } from 'react-toastify';
 
-const console = new RenderConsoleManager('AuthModule', ProcessType.Render);
-
-interface AuthModuleProps extends DefaultProps {
+export interface AuthModuleProps extends DefaultProps {
+  authManager: AuthManager;
 }
 
-export async function getLogin({ closable }: {
-  closable?: boolean
-}): Promise<MinecraftAccount | KnownAuthErrorType> {
-  return new Promise((resolve) => {
-    const container = document.createElement('div');
-    // noinspection JSCheckFunctionSignatures
-    const root = createRoot(container);
-    root.render(
-      <>
-        <LoginPanel
-          closable={closable}
-          functions={{
-            resolve: (loggedUser) => {
-              resolve(loggedUser);
-              root.unmount();
-            }, reject: (err) => {
-              if (err in KnownAuthErrorType) {
-                switch (err) {
-                  case KnownAuthErrorType.ClosedByUser: {
-                    console.log('Login Panel closed by user');
-                    root.unmount();
-                    resolve(err);
-                    break;
-                  }
-                }
-              } else console.error(err);
-            }
-          }} />
-      </>
-    );
-    const themeContainer = document.body;
-    themeContainer.appendChild(container);
-  });
-}
+type SelectItem = { label: React.ReactElement, value: string }
 
-export function addAccount(account: MinecraftAccount) {
-  return new Promise<void>((resolve, reject) => {
-    window.electron.ipcRenderer.invoke('Auth:Add', { user: account })
-      .then(() => resolve())
-      .catch(() => {
-        console.log('Error occurred');
-        reject();
-      });
-  });
-}
 
 export default function AuthModule(props: AuthModuleProps) {
-  const [dropdownOpened, setDropdown] = useState(false);
-  const [accountList, setAccountList] = useState<MinecraftAccount[]>([]);
+  const [isLoading, setLoading] = useState(false);
+  const loader = useRef<LoaderRefType>(null);
+  const select = useRef<RefSelectProps>(null);
+  const refresh = async () => {
+    await props.authManager.refreshData();
+    loader.current?.refresh();
+    setLoading(false);
+  };
+  useEffect(() => {
+    // Register refresh event from backend
+    window.electron.ipcRenderer.on('Auth:RefreshEvent', refresh);
 
+    return () => {
+      window.electron.ipcRenderer.removeListener('Auth:RefreshEvent', refresh);
+    };
+  }, []);
 
-  function closeDropDown() {
-    setDropdown(false);
-  }
-
-  let { offlineMode } = React.useContext(globalContext);
-
-  async function generateAccountList() {
-    const accountList = await window.electron.ipcRenderer.invoke('Auth:getAccountList', {});
-    setAccountList(accountList);
-  }
-
-  return (
-    <div className={styles.loadedContent}>
-      <OutsideAlerter children={<div className={styles.loadedContent}>
-        <div className={styles.selectedContent}>
-          <Loader
-            className={styles.selectedContent}
-          >{async () => {
-            const user = await window.electron.ipcRenderer.invoke('Auth:getSelectedAccount', {}).catch(console.error);
-            return (<UserCard className={styles.user} user={user} action={false} />);
-          }}</Loader>
-          <Button
-            className={styles.button}
-            content={<Icon icon={arrowIcon} className={styles.dropdownIcon} />}
-            type={ButtonType.Square}
-            action={() => setDropdown(!dropdownOpened)}
-          />
-        </div>
-        <div
-          className={[styles.dropdown, !dropdownOpened ? styles.closed : undefined].join(' ')}>
-          <Loader> {async (reload) => {
-            if (accountList.length === 0) await generateAccountList();
-            const selectedAccountId = await window.electron.ipcRenderer.invoke('Auth:getSelectedId', {});
-
-            return (
-              <div className={styles.UserListContainer}>
-                {accountList.map((account: MinecraftAccount, index: number) => {
-                  return (
-                    <UserCard
-                      user={account}
-                      key={index}
-                      action={{
-                        accountIndex: index,
-                        reloadFunc: () => setAccountList([]),
-                        action: {
-                          canLogOut: selectedAccountId !== index,
-                          canSelect: selectedAccountId !== index
-                        }
-                      }}
-                      className={[
-                        styles.User,
-                        selectedAccountId === index && styles.selected
-                      ].join(' ')}
-                    />
-                  );
-                })}
-                {!offlineMode && <Button
-                  className={styles.addButton}
-                  action={() => {
-                    getLogin({ closable: true })
-                      .then((response) => {
-                        //check if response is not an knownAuthError
-                        if (!Object.keys(KnownAuthErrorType).includes(response.toString())) {
-                          response = response as MinecraftAccount;
-                          if (!offlineMode) {
-                            const operation = addAccount(response);
-                            toast.promise(operation, {
-                              pending:
-                                'Adding account ' + response.profile.name,
-                              success:
-                                'Added Account ' + response.profile.name,
-                              error: 'We could add account'
-                            });
-                            operation.then(() => {
-                              setAccountList([]);
-                            });
-                            operation.catch((err) => {
-                              toast.error(err.toString());
-                            });
-                          }
-                        }
-                      });
+  return (<div className={[styles.AuthModule, props.className].join(' ')} style={props.style}>
+      <Loader ref={loader}>
+        {(refresh) => new Promise(async (resolve, reject) => {
+          ////
+          //get datas
+          const accountList = await props.authManager.getAccountList();
+          const currentAccount = await props.authManager.getSelectedAccount();
+          //Check data validity
+          if (currentAccount !== null) {
+            //Construct Dropdown
+            //Build dropdown
+            const dropdownItems: SelectItem[] = accountList.map((account): SelectItem => {
+              //create item
+              const isSelected = account.name === currentAccount.name;
+              return {
+                value: account.name, label: (<UserCard user={account} key={account.name} displayAuthProvider
+                                                       onLogout={!isSelected ? () => props.authManager.requestLogout(account) : undefined}
+                                                       className={isSelected ? styles.SelectedUser : styles.User} />)
+              };
+            });
+            //construct onClick function (select the account)
+            const onClick = (val: string) => {
+              setLoading(true);
+              console.log(`Request select ${val}`);
+              props.authManager.findIndex(val)
+                .then(async index => await window.electron.ipcRenderer.invoke('Auth:SelectAccount', { index: index }));
+            };
+            //construct add function
+            const add = () => {
+              select.current?.blur();
+              setLoading(true);
+              props.authManager.LoginNew([{ closable: true }])
+                .then(account => {
+                  toast.success('Added account ' + account.name);
+                  setLoading(false);
+                })
+                .catch((error: AuthError) => {
+                  if (error === KnownAuthErrorType.ClosedByUser) console.log('Popup closed by user'); else if (error === KnownAuthErrorType.UserAlreadyRegistered) {
+                    toast.warn('This account already exist');
+                  } else {
+                    toast.error('Cannot add new account: ' + error);
+                    console.error('Couldn\'t add new Account: ', error);
                   }
-                  }
-                  content={<Icon icon={addIcon} className={styles.icon} />}
-                  type={ButtonType.Rectangle}
-                />}
-              </div>
-            );
-
-
-          }}</Loader>
-        </div>
-      </div>} onClickOutside={closeDropDown} /></div>
-  );
-
+                  setLoading(false);
+                });
+            };
+            //
+            resolve(<Select ref={select} onChange={onClick} loading={isLoading} options={dropdownItems} bordered={false}
+                            popupMatchSelectWidth={false}
+                            value={currentAccount.name} popupClassName={styles.Dropdown} listHeight={165}
+                            className={styles.AuthModule}
+                            dropdownRender={(dropdown) => (<>
+                                {dropdown}
+                                <Button onClick={add} className={styles.AddButton}>
+                                  <Icon icon={addIcon} className={styles.icon} />
+                                </Button>
+                              </>)}
+            />);
+          } else {
+            console.warn('Rendering null selected account');
+            resolve(<div className={styles.AuthModule}></div>);
+          }
+        })}
+      </Loader>
+    </div>);
 }

@@ -1,253 +1,60 @@
 .AuthModule {
   max-width: 40vw;
-  min-width: 20vw;
+  min-width: 25vw;
+  height: fit-content;
+  min-height: 11vh;
   width: fit-content;
-  height: 10vh;
   position: absolute;
   right: 0;
   top: 0;
-  padding: 1vh 1vw;
   background: var(--background-color);
   border-radius: 0 0 15px 15px;
   z-index: 10;
 }
 
-.AuthModule .loadedContent {
-  width: fit-content;
-  position: relative;
-  /*background-color: red;*/
+.Dropdown {
+
 }
 
-.AuthModule .loadedContent .selectedContent {
-  height: 10vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  /*background-color: orange;*/
-}
-
-.AuthModule .loadedContent .selectedContent .user {
+.AuthModule .SelectedUser,
+.Dropdown .SelectedUser {
   background-color: transparent;
   max-width: 33vw;
 }
 
-.AuthModule .loadedContent .selectedContent .button {
-  background-color: transparent;
-  transition: all 0.2s ease-in-out;
-  padding: 10px;
-}
 
-.AuthModule .loadedContent .selectedContent .button:hover {
-  background-color: var(--hover-background-color);
-}
-
-.AuthModule .loadedContent .dropdownIcon {
-  width: 2vw;
-  height: 2vw;
-}
-
-.AuthModule .loadedContent .dropdown {
-  width: calc(100% + 2vw);
-  min-height: 2vh;
-  max-height: 26vh;
-  position: absolute;
-  top: calc(100% + 1.5vh);
-  left: -1vw;
-  background-color: var(--background-color);
-  box-sizing: border-box;
-  padding: 1vh 5px;
-  overflow-x: hidden;
-  overflow-y: scroll;
-  border-radius: 15px;
-  transition: all 0.2s ease-in-out;
-}
-
-.AuthModule .loadedContent .dropdown.closed {
-  min-height: 0;
-  max-height: 0;
-  padding: 0 5px;
-}
-
-.AuthModule .loadedContent .dropdown .UserListContainer {
-  width: 100%;
-  min-height: 1vh;
-  /*background-color: red;*/
-  display: flex;
-  flex-direction: column;
-  align-items: start;
-  justify-content: center;
-  gap: 1vh;
-}
-
-.AuthModule .loadedContent .dropdown .UserListContainer .addButton {
+.Dropdown .AddButton {
+  border: none;
   width: 100%;
   height: 9vh;
   padding: 0;
   background-color: var(--second-background-color);
 }
 
-.AuthModule .loadedContent .dropdown .UserListContainer .addButton .icon {
+.Dropdown .AddButton .icon {
   width: 50%;
   height: 70%;
   object-fit: contain;
   transition: all 0.2s ease-in-out;
 }
 
-.AuthModule .loadedContent .dropdown .UserListContainer .addButton:hover .icon {
+.Dropdown .AddButton:hover .icon {
   transform: scale(1.2);
 }
 
-.AuthModule .loadedContent .dropdown .UserListContainer .User {
-  background-color: var(--second-background-color);
+/*Ant render dropdown out of parent component*/
+.Dropdown .User {
+  background-color: transparent;
   width: 100%;
   cursor: pointer;
 }
 
-.AuthModule .loadedContent .dropdown .UserListContainer .User:hover {
+.Dropdown .User:hover {
   /* background-color: var(--hover-background-color);*/
 }
 
-.AuthModule .loadedContent .dropdown .UserListContainer .User.selected {
+.Dropdown .User.selected {
   background-color: var(--hover-background-color);
 }
 
-/**********************************/
-.UserCard {
-  min-width: 20vw;
-  width: fit-content;
-  height: 11vh;
-  background-color: var(--second-background-color);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5vw;
-  border-radius: 10px;
-  box-sizing: border-box;
-  padding: 0 1vw;
-
-}
-
-.UserCard .data {
-  height: 100%;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  flex-wrap: nowrap;
-  gap: 1vw;
-}
-
-.UserCard .authIcon {
-  height: 3vw;
-  width: 3vw;
-  border-radius: 10px;
-  object-fit: contain;
-  object-position: center;
-}
-
-.UserCard .skin {
-  height: 5vw;
-  width: 5vw;
-  border-radius: 10px;
-  object-fit: contain;
-  object-position: center;
-}
-
-.UserCard .userName {
-  /*background-color: #1e954e;*/
-  font-size: 4vh;
-  font-family: SquareFont, serif;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 30vw;
-}
-
-.UserCard .ActionContainer {
-  float: right;
-  height: 100%;
-  min-width: fit-content;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease-in-out;
-  box-sizing: border-box;
-  padding: 10px;
-}
-
-.UserCard .ActionContainer .logOutButton {
-  background-color: var(--unvalid-secondary);
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  width: 1.5vw;
-  height: 1.5vw;
-}
-
-.UserCard .ActionContainer .logOutButton:hover {
-  background-color: var(--unvalid);
-}
-
-.UserCard .ActionContainer .logOutButtonIcon {
-  width: 2vw;
-  height: 2vw;
-}
-
-/****************************/
-.AuthProviderCard {
-  width: 100%;
-  height: 10vh;
-  position: relative;
-  cursor: pointer;
-  background-color: transparent;
-  padding: 0;
-}
-
-.AuthProviderCard.Microsoft::before {
-  content: '';
-  position: absolute;
-  display: block;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(159deg, rgba(255, 87, 34, 1) 0%, rgba(76, 175, 80, 1) 100%);
-  filter: blur(20px);
-  transition: opacity 0.3s;
-  border-radius: 10px;
-  opacity: 0;
-  z-index: 0;
-}
-
-.AuthProviderCard.Microsoft:hover::before {
-  opacity: 0.6;
-}
-
-.AuthProviderCard .content {
-  width: 100%;
-  height: 100%;
-  background-color: var(--second-background-color);
-  display: flex;
-  align-items: center;
-  gap: 2vw;
-  border-radius: 10px;
-  box-sizing: border-box;
-  padding: 5px;
-  z-index: 1;
-  position: relative;
-  transition: all 0.3s ease-in-out;
-}
-
-.AuthProviderCard .icon {
-  height: 5vw;
-  width: 5vw;
-  background-color: var(--third-background-color);
-  border-radius: 5px;
-}
-
-.AuthProviderCard .label {
-  font-size: 3vw;
-}
-
-.AuthProviderCard .stateIcon {
-  width: 2vw;
-  height: 2vw;
-}
 

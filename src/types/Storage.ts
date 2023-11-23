@@ -1,6 +1,7 @@
 import { Themes } from './Theme';
 import { GameVersion } from './Versions';
 import { Xbox } from 'msmc';
+import { Account, MSAccount } from './AuthPublic';
 
 interface InterfaceData {
   selectedTab: string;
@@ -8,8 +9,8 @@ interface InterfaceData {
   isMenuCollapsed: boolean;
 }
 
-interface AuthData {
-  accountList: Xbox[];
+export interface AuthData {
+  accountList: Account[];
   selectedAccount: number | null;
 }
 

@@ -3,7 +3,6 @@ import { Button, SiderProps } from 'antd';
 import Icon from './Icons/Icon';
 import arrowIcon from '../../../assets/graphics/icons/caret-left.svg';
 import { DefaultProps } from '../../../types/DefaultProps';
-import '../../css/Tabs-ant-override.css';
 import { StyleProvider } from '@ant-design/cssinjs';
 import Sider from 'antd/es/layout/Sider';
 import styles from "../../css/publicStyle.module.css"
