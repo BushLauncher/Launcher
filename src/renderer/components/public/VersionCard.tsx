@@ -13,7 +13,6 @@ import { useState } from 'react';
 import loadIcon from '../../../assets/graphics/icons/loading.svg';
 import LaunchButton from '../main/LaunchButton';
 import Loader from './Loader';
-import "../../css/publicStyle-ant-override.css"
 
 type activeAndCallback = { active: boolean, callback?: () => any }
 

@@ -1,4 +1,4 @@
-import styles from '../../../css/AuthModuleStyle.module.css';
+import styles from '../../../css/AuthProviderCardStyle.module.css';
 import Icon from '../../public/Icons/Icon';
 
 import loadingIcon from '../../../../assets/graphics/icons/loading.svg';

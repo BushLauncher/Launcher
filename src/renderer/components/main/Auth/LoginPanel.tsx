@@ -2,14 +2,14 @@
 import Button, { ButtonType } from '../../public/Input/Button';
 import Icon from '../../public/Icons/Icon';
 import closeIcon from '../../../../assets/graphics/icons/close.svg';
-import { AuthProvider, MSAccount } from '../../../../types/AuthPublic';
+import { AuthProvider, Account } from '../../../../types/AuthPublic';
 import AuthProviderCard from './AuthProviderCard';
 import { toast } from 'react-toastify';
 import { globalContext } from '../../../index';
 import { errorCode, KnownAuthErrorType } from '../../../../types/Errors';
 
 export interface loginInterface {
-  resolve: (account: MSAccount) => void;
+  resolve: (account: Account) => void;
   reject: (code: errorCode) => void;
 }
 
@@ -38,7 +38,7 @@ export default function LoginPanel({ functions, props.closable }: {
                       reject={(err: errorCode) =>
                         toast.error(err.toString())
                       }
-                      resolve={(account: MSAccount) =>
+                      resolve={(account: Account) =>
                         functions.resolve(account)
                       }
                     />
@@ -57,14 +57,10 @@ export default function LoginPanel({ functions, props.closable }: {
 
 import styles from '../../../css/LoginPanel.module.css';
 import { DefaultProps } from '../../../../types/DefaultProps';
-import { App, Button, ConfigProvider, Modal } from 'antd';
-import Icon from '../../public/Icons/Icon';
-import { ButtonType } from '../../public/Input/Button';
-import { Account, AuthProvider, MSAccount } from '../../../../types/AuthPublic';
+import { ConfigProvider, Modal } from 'antd';
+import { Account, AuthProvider } from '../../../../types/AuthPublic';
 import AuthProviderCard from './AuthProviderCard';
-import { GenericError } from '../../../../types/Errors';
-import { toast } from 'react-toastify';
-import { functions } from 'electron-log';
+import { GenericError, KnownAuthErrorType } from '../../../../types/Errors';
 import { defaultTheme } from '../../../index';
 import { useState } from 'react';
 
@@ -94,6 +90,7 @@ export default function LoginPanel(props: LoginPanelProps) {
   function close() {
     if (!props.closable) throw new Error('Cannot close the panel');
     setOpen(false);
+    reject(KnownAuthErrorType.ClosedByUser);
   }
 
   const closable = props.closable !== undefined && props.closable;

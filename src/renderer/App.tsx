@@ -1,15 +1,17 @@
 import './css/defaultStyle.css';
 import Loader from './components/public/Loader';
 import React from 'react';
-import './css/Tabs-ant-override.css';
-import './css/SettingsModal-ant-override.css';
 import RenderConsoleManager, { ProcessType } from '../global/RenderConsoleManager';
 import { Configuration } from '../types/Configuration';
 import { toast } from 'react-toastify';
-import { Account, AccountCheckOperationResponse, MSAccount } from '../types/AuthPublic';
-import { App as AntdApp } from 'antd';
+import { MSAccount, AccountCheckOperationResponse, Account } from '../types/AuthPublic';
+import { App as AntdApp, Dropdown } from 'antd';
 import AuthManager from './components/main/Auth/AuthManager';
 import AuthModule from './components/main/Auth/AuthModule';
+
+
+import "./Ant-override.css";
+
 
 
 const console = new RenderConsoleManager('app', ProcessType.Render);
@@ -237,7 +239,7 @@ export default function App() {
             type: 'info',
             isLoading: false
           }), 1000);
-        authManager.LoginNew()
+        authManager.LoginNew([{closable: false}])
           .then((account: Account) => {
             //local returned account is re-fetched
             handleAccountCheckOperationCallback('done');
@@ -252,7 +254,7 @@ export default function App() {
             type: 'warning',
             isLoading: false
           }), 1000);
-        authManager.LoginNew().then((account: Account) => {
+        authManager.LoginNew([{closable: false}]).then((account: Account) => {
           //local returned account is re-fetched
           handleAccountCheckOperationCallback('done');
         }).catch(() => handleAccountCheckOperationCallback('couldntRevalidate'));
@@ -266,10 +268,10 @@ export default function App() {
       case 'done': {
         //refresh in case of re login
         await authManager.refreshData();
-        const account = authManager.getSelected();
+        const account = await authManager.getSelectedAccount();
         if (account === null) throw new Error('Cannot render null account');
         else {
-          console.log('Logged as  ' + account.name);
+          console.log('Logged as ' + account.name);
           setTimeout(() => toast.update(accountValidateOperation, {
             render: 'Hi ' + account.name + ' !',
             isLoading: false,

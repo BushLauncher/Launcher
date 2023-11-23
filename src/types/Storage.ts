@@ -1,7 +1,7 @@
 import { Themes } from './Theme';
 import { GameVersion } from './Versions';
 import { Xbox } from 'msmc';
-import { Account } from './AuthPublic';
+import { Account, MSAccount } from './AuthPublic';
 
 interface InterfaceData {
   selectedTab: string;

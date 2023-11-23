@@ -9,7 +9,7 @@ import { getAllVersionList, getSelectedVersion, getVersionMethode, groupMinecraf
 import * as userData from './DataManager';
 import { CleanUpCatch } from './DataManager';
 import { getDefaultRootPath, getLocationRoot, UninstallGameFiles, VerifyVersionFile } from './FileManager';
-import { Account, AuthProvider, MSAccount } from '../types/AuthPublic';
+import { MSAccount, AuthProvider, Account } from '../types/AuthPublic';
 import {
   AddAccount,
   getAccountList,
@@ -92,8 +92,8 @@ export default class MainWindow extends Window {
       //return response (can contain the Error)
       return response;
     });
-    ipcMain.handle('Auth:LogOut', (_event, args: { accountIndex: number }) => {
-      return LogOutAccount(args.accountIndex);
+    ipcMain.handle('Auth:LogOut', (_event, args: { index: number }) => {
+      return LogOutAccount(args.index);
     });
     ipcMain.handle('Auth:LogOutAll', (_event, args: { accountIndex: number }) => {
       return LogOutAllAccount();

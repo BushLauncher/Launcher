@@ -1,11 +1,11 @@
-import React, { useEffect, useRef } from 'react';
+import React, { ReactNode, useEffect, useRef } from 'react';
 import { DefaultProps } from '../../../types/DefaultProps';
 
 //https://stackoverflow.com/a/42234988
 
 
 interface OutsideAlerterProps extends DefaultProps {
-  children: JSX.Element,
+  children: React.ReactElement | ReactNode
   onClickOutside: (event: MouseEvent) => any
   exceptElementClasses?: string[];
 }

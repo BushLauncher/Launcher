@@ -1,18 +1,21 @@
-import { getDataStorage } from './main';
+import { currentWindow, getDataStorage } from './main';
 import { Account, AuthProvider } from '../types/AuthPublic';
 import { MicrosoftAuthenticator } from '@xmcl/user';
 import ConsoleManager, { ProcessType } from '../global/ConsoleManager';
-import { MSLogin, RefreshMSAccount, xboxToUser } from './Logins';
-import { AuthError, KnownAuthErrorType } from '../types/Errors';
+import { MSLogin, RefreshMSAccount } from './Logins';
+import { AuthError } from '../types/Errors';
 
 const console = new ConsoleManager('AuthModule', ProcessType.Internal);
 
 export async function RefreshAccount(id: number | Account<any>): Promise<Account<any> | AuthError> {
   const account = (typeof id === 'number') ? getAccount(id) : id;
+  let response: Account<any> | AuthError | null = null;
   switch (account.provider) {
     case AuthProvider.Microsoft:
-      return RefreshMSAccount(account);
+      response = await RefreshMSAccount(account);
   }
+  RefreshFrontModule();
+  return response;
 }
 
 export function AddAccount(user: Account<any>) {
@@ -35,7 +38,12 @@ export async function Login(providerType: AuthProvider): Promise<Account<any>> {
 
 
 ////
-
+/**
+ * Call to refresh the front end Auth module
+ */
+function RefreshFrontModule() {
+  currentWindow?.window.webContents.send('Auth:RefreshEvent');
+}
 
 export function SelectAccount(id: number) {
   if (updateStorage('selectedAccount', id)) {
@@ -75,15 +83,15 @@ export function ReplaceAccount(id: number, account: Account<any>) {
 }
 
 export function RemoveAccount(indexToDelete: number) {
+  if (updateStorage('accountList', removeFromList(indexToDelete))) {
+    console.log(`Removed account: ${indexToDelete}`);
+  } else throw new Error('Cannot remove Account, local update error');
   //we must change the selected Account id because the array's ids were changed
-  //index to delete cannot be === to the selected account
+  //index to delete cannot be === to the selected account 'cause we cannot log out selected account
   const selectedAccountId = getSelectedAccountId();
   if (selectedAccountId != null && selectedAccountId > indexToDelete) {
     SelectAccount(selectedAccountId - 1);
   }
-  if (updateStorage('accountList', removeFromList(indexToDelete))) {
-    console.log(`Removed account: ${indexToDelete}`);
-  } else throw new Error('Cannot remove Account, local update error');
 }
 
 export function isAccountValid(account: Account<any>): boolean {
@@ -116,6 +124,7 @@ function addToStorage(accountToAdd: Account<any>): boolean {
 function updateStorage(id: string, value: any): boolean {
   try {
     getDataStorage().update('auth.' + id, value);
+    RefreshFrontModule();
     return true;
   } catch (err: any) {
     console.error(err);

@@ -1,0 +1,79 @@
+.UserCard {
+  min-width: 20vw;
+  width: fit-content;
+  height: 11vh;
+  background-color: var(--second-background-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5vw;
+  border-radius: 10px;
+  box-sizing: border-box;
+  padding: 0 1vw;
+
+}
+
+.UserCard .data {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: nowrap;
+  gap: 1vw;
+}
+
+.UserCard .authIcon {
+  height: 3vw;
+  width: 3vw;
+  border-radius: 10px;
+  object-fit: contain;
+  object-position: center;
+}
+
+.UserCard .skin {
+  height: 5vw;
+  width: 5vw;
+  border-radius: 10px;
+  object-fit: contain;
+  object-position: center;
+}
+
+.UserCard .userName {
+  /*background-color: #1e954e;*/
+  font-size: 4vh;
+  font-family: SquareFont, serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 30vw;
+}
+
+.UserCard .ActionContainer {
+  float: right;
+  height: 100%;
+  min-width: fit-content;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease-in-out;
+  box-sizing: border-box;
+  padding: 10px;
+}
+
+.UserCard .ActionContainer .logOutButton {
+  background-color: var(--unvalid-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  width: 1.5vw;
+  height: 1.5vw;
+}
+
+.UserCard .ActionContainer .logOutButton:hover {
+  background-color: var(--unvalid);
+}
+
+.UserCard .ActionContainer .logOutButtonIcon {
+  width: 2vw;
+  height: 2vw;
+}

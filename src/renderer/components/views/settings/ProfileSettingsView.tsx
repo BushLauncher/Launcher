@@ -29,7 +29,7 @@ export default function ProfileSettingsView() {
                     // @ts-ignore
                     accountList.map((account, index) => {
                       const isSelected: boolean = index === selected;
-                      return <UserCard displayAuthMethode={true} user={account} key={index} action={{
+                      return <UserCard displayAuthProvider={true} user={account} key={index} action={{
                         accountIndex: index,
                         reloadFunc: reload,
                         action: { canLogOut: !isSelected, canSelect: !isSelected }

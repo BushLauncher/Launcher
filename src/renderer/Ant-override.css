@@ -1,3 +1,28 @@
+@import "./Theme.css";
+
+#root .CollapsableVersion{
+  margin: 1vh 0;
+}
+#root .CollapsableVersion .ant-collapse {
+  width: 100%;
+  background-color: var(--background-color);
+}
+
+#root .CollapsableVersion .ant-collapse .ant-collapse-header {
+  padding: 0;
+  align-items: center;
+  margin-bottom: 0;
+}
+#root .CollapsableVersion .ant-collapse .ant-collapse-expand-icon {
+  padding-inline-end: 0;
+  margin-inline-start: 0;
+  position: absolute;
+  left: 0.4vw;
+}
+#root .CollapsableVersion .ant-collapse .ant-collapse-content-box {
+  padding: 0.5vh 2vh 0.5vh;
+}
+
 #root .ant-tabs-left {
   width: 100%;
   height: 100%;
@@ -149,4 +174,48 @@
   padding: 14px;
   box-sizing: content-box;
   border-radius: 15px;
+}
+
+
+.ant-modal-root .ant-modal.SettingsModal {
+}
+
+.ant-modal-root .ant-modal.SettingsModal .ant-modal-content {
+  border: 1px solid #414141;
+  background-color: #1a1a1a;
+  height: 92vh;
+}
+
+.ant-modal-root .ant-modal.SettingsModal .ant-modal-content .ant-modal-header {
+  background-color: #1a1a1a;
+}
+
+.ant-modal-root .ant-modal.SettingsModal .ant-modal-content .ant-tabs {
+  height: 100%;
+
+}
+
+.ant-modal-root .ant-modal.SettingsModal .ant-modal-content .ant-tabs .versionSettings .tabs {
+  height: 48vh;
+
+}
+
+.ant-modal-root .ant-modal.SettingsModal .ant-modal-content .ant-tabs .ant-tabs-content-holder {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.ant-modal-root .ant-modal.SettingsModal .ant-modal-content .ant-tabs .ant-tabs-content-holder .ant-tabs-nav {
+  max-height: 70vh;
+}
+
+.ant-modal-root .ant-modal.SettingsModal .ant-modal-content .ant-tabs .ant-tabs-content-holder .ant-tabs-tabpane {
+  max-height: 70vh;
+}
+
+
+.ant-select-dropdown .ant-select-item  {
+  padding: 0;
+  margin: 3px 0;
 }

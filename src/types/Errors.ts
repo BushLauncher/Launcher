@@ -20,7 +20,8 @@ export type knowErrorFormat = {
 //Auth Errors
 export enum KnownAuthErrorType {
   ClosedByUser = 'ClosedByUser',
-  UserDontHasGame = 'UserDontHasGame'
+  UserDontHasGame = 'UserDontHasGame',
+  UserAlreadyRegistered = "UserAlreadyRegistered"
 }
 
 export type AuthError = KnownAuthErrorType | Lexcodes | { errno: string } | string;
