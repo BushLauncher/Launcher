@@ -109,8 +109,8 @@ export default class AuthManager {
     return new Promise<Account | GenericError>((resolve) => {
       const container = document.createElement('div');
       const loginPanelRoot = createRoot(container);
-      loginPanelRoot.render(<LoginPanel {...props} resolve={resolve} />);
       const app = document.getElementById('App');
+      loginPanelRoot.render(<LoginPanel {...props} resolve={resolve}/>);
       if (app === null) throw new Error('Cannot get App container'); else app.appendChild(container);
     });
   }
@@ -120,7 +120,7 @@ export default class AuthManager {
   }
 
   private getIndex(account: Account): number {
-    const index = this.accountList.findIndex(a=>a.name === account.name);
+    const index = this.accountList.findIndex(a => a.name === account.name);
     if (index === -1) throw new Error('Cannot find this account in storage: \n' + account);
     else return index;
   }

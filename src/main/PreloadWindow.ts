@@ -58,37 +58,11 @@ export default class PreloadWindow extends Window {
 
   private checkForUpdatesExist() {
     return new Promise<false | toDownloadData>((resolve, reject) => {
-      console.log('Checking for updates...');
-      new Octokit().request('GET /repos/BushLauncher/Launcher/releases/latest')
-        .then((githubResponse) => {
-          console.log('Got response from GitHub API');
-          let res = githubResponse.data;
-          const localVersion = app.getVersion();
-          if (compareVersion(res.name.replace('v', ''), localVersion) === 1) {
-            console.log('Update available...');
-            resolve({
-              version: res.name.replace('v', ''),
-              url: res.assets[0].browser_download_url,
-              size: res.assets[0].size
-            });
-          } else {
-            console.log('No Update available');
-            resolve(false);
-          }
-        })
-        .catch((err) => {
-          console.error('Couldn\'t check for updates');
-          console.error(err);
-          reject(err);
-        });
+
     });
   }
 
 }
 
-export type toDownloadData = {
-  version: string,
-  url: string,
-  size: number
-}
+
 

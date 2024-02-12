@@ -3,6 +3,10 @@ export function CapitalizeFirst(word: string) {
 }
 
 //TODO: use semver parse
+/**
+ * @deprecated
+ * use semver lt instead
+ */
 export function compareVersion(_v1: string, _v2: string) {
   const v1 = _v1.split('.');
   const v2 = _v2.split('.');

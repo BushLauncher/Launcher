@@ -1,6 +1,6 @@
 // noinspection SpellCheckingInspection
 
-import { app, BrowserWindow, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, session, shell } from 'electron';
 import path from 'path';
 import BrowserWindowConstructorOptions = Electron.BrowserWindowConstructorOptions;
 
@@ -33,7 +33,7 @@ export default class Window {
       hasShadow: false,
       titleBarStyle: 'hidden',
       backgroundColor: '#252d27',
-      backgroundMaterial: "acrylic",
+      backgroundMaterial: 'acrylic',
       frame: false,
       movable: true,
       minimizable: true,
@@ -41,7 +41,7 @@ export default class Window {
       closable: true,
       title: 'Bush Launcher',
       darkTheme: true,
-      icon: this.getAssetPath('icon.png'),
+      icon: this.getAssetPath('icon.png')
     }, additionalParams);
     this.window = new BrowserWindow(params);
     this.window.setResizable(false);
@@ -49,7 +49,7 @@ export default class Window {
     const loadingOperation = (contentPath.startsWith('http'))
       ? this.window.webContents.loadURL(resolvedHtmlPath)
       : this.window.loadFile(resolvedHtmlPath);
-    console.log("Loading React app...");
+    console.log('Loading React app...');
     loadingOperation.then(() => {
       return;
     });
@@ -72,4 +72,5 @@ export default class Window {
   private getAssetPath(...dataPaths: string[]) {
     return path.join(app.isPackaged ? path.join(process.resourcesPath, 'assets') : path.join(__dirname, '../../assets'), ...dataPaths);
   }
+
 }

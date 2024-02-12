@@ -7,52 +7,7 @@ import { DefaultProps } from '../../../types/DefaultProps';
 
 export default function MainMenuBar() {
   const {offlineMode} = useContext(globalContext);
-  /*let connexionToastId = 'networkConnexion';
 
-    function launchNetworkCheck() {
-      const getNetworkState = () => {
-        return new Promise<void>((resolve, reject) => {
-          setTimeout(() => {
-            if (!isOnline) {
-              if (navigator.onLine) resolve();
-            } else if (!navigator.onLine) reject();
-          }, 2000);
-        });
-      };
-      const updateNetworkState = () => {
-        if (navigator.onLine !== isOnline) {
-          //if the current state != global state
-          // noinspection JSIgnoredPromiseFromCall
-          toast.promise(getNetworkState, {
-            pending: `Connecting to the internet...`/*[currently: ${navigator.onLine}, context: ${isOnline}]`*/
-  /*,
-          success: {
-            render() {
-              setTimeout(() => {
-                window.location.reload();
-              }, 2000);
-              return 'Connected !';
-            }
-          },
-          error: {
-            render() {
-              setTimeout(() => {
-                window.location.reload();
-              }, 2000);
-              return 'We lost connexion !';
-            }
-          }
-        }, {
-          toastId: 'networkConnexion', autoClose: 20000, hideProgressBar: true
-        });
-      } else if (toast.isActive(connexionToastId)) toast.dismiss(connexionToastId);
-    };
-
-    updateNetworkState();
-    setInterval(updateNetworkState, 5000);
-  }
-
-  launchNetworkCheck();*/
   return (
     <div id='mainMenu' className={styles.mainMenuBar} role={'menu'}>
       <div className={styles.data}>
@@ -84,6 +39,7 @@ export default function MainMenuBar() {
 /*******************/
 import closeIcon from '../../../assets/graphics/icons/close.svg';
 import minimizeIcon from '../../../assets/graphics/icons/window-minimize.svg';
+import { toast } from 'react-toastify';
 interface FrameButtonProps extends DefaultProps {
   type: 'close' | 'minimize',
 }

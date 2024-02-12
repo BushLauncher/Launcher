@@ -5,7 +5,7 @@ import { Account, AuthProvider } from '../../../../types/AuthPublic';
 import AuthProviderCard from './AuthProviderCard';
 import { GenericError, KnownAuthErrorType } from '../../../../types/Errors';
 import { defaultTheme, globalContext } from '../../../index';
-import { useContext, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 
 
 export interface LoginPanelProps extends DefaultProps {

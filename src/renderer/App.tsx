@@ -1,17 +1,17 @@
 import './css/defaultStyle.css';
 import Loader from './components/public/Loader';
-import React from 'react';
+import React, { useContext } from 'react';
 import RenderConsoleManager, { ProcessType } from '../global/RenderConsoleManager';
 import { Configuration } from '../types/Configuration';
 import { toast } from 'react-toastify';
-import { MSAccount, AccountCheckOperationResponse, Account } from '../types/AuthPublic';
-import { App as AntdApp, Dropdown } from 'antd';
+import { Account, AccountCheckOperationResponse } from '../types/AuthPublic';
 import AuthManager from './components/main/Auth/AuthManager';
 import AuthModule from './components/main/Auth/AuthModule';
 
 
-import "./Ant-override.css";
-
+import './Ant-override.css';
+import { globalContext } from './index';
+import NetworkCheck from './components/main/NetworkCheck';
 
 
 const console = new RenderConsoleManager('app', ProcessType.Render);
@@ -224,8 +224,45 @@ const console = new RenderConsoleManager('app', ProcessType.Render);
 
 
 export default function App() {
-  //Check for update frontend listener
+  //Clear body to avoid Electron Session state, Antd Modal stacking
+  document.addEventListener('load', () => {
+    for (let i = 0; i < document.body.children.length; i++) {
+      const e = document.body.children[i];
+      if (e.id !== 'root') document.body.removeChild(e);
+    }
+  });
 
+  const { offlineMode } = useContext(globalContext);
+  //notify offline mode
+  if (offlineMode) {
+    toast.warn('Running in offline mode, some function might not work.', { autoClose: 10000 });
+  }
+  //Check for update frontend listener
+  const updateCheckOperation = toast.loading('Checking for update...', { toastId: 'updateCheckOperationToast' });
+  //@ts-ignore
+  window.electron.ipcRenderer.on('Starting:UpdateCheckOperation', async (response: UpdateCheckOperationResponse) => {
+    if (response.update) {
+      const update = response.updateData;
+      if (update === undefined) throw new Error('Update data are not provided !');
+      setTimeout(() => {
+        toast.update(updateCheckOperation, {
+          render: `New version ${update.version} available `,
+          type: 'info',
+          isLoading: false
+        });
+      }, 1000);
+    } else {
+      setTimeout(() => {
+        toast.update(updateCheckOperation, {
+          render: 'This is the latest version !',
+          type: 'success',
+          hideProgressBar: true,
+          autoClose: 3000,
+          isLoading: false
+        });
+      }, 1000);
+    }
+  });
   //Account frontend listener
   const authManager = new AuthManager();
   const accountValidateOperation = toast.loading('Checking account...', { toastId: 'accountValidateOperationToast' });
@@ -239,7 +276,7 @@ export default function App() {
             type: 'info',
             isLoading: false
           }), 1000);
-        authManager.LoginNew([{closable: false}])
+        authManager.LoginNew([{ closable: false }])
           .then((account: Account) => {
             //local returned account is re-fetched
             handleAccountCheckOperationCallback('done');
@@ -254,7 +291,7 @@ export default function App() {
             type: 'warning',
             isLoading: false
           }), 1000);
-        authManager.LoginNew([{closable: false}]).then((account: Account) => {
+        authManager.LoginNew([{ closable: false }]).then((account: Account) => {
           //local returned account is re-fetched
           handleAccountCheckOperationCallback('done');
         }).catch(() => handleAccountCheckOperationCallback('couldntRevalidate'));
@@ -289,6 +326,7 @@ export default function App() {
   //
   return (
     <div id={'App'}>
+      <NetworkCheck />
       <AuthModule authManager={authManager} />
       <Loader /*Load all configurations*/>
         {async (reload) =>

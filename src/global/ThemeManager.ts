@@ -2,7 +2,7 @@ import { Themes } from '../types/Theme';
 
 export async function SetTheme(theme: Themes) {
   await window.electron.ipcRenderer.invoke('Option:setTheme', ({ theme: theme }));
-  window.location.reload();
+  window.electron.ipcRenderer.sendMessage("Reload", {});
 }
 
 export async function getCurrentTheme(): Promise<Themes> {

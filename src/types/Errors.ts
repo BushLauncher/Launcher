@@ -48,5 +48,11 @@ export const knowGameError: { [key in keyof typeof KnowGameErrorType]: knowError
   }
 };
 
+// Update Error
+export enum KnownUpdateError {
+  NoNetwork = 'NoNetwork'
+}
+
+export type UpdateError = KnownUpdateError | string;
 
 

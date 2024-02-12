@@ -2,11 +2,10 @@ import { createRoot } from 'react-dom/client';
 import App from './App';
 import React from 'react';
 import MainMenuBar from './components/main/MainMenu';
-import { App as AntApp, ConfigProvider } from 'antd';
+import { ConfigProvider } from 'antd';
 import { ElectronHandler, versionHandler } from '../main/preload';
 import darkDefault from '../themes/darkDefault';
 import { ToastContainer } from 'react-toastify';
-import { NotificationParam } from '../types/DefaultProps';
 
 const container = document.getElementById('root')!;
 const root = createRoot(container);
@@ -27,9 +26,7 @@ interface globalState {
 const globalState: globalState = {
   offlineMode: !navigator.onLine
 };
-
 export const globalContext = React.createContext(globalState);
-
 
 root.render(
   <globalContext.Provider value={globalState}>
@@ -51,7 +48,3 @@ root.render(
   </globalContext.Provider>
 );
 
-
-window.electron.ipcRenderer.on('clearAll', () => {
-  window.localStorage.clear();
-});
